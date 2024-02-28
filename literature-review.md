@@ -1,2 +1,19 @@
-## Computational Scaling of Resources in Learning Sparse Parities with SGD  
-Name: [Hidden Progress in Deep Learning: SGD Learns Parities near the Computational Limit](https://proceedings.neurips.cc/paper_files/paper/2022/file/884baf65392170763b27c914087bde01-Paper-Conference.pdf)
+## Computational Scaling of Resources in Learning with SGD  
+### [Hidden Progress in Deep Learning: SGD Learns Parities near the Computational Limit](https://proceedings.neurips.cc/paper_files/paper/2022/file/884baf65392170763b27c914087bde01-Paper-Conference.pdf)
+tbd
+
+## Benefit of Non-Linear Learning Methods over Kernel Models
+### [Quantifying the Benefit of Using Differentiable Learning over Tangent Kernels](https://proceedings.mlr.press/v139/malach21a/malach21a-supp.pdf)
+The authors investigate whether the ability of a differentiable model trained on gradient descent to learn a problem to a vanishing prediction error relies on the ability of a kernel model to achieve any improvement over random guessing in specific scenarios.
+On the one hand, they can guarantee that the NTK of a model must achieve an improvement over random guessing if the model itself masters the problem to a small error.
+On the other hand, they limit this guaranteed improvement by showcasing scenarios where the model can efficiently arbitrarily small errors while the NTK is unable to improve upon random guessing.
+
+As mentioned before, they distinguish between several scenarios. First, they consider the case of unbiased initializations. That is an initialization such that the model output is completely neutral and not biased towards any prediction. In this case, they establish that if the first gradient step changes towards a better weight configuration, then the NTK, which approximates the model, must also achieve a small improvement that is at least inversely polynomial in the model complexity and gradient accuracy and also depends on the smoothness of the loss function.
+Here, gradient accuracy refers to the approximation error of the true gradient. Because the authors do not consider exact gradient descent but the more general class of approximate gradient descent algorithms, their results hence affect a wider range of (approximate) gradient descent variants.
+
+In the more general case of arbitrary (and thus possibly biased) initializations, the authors distinguish by another case. If the initialization distribution of the random features of the kernel model may depend on the specific input distribution, then they can handcraft an initialization scheme for the NTK of that model. They maintain that in expectation over the randomness of this initialization, the NTK will still achieve a polynomial improvement over blind guessing if approximate gradient descent ensures a low error for *any* initialization.
+Again, they also construct a negative example where a differentiable model trained by approximate gradient descent ensures a vanishing error but its NTK exhibits a polynomially vanishing improvement over blind guessing. Therefore, they impose a tight upper bound to the guaranteed improvement. 
+
+In the general case, the initialization of the kernel model may however *not* depend on the specific input distribution but must be the same for the entire input distribution family. In this setting, the authors demonstrate scenarios where differentiable models can efficiently obtain arbitrarily small errors while *any* tangent kernel corresponding to polynomially-sized model may not even surpass an exponentially vanishing improvement over blind guessing.
+
+However, this statement does neither fix a learning problem nor fix a model. The theorem considers a sequence of errors $(\varepsilon_n)_{n\in\mathbb{N}}$ that converges to 0 and establishes a separate learning problem and a separate differentiable model of each $n$. In order to satifsy some requirements for the theoretical analysis, their differentiable model moreover does not follow natural architectural designs. Firstly, the sigmoidal activation function is constructed by piece-wise quadratic functions. Secondly, each model in the aforementioned sequence leaves "some" weights entirely fixed and learns the others.
