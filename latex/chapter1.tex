@@ -1,0 +1,288 @@
+% !TEX root = thesis_ruettgers_lukas.tex
+% From mitthesis package
+% Version: 1.04, 2023/10/19
+% Documentation: https://ctan.org/pkg/mitthesis
+
+
+%% 2024/05/28: 6-7 pages of pure text
+\chapter{Introduction} 
+\section{The i.i.d. Assumption}
+% TODO: Cite some review paper that underscores the importance of i.i.d. assumption
+% \cite{zhang2021understanding} Understanding Deep Learning requires rethinking generalization. (In-distribution generalization).
+% \cite{lake2017building} Behavioural brain scientists contrast current Machine Learning models with brain models
+%
+%
+%
+% Describe the natural imperfections (noise) and limitations (quantitative and qualitative) of experience when learning concepts.
+% - Experimental conditions, collector's bias
+% - Unrelated background information in audio and video
+% - Infeasible to cover many different kinds of noise realisations.
+%
+%
+% This would not be a problem if this training dataset still sufficed to absorb the true representations of the desired concept.
+% - After all, humans seem to bear capabilities (etw. in sich tragen) that allow them to infer concepts that generalize well from comparably little experience.
+% - However, these experimental peculiarities might introduce spurious features whose regularities are simpler than the true features and still correlate with the desired functional output.
+% - As many models are rightfully(!) trimmed to learn a maximally compressed representation that preserves as much information on the functional output as possible, these spurious features render most effective for this objective.
+%
+% List a few typical generalization failures that emerged from this problem
+% TODO: Cite paper on adversial samples
+% - Adversial Samples in Image Recognition
+%
+%
+%
+% Underscore the (umumgaenglich) importance of generalization
+% - General agents that are employable in a multitude of environments
+% - Construction site robot, Factory robot, Vehicle pilot, Document Parsing (handwritten), Speech Recognition (voice of women vs. men)
+%
+%
+%
+% Defend data compression
+% - The problem is not the frequently employed principle of seeking a maximally compressed representation.
+% TODO: Refer to theory in \cite{li2008kolmogorov} that proves the benefit of data compression
+% - Indeed, the converse is true. It is part of an incomplete solution to this problem, as some theoretical evidence underscores the benefit of compressing model representations for generalization. (CNNs, RNNs, Diffusion Models)
+% - Minimizing model parameters has been the slogan (logos?, Motto) of research that reaches as early as to Vapnik's VC-Dimension, Rademacher Complexity and its relation to Uniform Convergence
+%
+%
+%
+% Accuse the i.i.d. assumption
+% - Instead, the problem at least for some part (teilweise) lies in the naive assumption that we deal with i.i.d. examples from a single, unadulterated, pristine (WORDING rein, unberuehrt, natuerlich) distribution.
+% - Although the i.i.d. assumption dramatically simplified generalization bounds in theory, it neglects the incompleteness of the sample in a fundamental way.
+% - It therefore renders these generalization bounds less useful for generalization in applied scenarios.
+%
+%
+%
+% Awareness of this modeling drawback is already established. 
+% Showcase some engineering methods in practice that try to cope with this problem:
+% - Domain Randomization in Reinforcement Learning
+% - Dropout in Feedforward Neural Networks
+% - Cropping, Flipping, Rotating, Adding Noise in Images
+%
+%
+%
+% Underscore that we require a more fundamental reformulation of our training procedures than expanding datasets with hotfixes.
+% - Models endowed with these enriched datasets exhibited noticeable improvements, although its magnitude strongly differs across experimental settings.
+% - Nevertheless, enriching training datasets with some handcrafted hot-fixes cannot account for the abundant ways in which the training dataset will be limited or incomplete.
+% - (Vielmehr benoetigen wir) Instead, we must consider how we model learning problems and techniques at their very root.
+%
+\section{Domain Generalization}
+%% Introduce Domain Generalization.
+%
+% The probability distribution is extended by parameters that model everything beyond the causal confounders (CHECK this term), e.g. experimental conditions.
+% - The limitation of the training dataset set the stage to the study of Domain Generalization, or out-of-distribution generalization.
+% - We explicitly model these experimental conditions as parameters of each distribution. 
+% - - Similarly to a noise model, these parameters are mostly assumed to influence each distribution in a way that does not relate to the true underlying concept we wish to absorb.
+% CITE: IRM or other papers that work with structural causal models.
+%
+%
+%
+% Reformulation of the Generalization Error
+% - This way, we create a parametrized family of distributions from which the training distributions originate/are selected.
+% - Generalization is not anymore analysed in terms of the expected risk on the same underlying distribution, but is considered with regard to this entire family, e.g. the worst case error.
+%
+%
+%
+% Relation to Causality
+% \cite{peters2016causal} Causal inference with invariant prediction models.
+% \cite{pfister2019invariant} Invariant prediction models for sequential data.
+% - This modeling viewpoint does not seek regularities that merely correlate with the desired output, but aims to absorb the underlying causal relation between the input and output.
+% - For that reason, this field of research avails to the broad body (GRAMMAR) of causality literature.
+% TODO: Introduce causal learning as a promising perspective on generalization.
+%
+% - (Entsprechend wird...) Consequently, each distribution from the family is associated with a stochastic, data-generating function that is modeled as a structural causal model (SCM). 
+% - While noise can distort the outcome of each causal process, the deterministic, causal processes embedded in the SCM are referred to as invariant causal mechanisms.
+% - These are the deterministic relations we hope to absorb from the observations.
+%
+%
+%
+%% Reformulations of Training Objectives
+% - Moreover, researchers provided alternative optimization objective formulations to classical Empirical Risk Minimization (ERM) by Vapnik.
+% CITE: Vapnik, ERM
+%
+%
+%
+% Brief introduction of IRM, REx, DRO
+% - Famous approaches include Invariant Risk Minimization, Risk Extrapolation, Distributionally Robust Optimization.
+% - While the first two assume a sufficiently diverse multitude of environments available during training to ensure a small generalization error, the latter not necessarily requires multiple distributions. 
+% TODO: Does DRO only assume a single training distribution? Check the paper.
+% - Instead, DRO models the distribution family as small parametrized distortions of the observed training distribution, against which the model's predictions shall remain resilient. 
+% - On the other hand, Risk Extrapolation superposes the training distributions to pseudodistributions and equalizes the risk across all of these.
+%
+%
+%
+% Invariant Risk Minimization
+% CITE: \cite{arjovsky2019invariant}
+% - Among them, only IRM approaches the problem through the lense of causality.
+% - Namely, it seeks to learn a single representation and predictor that are invariant across training environments. 
+% - By constraining the predictor to be optimal among all predictors on the given representation, it forces the representation to exclude variant features that only prove useful in some environments and therefore do not belong to the underlying invariant causal mechanism.
+%
+%
+%
+% Limitations of IRM
+% - Although the original IRM objective had to be linearized to render its optimization feasible, even the perfect formulation exhibits limitations that prior work exposed. \cite{ahuja2021invariance}
+% - Although IRM successfully adresses situations in which spurious features seem to yield better prediction performance in a proper subset of the training environments, how to deal with distortions and limitations that are present in all of these training distributions share remains unanswered.
+% Common case of single-source distribution
+% Even in the noise-free case, recursive principles must be inferred. (PrimeNumbers, limited training range, extrapolation required)
+%
+% TODO: Mention that we are going to show that IRM et cetera all fail to absorb these regularities.
+% - But even these improvements can not seal the fundamental incompleteness of IRM and other objective reformulations in Domain Generalization. As this work argues, all of them are unable to capture recursive regularities, which form an indispensible building block of the true causal mechanism we observe in nature.
+%
+%
+%
+%
+% Purpose of this work latching onto IRM
+% - This work is dedicated to this fundamental problem that identifies a core hindrance in abstraction from limited observations.
+% - It argues that our models must be endowed with the ability to learn the simplest recursive regularities that agree with the observations to guarantee reasonable generalization.
+%
+% - The requirements to realise this ability are two-fold, yet intertwined.
+%
+%
+% 1. 
+% - Firstly, optimization objectives need to be further reformulated to prefer solutions that compress the learned functions as much as possible, and hence force the learned function to absorb and especially assume as much regularities as possible.
+% - Even with the improvements that have been suggested by subsequent literature to compress the representation, the current objective functions yet do not clearly favor compressed regularities whose complete nature the training distributions only partially reveal.
+% TODO: Address counterargument of regularization, Information Bottleneck.
+% - Without allowing the model class to express such regularities in the form of recursion, the optimization objectives will have little opportunities to effectively do so, which leads us to the second point.
+%
+%
+%
+% 2. Separating description and computation in models
+% TODO: Counterargument: RNNs are already compact. They consider the input as a sequential vector.
+% TODO: Counterargument: Regularization reduces the number of variables (neurons) in the feedforward NN.
+% - There are two different things that the current architectures commonly confuse but that should be clearly separated.
+% - On the one hand, we have the underlying descriptive representation of the algorithm that the model computes. 
+% - We wish that this representation generalizes beyond the training domain.
+% - On the other hand, by construction many models can merely represent a specific computational realisation of the unknown algorithm for the training distribution range.
+%
+%
+% Example: ReLU MLP square function
+% - Take as a simple example a one-dimensional 2-Layer MLP with ReLU activations that is used to approximate the rational square function $f:\mathbb{Q}\to\mathbb{Q}, x\mapsto x^2$.
+% - The finite number of samples observed during training necessarily fall into a bounded interval $[a,b]$. Let us assume $a<0<b$ for ease of exposition.
+% - Trained with the ERM objective, the MLP will optimize its weights to obtain the best piece-wise linear approximation of the true function within the interval. 
+% - Throughout this process, the pattern according to which the weights and biases grow in magnitude with increasing input magnitude will mimic the recursive pattern that is inherent to the true function $f$.
+% - However, the model is not designed to absorb the simple recursive, or inductive, regularity that evokes this pattern.
+% - Instead, it merely yields a computational realisation of this algorithm for the limited support of the training distribution. 
+% - As soon as we leave this support, the model will by construction not exhibit any behaviour that structurally relates to the in-distribution approximation.
+% - As we will see later, such MLPs will immediately extrapolate linearly when trained with weight regularization.
+% TODO: Think about inserting a figure here visualizing the ReLU MLP extrapolation. We could even train it on our own.
+%
+%
+%
+% Defend regularization and accuse the mistargeted (is that a word?) modeling.
+% - Again, this is not a criticism on model compression in principle.
+% - Regularization is an important part of the yet incomplete solution, but it is not fully thought out (zu Ende gedacht).
+% - Compressing the functional approximation is the first step, but we need to derive the description from it later.
+% - What we therefore want to minimize eventually is the complexity of the underlying universal algorithmic description, but what we compress in practice is rather the specific limited realisation of the algorithm for the finite training distribution support.
+%
+%
+%
+% Harm of the current regularization approach for out-of-distribution generalization.
+% - As frequently observed in experiments, such a realisation might avail to spurious biases within the training dataset to achieve a better compression.
+% - But this might ruin out-of-distribution generalization, insofar as we must identify the underlying universal regularities by means of the functional in-distribution information provided during training.
+% - For that reason, we need to bestow stronger learnable expressions of recursion upon our hypothesis classes and encourage learning such by virtue of refined optimization objectives and techniques.
+% TODO: Specify "learnable", this does not coincide with differentiable.
+% TODO: Specify "optimization techniques", this part is too unclear.
+%
+% Contrast assumptions on the information within the training dataset as some last resort, whose influence we want to reduce as much as possible by using the available information as much as possible.
+% - How much these alterations on the modeling and optimization side might contribute to the ultimate goal of out-of-distribution generalization, and how much we still need to rely on statistical information to guarantee generalization is subject of this study.
+% TODO: Roter Faden contrasting information and what we do out of it by virtue of our models and algorithms needs to be more clear.
+%
+%
+\section{Outline of This Work}
+\subsection{Purpose and Contributions}
+% OUTLINE:
+% First of all, this work demonstrates that commonly employed models are not constructed to absorb the underlying algorithmic description and hence certaintly fail to generalize correctly beyond the training distribution.
+% Moreover, it exposes fundamental drawbacks in modern reformulations of optimization objectives such as IRM that emerged from the field of domain generalization.
+% On the other hand, this work emphasizes the strong relation between Kolmogorov complexity and the compression of the underlying algorithmic description.
+% Stringing these arguments together, it argues why we should aim at learning maximally compressed recursive descriptions of the underlying algorithm when our goal it to reasonably generalize beyond the training distribution.
+% Having established this relation between Kolmogorov complexity and out-of-distribution generalization, we investigate how strongly reformulations of the optimization objective that take into account the Kolmogorov complexity already reduce the amount of information required during training to infer the right function compared to contemporary regularization objectives.
+%
+% TODO: RESEARCH QUESTION: How does compression of the functional approximation benefit the compression of the Kolmogorov complexity of the underlying algorithm?
+% As the Kolmogorov complexity is in general incomputable, it is desirable to derive efficiently computable approximations thereof.
+% Since regularization norms are currently used to express the complexity of a model, we firstly investigate how the regularization norm of a model affects the Kolmogorov complexity of the function it computes.
+% Do smaller values with regard to the vector and matrix norms that are commonly employed to quantify the compression of a model necessarily imply a smaller Kolmogorov complexity of the respective object?
+% TODO: Decide which norms to cover. Their definition should be holistic enough to avoid obvious leaks.
+%
+% In particular, it turns out that a smaller L2-norm does not generally imply a smaller Kolmogorov complexity.
+% TODO: Can we generalize the argument to any Minkowksi norm or another more general class of norms?
+% Argument: L2 regularization does not imply smaller Kolmogorov complexity.
+% The norm of two weights with smaller weights 2 are less than one weight with higher magnitude 4.
+%
+% What about L0 regularization?
+% Argument: If a MLP reduces the number of its weights while maintaining a good prediction, it will naturally absorb these regularities into its structure.
+%
+%
+% RESEARCH QUESTION: How does the information that the training data must contain relate to the Kolmogorov complexity of the underlying data-generating function? 
+% 0. Introduction
+% The problem of learning also divides into information-theoretic and computational considerations.
+% How much information the data must contain to even be able to learn the function and how much additional information simplifies the complexity of effective learning algorithms are two separate stages.
+% Here, we assume information to be only in form of noise-free, functional mappings, as in the typical supervised learning setting. 
+% That is, the learning algorithm only witnesses tuples of the form $(x_i,y_i)$ such that $f(x_i)=y_i$ for the underlying data-generating function $f$.
+% TODO: This is the noise-free scenario. What about samples with an additive noise (compare the Structural Equation Models in causality literature)?
+%
+% It is common wisdom (allgemein bekannt) that the class of linear functions can be learned within the representation class of linear functions.
+% TODO: Cite Uniform Convergence proof for linear classes. Maybe contained in Shalev-Schwartz.
+% In that case, we assume that the model already restricts itself to the class of linear functions.
+% But how do these guarantees change when we assume the general representation class of partial computable functions, namely any function that could be effectively computed by a Turing Machine?
+% TODO: Clearly state that the realizibility assumption now becomes quite mild since we deal with the class of partial computable functions.
+%
+% How much information is needed to ensure that the function $f^{*}$ with the lowest Kolmogorov complexity that is consistent with the information $\mathcal{X}$ during training actually coincides with the true function?
+% Assuming the Kolmogorov complexity as a natural measure for "simplicity", we will refer to $f^{*}$ as the \textit{simplest consistent function} with respect to $\mathcal{X}$.
+%
+% 1. First, we ask how this information $\mathcal{X}$ shall be quantified.
+% - It will be shown that it is meaningless to quantify this information in terms of number of samples. 
+% - Instead, this work argues that this information should be quantified in Kolmogorov complexity too, to obtain meaningful relations to the Kolmogorov complexity of the true underlying function.
+%
+% 2. Lower bounds and upper bounds
+% Moreover, this work analyses how the Kolmogorov complexity of a true function determines the best-case and worst-case information-theoretic guarantees for identifying it as the simplest consistent function.
+% Here, best-case and worst-case are regarded over all possible subsets of the entire definition range, since the learning algorithm will necessarily only witness a finite fraction of the entire definition range during training.
+% With these two-sided bounds, this work demonstrates how strongly a fortunate and unfortunate choice of the training domain can impact the required information in form of functional tuples to merely make the true function learnable by any algorithm.
+%
+% 2.1. Best-case information lower bound
+% - Firstly, what is the smallest amount of such information that could possibly suffice to render the simplest consistent algorithm equivalent to the true function?
+% - Rephrased more formally, we ask whether there is a function $m:\mathbb{N}\to\mathbb{N}$ that indicates a threshold for the necessary amount of information to learn a function $f$ within the representation class of all partially computable functions. 
+% This function $m$ shall only depend on the Kolmogorov complexity $K(f)$ of the learned function $f$. 
+% Consequently, $m(k)$ should take the value of a threshold such that for any partial computable function $f$ with Kolmogorov complexity $K(f)=k$, there exists a training sample  $\mathcal{X}=(x_1,y_1),\dots,(x_n,y_n)$ with Kolgomorov complexity $K(\mathcal{X})\leq m(k)$, such that the function $f^{*}$ with the lowest Kolmogorov complexity that is consistent with the mappings in $\mathcal{X}$ is equivalent to $f$.
+%
+%
+% TODO: Explain "simplest consistent".
+%
+% 2.2. Worst-case information upper bound
+% - Conversely, what is the required amount of information that certainly suffices to learn a certain function within the representation class of partial computable functions?
+% - Expressed in the analogous formal wording as above, is there a guaranteed information threshold $M:\mathbb{N}\to\mathbb{N}$ that depends only on the Kolmogorov complexity $k$ of a function and yields a sufficient information threshold $M(k)$ such that for any partial computable function with $K(f)=k$, any training sample $\mathcal{X}=(x_1,y_1),\dots,(x_n,y_n)$ with Kolgomorov complexity $K(\mathcal{X})>M(K(f))$ suffices to learn $f$?
+%
+% 3. Additional information for computational efficiency.
+% Last but not least, the mere information-theoretic ability to learn a function $f$ does not imply the existence of an \textit{efficient} algorithm to learn it.
+% We therefore finally ask how additional information beyond this threshold $M$ ameliorates the computational efficiency of possible learning algorithms.
+% TODO: What learning algorithms are we talking of? We don't even know what learning algorithm besides learning by enumeration shall effectively learn such functions.
+%
+% TODO: Research Question: Above the sufficient information boundary, how does additional information increase the gap between the true simplest algorithm and the next simplest false algorithm?
+% MOTIVATING EXAMPLE
+% - I need an information quantity of n to certainly (worst case over $D\subseteq\{0,1\}^{*}$) render the simplest consistent function equivalent to the true function.
+% - But an algorithm to identify this simplest consistent function might be infeasible.
+% - How does providing additional information benefit the computatability of this solution?
+% - Is there is a difference between incomputable and computable?
+% - Is there a difference in terms of worst-case complexity?
+% - Or can I at least prove how the gap to the next spurious consistent function increases?
+%
+% TODO: When all proves are done, specify their outcomes here a bit more precisely.
+%
+\subsection{Content Organization}
+%% Chapter 2
+% - The second chapter is dedicated to introduce the current state of machine learning models and optimization methods.
+% - It sheds light on recent advances made in domain generalization.
+% - Moreover, it presents the methodological approaches from the field of causality.
+% TODO: How shall we present the causality work? Mainly their belief of invariant causal mechanisms?
+% - Finally, it pinpoints at the limitations these models and optimization formulations after all still exhibit for out-of-distribution generalization.
+%
+%
+%% Chapter 3
+% - In Chapter 3, we will formally delve into Kolmogorov complexity as a measure for the information content within an object.
+% - (In diesem Atemzug) There, we will also cover how it set the stage for Solomonoff's universal theory of inductive inference and his framework of learning by enumeration.
+% - Here, we will show relations (isomorphism?) between Kolmogorov complexity and certain matrix and vector norms.
+%
+%% Chapter 4
+% - Finally, Chapter 4 is dedicated to necessary and sufficient information thresholds for learning functions within the representation class of partial computable functions.
+% - Having these thresholds depend only on the Kolmogorov complexity of the learned function, we show that it is meaningless to quantify the required information by the number of functional mappings.
+% - Instead, we establish this relation in terms of the Kolmogorov complexity of the sample.
+%
+
+%

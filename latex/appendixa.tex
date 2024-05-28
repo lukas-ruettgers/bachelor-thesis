@@ -1,0 +1,81 @@
+% !TEX root = thesis_ruettgers_lukas.tex
+% From mitthesis package
+% Version: 1.01, 2023/07/04
+% Documentation: https://ctan.org/pkg/mitthesis
+
+\chapter{Theory and Proofs}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{CadetBlue!15!white},   
+    commentstyle=\color{Red3},
+    numberstyle=\tiny\color{gray},
+    stringstyle=\color{Blue3},
+    basicstyle=\small\ttfamily,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}%
+\lstset{language=C++,style={mystyle}}%
+\section{Out-of-distribution limitations}
+\subsection{Extrapolation of ReLU MLPs with L2-Regularization}
+% ReLU MLPs extrapolate
+\subsection{Prime Numbers are not learnable by IRM}
+% Independent of which model we choose.
+\section{Properties of Kolmogorov Complexity}
+\subsection{Unbounded Kolmogorov Complexity across Reference Machines}
+\subsection{No Order Preservation between L2 Norm and Kolmogorov Complexity}
+\section{Information Thresholds for Learnability}
+\subsection{Abysmal Minimal Sample Count to Kolmogorov Complexity Ratio}
+We are interested if there exists a function $m$ that - given the Kolmogorov complexity of a function $f$ - serves a lower bound on the required sample count to identify $f$ in the learning by enumeration framework. As it turns out, there is no effective lower bound. In other words, the sample count might become as small as one for arbitrarily high Kolmogorov complexities.
+
+This demonstrates that it should not be the sample count we seek to relate the Kolmogorov complexity to, but instead quantify the training sample itself by its Kolmogorov complexity, too.
+
+Proof.\\
+Since $\Sigma^{*}$ is countably infinite, consider an arbitrary order of $\Sigma^{*}$ as $x_1,x_2\dots$.
+Fix an arbitrary definition range $D\subseteq\Sigma^{*}, D \neq \emptyset$, and an arbitrary $c\in D$.
+For any $x_j$, let $f_{i_{j}}$ be the simplest function consistent with $\mathcal{S}_j:=\{(c,x_j)\}$. Then, $f_{i_{j}}$ is learnable from the Kolmogorov enumeration by a sample of size $1$.
+
+Obviously, $f_{i_{j}}\not \equiv f_{i_{k}}$ for any $j,k\in\mathbb{N}$ with $j\neq k$, since they disagree for input $c$.
+
+Therefore, there are infinitely many functions over $\Sigma^{*}$ that are learnable from the Kolmogorov enumeration by a sample of size $1$. However, for each $n\in\mathbb{N}$, there are only finitely many objects with Kolmogorov complexity $n$. 
+% TODO: Refer to proof in \cite{li2008kolmogorov} for lower bound counting argument that shows that there are only finitely many objects with Kolmogorov complexity $n$.
+\subsection{Kolmogorov Complexity Upper Bound for $K_U$}
+% Trivial enumeration upper bound that depends on the Kolmogorov complexity of f
+\subsection{Unbounded $K_U$ across $U$ for fixed finite $D$}
+% Is the function that identifies if $f_i\equiv f$ truly computable?
+\subsection{Unbounded $K_U$ across $U$ for fixed countably infinite $D$}
+% That is hard.
+\subsection{Lower Bound for $K_U$}
+\section{Placeholder}
+\begin{figure}[t]
+% sample image is from mwe package, but should be found by latex in the tex tree w/o loading that package
+\centering\includegraphics[alt={sample image},width=6.67cm]{example-image-b} 
+\caption[Short figure name.]{Caption text \cite{godel1931formal}.}\label{example-image-b}
+\end{figure}
+
+%%%%%%%%%%%%%%% begin table %%%%%%%%%%%%%%%%%% 
+\begin{table}[t]
+\caption[Short table name]{The error function and complementary error function}\label{tab:1}%
+\centering{%
+\begin{tabular*}{0.8\textwidth}{@{\hspace*{1.5em}}@{\extracolsep{\fill}}ccc!{\hspace*{3.em}}ccc@{\hspace*{1.5em}}}
+\\[-0.5em]
+\toprule
+\multicolumn{1}{@{\hspace*{1.5em}}c}{$x$\rule{0pt}{8pt}} &
+\multicolumn{1}{c}{$\text{erf}(x)$} &
+\multicolumn{1}{c!{\hspace*{3.em}}}{$\text{erfc}(x)$} &
+\multicolumn{1}{c}{$x$} &
+\multicolumn{1}{c}{$\text{erf}(x)$} &
+\multicolumn{1}{c@{\hspace*{1.5em}}}{$\text{erfc}(x)$} \\ \midrule
+0.00 & 0.00000 & 1.00000 & 1.10 & 0.88021 & 0.11980 \\
+0.60 & 0.60386 & 0.39614 & 1.82\makebox[0pt][l]{14} & 0.99000 & 0.01000 \\
+0.70 & 0.67780 & 0.32220 & 1.90 & 0.99279 & 0.00721 \\
+\bottomrule
+\end{tabular*}
+}%
+\end{table}
+%%%%%%%%%%%%%%%% end table %%%%%%%%%%%%%%%%%%% 

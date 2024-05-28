@@ -1,0 +1,22 @@
+% !TEX root = thesis_ruettgers_lukas.tex
+% From mitthesis package
+% Version: 1.04, 2023/10/19
+% Documentation: https://ctan.org/pkg/mitthesis
+
+\chapter{Identifying the Simplest Consistent Algorithm}
+We fix a universal reference machine $U$ and consider its induced enumeration of partial computable functions $f_1,f_2,\dots$.
+Let $f:\Sigma^{*}\to\Sigma^{*}$ be an arbitrary, partial computable function over an arbitrary, but fixed, finite alphabet $\Sigma$.
+For any $D\subseteq \Sigma^{*}$, we define
+\begin{align}
+	K_U(f\mid D)&:=\min_{\mathcal{S}\subset (D\times \Sigma^{*})^{*}}\{|S|\mid \text{The smallest } f_i \text{ consistent with } \mathcal{S} \text{ satisfies } f_i\equiv f\}, \text{ and}\\
+	K_U(f)&:= \min_{D\subseteq \Sigma^{*}} K(f\mid D).
+\end{align}
+\section{Out-Sampling Erroneous Simpler Algorithms}
+What qualitative and quantitative criteria must the training sample meet to ensure that the simplest algorithm that is consistent with the sample truly coincides with the true function?
+
+\section{Hypothesis Certification}
+% see Chapter 5.2 in \cite{li2008kolmogorov}
+
+\section{Retrievability of the Algorithm}
+% \cite{richens2024robust} Nearly Optimal Policies for Local Interventions imply Retrievability of Causal Model.
+We avail to the idea of \cite{richens2024robust} to derive sufficient conditions when the true algorithm is retrievable.

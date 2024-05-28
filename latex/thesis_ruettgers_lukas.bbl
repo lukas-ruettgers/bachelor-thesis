@@ -1,0 +1,392 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.3 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{none/global//global/global/global}
+    \entry{zhang2021understanding}{article}{}{}
+      \name{author}{5}{}{%
+        {{hash=02582b039d752b000c75f8d7d38a36f4}{%
+           family={Zhang},
+           familyi={Z\bibinitperiod},
+           given={Chiyuan},
+           giveni={C\bibinitperiod}}}%
+        {{hash=02404a92b0be3f52ec5ac08e41c13445}{%
+           family={Bengio},
+           familyi={B\bibinitperiod},
+           given={Samy},
+           giveni={S\bibinitperiod}}}%
+        {{hash=e771760b6d0d33f8b4dfd907d8d57ac2}{%
+           family={Hardt},
+           familyi={H\bibinitperiod},
+           given={Moritz},
+           giveni={M\bibinitperiod}}}%
+        {{hash=3503059e1c0c778913607c87d8c5173a}{%
+           family={Recht},
+           familyi={R\bibinitperiod},
+           given={Benjamin},
+           giveni={B\bibinitperiod}}}%
+        {{hash=494b568c5dc85ba8f3f409635f9c5f25}{%
+           family={Vinyals},
+           familyi={V\bibinitperiod},
+           given={Oriol},
+           giveni={O\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {ACM New York, NY, USA}%
+      }
+      \strng{namehash}{87d88dc7d6b93b72f0e358c8244f2c7e}
+      \strng{fullhash}{5f9fd616ce70a721a8ba93854c0c517e}
+      \strng{fullhashraw}{5f9fd616ce70a721a8ba93854c0c517e}
+      \strng{bibnamehash}{5f9fd616ce70a721a8ba93854c0c517e}
+      \strng{authorbibnamehash}{5f9fd616ce70a721a8ba93854c0c517e}
+      \strng{authornamehash}{87d88dc7d6b93b72f0e358c8244f2c7e}
+      \strng{authorfullhash}{5f9fd616ce70a721a8ba93854c0c517e}
+      \strng{authorfullhashraw}{5f9fd616ce70a721a8ba93854c0c517e}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Communications of the ACM}
+      \field{number}{3}
+      \field{title}{Understanding deep learning (still) requires rethinking generalization}
+      \field{volume}{64}
+      \field{year}{2021}
+      \field{pages}{107\bibrangedash 115}
+      \range{pages}{9}
+    \endentry
+    \entry{lake2017building}{article}{}{}
+      \name{author}{4}{}{%
+        {{hash=8449df2d22be789ac9cc32444c31921e}{%
+           family={Lake},
+           familyi={L\bibinitperiod},
+           given={Brenden\bibnamedelima M},
+           giveni={B\bibinitperiod\bibinitdelim M\bibinitperiod}}}%
+        {{hash=e226fb1da66be94e73828778e6eb8af8}{%
+           family={Ullman},
+           familyi={U\bibinitperiod},
+           given={Tomer\bibnamedelima D},
+           giveni={T\bibinitperiod\bibinitdelim D\bibinitperiod}}}%
+        {{hash=5c7ff02e1f8b4c4aa7bfddece14f23d2}{%
+           family={Tenenbaum},
+           familyi={T\bibinitperiod},
+           given={Joshua\bibnamedelima B},
+           giveni={J\bibinitperiod\bibinitdelim B\bibinitperiod}}}%
+        {{hash=947b5ff2e5969eafe5136b3e017c5c01}{%
+           family={Gershman},
+           familyi={G\bibinitperiod},
+           given={Samuel\bibnamedelima J},
+           giveni={S\bibinitperiod\bibinitdelim J\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Cambridge University Press}%
+      }
+      \strng{namehash}{1bfc1030ef4e8838fb304c2836d14692}
+      \strng{fullhash}{f3f65c1f5ec76205ed74a281c8ea6f9f}
+      \strng{fullhashraw}{f3f65c1f5ec76205ed74a281c8ea6f9f}
+      \strng{bibnamehash}{f3f65c1f5ec76205ed74a281c8ea6f9f}
+      \strng{authorbibnamehash}{f3f65c1f5ec76205ed74a281c8ea6f9f}
+      \strng{authornamehash}{1bfc1030ef4e8838fb304c2836d14692}
+      \strng{authorfullhash}{f3f65c1f5ec76205ed74a281c8ea6f9f}
+      \strng{authorfullhashraw}{f3f65c1f5ec76205ed74a281c8ea6f9f}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Behavioral and brain sciences}
+      \field{title}{Building machines that learn and think like people}
+      \field{volume}{40}
+      \field{year}{2017}
+      \field{pages}{e253}
+      \range{pages}{-1}
+    \endentry
+    \entry{li2008kolmogorov}{book}{}{}
+      \true{moreauthor}
+      \true{morelabelname}
+      \name{author}{2}{}{%
+        {{hash=dbe83fd8da75338203d4e8dd0e20be17}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={Ming},
+           giveni={M\bibinitperiod}}}%
+        {{hash=9255a9ed01ca316f6ea71c7c16e49671}{%
+           family={Vitányi},
+           familyi={V\bibinitperiod},
+           given={Paul},
+           giveni={P\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Springer}%
+      }
+      \strng{namehash}{7b8b0013c8f5aa25de9759f56c1cb873}
+      \strng{fullhash}{7b8b0013c8f5aa25de9759f56c1cb873}
+      \strng{fullhashraw}{7b8b0013c8f5aa25de9759f56c1cb873}
+      \strng{bibnamehash}{7b8b0013c8f5aa25de9759f56c1cb873}
+      \strng{authorbibnamehash}{7b8b0013c8f5aa25de9759f56c1cb873}
+      \strng{authornamehash}{7b8b0013c8f5aa25de9759f56c1cb873}
+      \strng{authorfullhash}{7b8b0013c8f5aa25de9759f56c1cb873}
+      \strng{authorfullhashraw}{7b8b0013c8f5aa25de9759f56c1cb873}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{An introduction to Kolmogorov complexity and its applications}
+      \field{volume}{3}
+      \field{year}{2008}
+    \endentry
+    \entry{peters2016causal}{article}{}{}
+      \name{author}{3}{}{%
+        {{hash=b50a0fee091540dedaefacc234101037}{%
+           family={Peters},
+           familyi={P\bibinitperiod},
+           given={Jonas},
+           giveni={J\bibinitperiod}}}%
+        {{hash=73b8ae79083852e052f5bd5f82021408}{%
+           family={Bühlmann},
+           familyi={B\bibinitperiod},
+           given={Peter},
+           giveni={P\bibinitperiod}}}%
+        {{hash=ab9469dddb5d18ec039f709e2d7c4e00}{%
+           family={Meinshausen},
+           familyi={M\bibinitperiod},
+           given={Nicolai},
+           giveni={N\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Oxford University Press}%
+      }
+      \strng{namehash}{fa0e88230d41a33895d182c3b004cfa7}
+      \strng{fullhash}{fa0e88230d41a33895d182c3b004cfa7}
+      \strng{fullhashraw}{fa0e88230d41a33895d182c3b004cfa7}
+      \strng{bibnamehash}{fa0e88230d41a33895d182c3b004cfa7}
+      \strng{authorbibnamehash}{fa0e88230d41a33895d182c3b004cfa7}
+      \strng{authornamehash}{fa0e88230d41a33895d182c3b004cfa7}
+      \strng{authorfullhash}{fa0e88230d41a33895d182c3b004cfa7}
+      \strng{authorfullhashraw}{fa0e88230d41a33895d182c3b004cfa7}
+      \field{sortinit}{4}
+      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of the Royal Statistical Society Series B: Statistical Methodology}
+      \field{number}{5}
+      \field{title}{Causal inference by using invariant prediction: identification and confidence intervals}
+      \field{volume}{78}
+      \field{year}{2016}
+      \field{pages}{947\bibrangedash 1012}
+      \range{pages}{66}
+    \endentry
+    \entry{pfister2019invariant}{article}{}{}
+      \name{author}{3}{}{%
+        {{hash=af658c26506fad0933e44c6f02d1dbdd}{%
+           family={Pfister},
+           familyi={P\bibinitperiod},
+           given={Niklas},
+           giveni={N\bibinitperiod}}}%
+        {{hash=73b8ae79083852e052f5bd5f82021408}{%
+           family={Bühlmann},
+           familyi={B\bibinitperiod},
+           given={Peter},
+           giveni={P\bibinitperiod}}}%
+        {{hash=b50a0fee091540dedaefacc234101037}{%
+           family={Peters},
+           familyi={P\bibinitperiod},
+           given={Jonas},
+           giveni={J\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Taylor \& Francis}%
+      }
+      \strng{namehash}{42acda56769a8fb9eb6a245b2b089c14}
+      \strng{fullhash}{42acda56769a8fb9eb6a245b2b089c14}
+      \strng{fullhashraw}{42acda56769a8fb9eb6a245b2b089c14}
+      \strng{bibnamehash}{42acda56769a8fb9eb6a245b2b089c14}
+      \strng{authorbibnamehash}{42acda56769a8fb9eb6a245b2b089c14}
+      \strng{authornamehash}{42acda56769a8fb9eb6a245b2b089c14}
+      \strng{authorfullhash}{42acda56769a8fb9eb6a245b2b089c14}
+      \strng{authorfullhashraw}{42acda56769a8fb9eb6a245b2b089c14}
+      \field{sortinit}{5}
+      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of the American Statistical Association}
+      \field{number}{527}
+      \field{title}{Invariant causal prediction for sequential data}
+      \field{volume}{114}
+      \field{year}{2019}
+      \field{pages}{1264\bibrangedash 1276}
+      \range{pages}{13}
+    \endentry
+    \entry{arjovsky2019invariant}{article}{}{}
+      \name{author}{4}{}{%
+        {{hash=ab4a5e058dea2d852ff02aa4e10045c3}{%
+           family={Arjovsky},
+           familyi={A\bibinitperiod},
+           given={Martin},
+           giveni={M\bibinitperiod}}}%
+        {{hash=ac762f2592005edf6bad58f566967c6c}{%
+           family={Bottou},
+           familyi={B\bibinitperiod},
+           given={Léon},
+           giveni={L\bibinitperiod}}}%
+        {{hash=94f7047ed067ed3ca0ce018501dd9db9}{%
+           family={Gulrajani},
+           familyi={G\bibinitperiod},
+           given={Ishaan},
+           giveni={I\bibinitperiod}}}%
+        {{hash=47d681c0cbae75196012a538c46ccc06}{%
+           family={Lopez-Paz},
+           familyi={L\bibinithyphendelim P\bibinitperiod},
+           given={David},
+           giveni={D\bibinitperiod}}}%
+      }
+      \strng{namehash}{85927f32b198f2ea4ea13f02b9b8a2f3}
+      \strng{fullhash}{fff4e7042f937a836fba8845cc73b792}
+      \strng{fullhashraw}{fff4e7042f937a836fba8845cc73b792}
+      \strng{bibnamehash}{fff4e7042f937a836fba8845cc73b792}
+      \strng{authorbibnamehash}{fff4e7042f937a836fba8845cc73b792}
+      \strng{authornamehash}{85927f32b198f2ea4ea13f02b9b8a2f3}
+      \strng{authorfullhash}{fff4e7042f937a836fba8845cc73b792}
+      \strng{authorfullhashraw}{fff4e7042f937a836fba8845cc73b792}
+      \field{sortinit}{6}
+      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{arXiv preprint arXiv:1907.02893}
+      \field{title}{Invariant risk minimization}
+      \field{year}{2019}
+    \endentry
+    \entry{ahuja2021invariance}{article}{}{}
+      \name{author}{7}{}{%
+        {{hash=6cf187e36b0312da8c610cf7460af3de}{%
+           family={Ahuja},
+           familyi={A\bibinitperiod},
+           given={Kartik},
+           giveni={K\bibinitperiod}}}%
+        {{hash=106227fe2b1bb3658af90985620207fb}{%
+           family={Caballero},
+           familyi={C\bibinitperiod},
+           given={Ethan},
+           giveni={E\bibinitperiod}}}%
+        {{hash=c38fad393616265bf9c9603675bf2b89}{%
+           family={Zhang},
+           familyi={Z\bibinitperiod},
+           given={Dinghuai},
+           giveni={D\bibinitperiod}}}%
+        {{hash=edf6c73001efedf0275bd6bc47c9e5b3}{%
+           family={Gagnon-Audet},
+           familyi={G\bibinithyphendelim A\bibinitperiod},
+           given={Jean-Christophe},
+           giveni={J\bibinithyphendelim C\bibinitperiod}}}%
+        {{hash=40a8e4774982146adc2688546f54efb2}{%
+           family={Bengio},
+           familyi={B\bibinitperiod},
+           given={Yoshua},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=e7fbb560b8f6fd4003bc50b9316b1821}{%
+           family={Mitliagkas},
+           familyi={M\bibinitperiod},
+           given={Ioannis},
+           giveni={I\bibinitperiod}}}%
+        {{hash=7711557abf7c3d508d1fa84cab27626e}{%
+           family={Rish},
+           familyi={R\bibinitperiod},
+           given={Irina},
+           giveni={I\bibinitperiod}}}%
+      }
+      \strng{namehash}{d29ca4be5262217c423207869c675a6c}
+      \strng{fullhash}{d6e1e8ab3dcf55cc0dae7fcbc66d17f4}
+      \strng{fullhashraw}{d6e1e8ab3dcf55cc0dae7fcbc66d17f4}
+      \strng{bibnamehash}{d6e1e8ab3dcf55cc0dae7fcbc66d17f4}
+      \strng{authorbibnamehash}{d6e1e8ab3dcf55cc0dae7fcbc66d17f4}
+      \strng{authornamehash}{d29ca4be5262217c423207869c675a6c}
+      \strng{authorfullhash}{d6e1e8ab3dcf55cc0dae7fcbc66d17f4}
+      \strng{authorfullhashraw}{d6e1e8ab3dcf55cc0dae7fcbc66d17f4}
+      \field{sortinit}{7}
+      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Advances in Neural Information Processing Systems}
+      \field{title}{Invariance principle meets information bottleneck for out-of-distribution generalization}
+      \field{volume}{34}
+      \field{year}{2021}
+      \field{pages}{3438\bibrangedash 3450}
+      \range{pages}{13}
+    \endentry
+    \entry{richens2024robust}{article}{}{}
+      \name{author}{2}{}{%
+        {{hash=c6bbf77a3760efc6de1087d270e4602b}{%
+           family={Richens},
+           familyi={R\bibinitperiod},
+           given={Jonathan},
+           giveni={J\bibinitperiod}}}%
+        {{hash=03927f5e87adad1ef39814afb498a1a6}{%
+           family={Everitt},
+           familyi={E\bibinitperiod},
+           given={Tom},
+           giveni={T\bibinitperiod}}}%
+      }
+      \strng{namehash}{94ed6b0caae4fe875182229ca30e573e}
+      \strng{fullhash}{94ed6b0caae4fe875182229ca30e573e}
+      \strng{fullhashraw}{94ed6b0caae4fe875182229ca30e573e}
+      \strng{bibnamehash}{94ed6b0caae4fe875182229ca30e573e}
+      \strng{authorbibnamehash}{94ed6b0caae4fe875182229ca30e573e}
+      \strng{authornamehash}{94ed6b0caae4fe875182229ca30e573e}
+      \strng{authorfullhash}{94ed6b0caae4fe875182229ca30e573e}
+      \strng{authorfullhashraw}{94ed6b0caae4fe875182229ca30e573e}
+      \field{sortinit}{8}
+      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{arXiv preprint arXiv:2402.10877}
+      \field{title}{Robust agents learn causal world models}
+      \field{year}{2024}
+    \endentry
+    \entry{godel1931formal}{article}{}{}
+      \name{author}{1}{}{%
+        {{hash=741b5eae8f0486fe4cfb19725eb596a0}{%
+           family={Gödel},
+           familyi={G\bibinitperiod},
+           given={Kurt},
+           giveni={K\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Springer}%
+      }
+      \strng{namehash}{741b5eae8f0486fe4cfb19725eb596a0}
+      \strng{fullhash}{741b5eae8f0486fe4cfb19725eb596a0}
+      \strng{fullhashraw}{741b5eae8f0486fe4cfb19725eb596a0}
+      \strng{bibnamehash}{741b5eae8f0486fe4cfb19725eb596a0}
+      \strng{authorbibnamehash}{741b5eae8f0486fe4cfb19725eb596a0}
+      \strng{authornamehash}{741b5eae8f0486fe4cfb19725eb596a0}
+      \strng{authorfullhash}{741b5eae8f0486fe4cfb19725eb596a0}
+      \strng{authorfullhashraw}{741b5eae8f0486fe4cfb19725eb596a0}
+      \field{sortinit}{9}
+      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Monatshefte für mathematik und physik}
+      \field{title}{Über formal unentscheidbare Sätze der Principia Mathematica und verwandter Systeme I}
+      \field{volume}{38}
+      \field{year}{1931}
+      \field{pages}{173\bibrangedash 198}
+      \range{pages}{26}
+    \endentry
+  \enddatalist
+\endrefsection
+\endinput
+

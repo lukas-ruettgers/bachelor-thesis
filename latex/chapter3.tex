@@ -1,0 +1,64 @@
+% !TEX root = thesis_ruettgers_lukas.tex
+% From mitthesis package
+% Version: 1.04, 2023/10/19
+% Documentation: https://ctan.org/pkg/mitthesis
+
+
+\chapter{Recursion and Simplicity}
+% TODO: Read Minimum Description Length Literature
+\section{Kolmogorov Complexity}
+% Tentative title: Simplicity of Strings
+% \cite{li2008kolmogorov}
+% TODO: Cite initial paper of Kolmogorov.
+%% CONTENT OVERVIEW
+% - Invariance Theorem: Constant Factor for Changing Reference Machine
+% - - Turing Machine, Goedelnumber ordering
+% - - Criticism why this additive constant should matter in our case.
+% - - - Prove that for any constant c, there is a reference machine which biases against the function f such that its Kolmogorov complexity must be larger than c
+% - Explicit Description Upper Bound for Kolmogorov Complexity
+% - Counting Lower Bound for Kolmogorov Complexity
+% - Plain vs. prefix Kolmogorov complexity
+% - Monotonic universal reference machine
+
+
+
+\section{The Expressive Power of Recursion}
+% TODO: Refer to G{\"o}del's primitive recursive functions. 
+% \cite{godel1931formal}
+% We can also take Robinson's version.
+
+\section{The Descriptive Simplicity of Recursion}
+\subsection{Representation in Numeral Systems}
+% Alternative title: Recursion in Alphabetical Representation
+Humans do not perform operations on a number as a whole, as current mathematical models do. Instead, they represent numbers in numeral systems, in particular the decimal system. This transformation not only into a representation that allows
+Number is not regarded as a real number.
+
+\section{The Simplest Algorithm}
+% TODO: Relate to Minimum Description Length Literature. 
+% \cite{grunwald2007minimum} \cite{grunwald2019minimum}.
+% TODO: Relate to Kolmogorov Complexity Literature. 
+% \cite{li2008kolmogorov}.
+% \cite{legg2007universal} Machine Intelligence via Kolmogorov Complexity.
+By nature, our organism strives to minimize the energy it requires to perform a certain operation. This also applies to our brain. When trying to make sense of our world, our brain tries to do so in the most efficient way. But in terms of what kind of efficiency?
+
+Let us illustrate this question with the example of inferring time series from few samples.
+Observing the sequence \dots 2 \_ \_ \_ 2\dots, our brains might assume the constant function $f(n)=2$.
+But given \dots 2 \_ 4 \_ \_ \dots, would the brain assume a linear sequence \dots 2 3 4 5 \dots? Or would it rather assume a constant function with one exception \dots 2 2 4 2 \dots.
+And after the next sample extends the overall image to \dots 2 \_ 4 \_ 2\dots, is the constant function with one exception now still the most plausible assumption?
+Or do we in fact deal with a symmetric piece-wise linear function \dots 1 2 3 4 3 2 1 \dots instead?
+
+In general, both assumptions are reasonable, as they fit simple patterns on the observed sequences.
+But as more and more 2s are joining the overall image, the constant function with the exception becomes more and more plausible. While it remains a suitable candidate for the underlying pattern, alternative pattern classes become more and more complex with additional samples, and thus more and more energy-intensive. Within our inductive bias that follows some principle of simplicity, such as Ockham's Razor, the simplest algorithm becomes more and more likely to generate the observed patterns. 
+% TODO: Present Ockham's Razor more scientifically (with citation).
+
+\subsection{Computational Simplicity and Complexity}
+The term "simplicity" might hint at the \textit{descriptive} efficiency of an algorithm or concept. The less resources are needed to describe the algorithm, the more efficient will a machine or human be able to store this piece of information. 
+However, this aspect does not fully capture the multi-sided shape of efficiency. Another side is the executive efficiency, that describes how many resources it needs to execute a certain algorithm. These resources include at least time, memory, but in a more general setting also communication costs between different involved units.
+
+% TODO: Refer to Ray Solomonoff's Theory of Inductive Inference \cite{solomonoff1964formal}.
+
+But given \dots 2 4 8 16 \dots, I do not assume a cubic polynomial, but an exponential function $f(n)=2^n$. Although the function values are exponential in the input, the computational complexity need not be, depending on which operations the underlying architecture allows. An architecture that features bit shift operations in constant time will allow an algorithm that computes $f$ with linear computational complexity.
+Moreover, its descriptive complexity is far lower than the growing complexity of the polynomial alternatives.
+
+% TODO: Example: Learning a sorting algorithm
+

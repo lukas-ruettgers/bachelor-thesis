@@ -1,0 +1,38 @@
+% !TEX root = thesis_ruettgers_lukas.tex
+% From mitthesis package
+% Version: 1.04, 2023/10/19
+% Documentation: https://ctan.org/pkg/mitthesis
+
+
+\chapter{Domain Generalization of Neural Networks}
+\section{Extrapolation Drawbacks of Models}
+\subsection{ReLU MLPs Extrapolate Linearly}
+% \cite{hornik1989multilayer} MLPs are universal function approximators
+% \cite{xu2019can} ReLU MLP extrapolation in NTK regime
+% \cite{jacot2018neural} NTK
+Within the support of the training distribution, MLPs are universal function approximators.
+In the NTK regime, ReLU MLPs converge to linear functions outside the training distribution with a linear convergence rate.
+Instead, the non-linearities in the architecture are the crucial foundation for encoding task-specific non-linearities. Compare Graph Neural Networks and Dynamic Programming Problems.
+% TODO: Show own proof outside the NTK regime with regularized ReLU MLPs.
+
+\section{Invariant Causal Mechanisms}
+% TODO: At some point we need to introduce the notions of causality.
+
+\section{Optimization Objective Reformulations}
+\subsection{Risk Extrapolation}
+%\cite{krueger2021out} REx
+
+\subsection{Invariant Risk Minimization}
+% TODO: Describe and criticize IRM.
+% TODO: Understand the drawback of the linearization of IRM. At what cost did they derive IRMv1?
+
+% \cite{arjovsky2019invariant} IRM
+\subsubsection{Fully Informative Invariant Features}
+% \cite{ahuja2021invariance} IB-IRM, FIIF vs. PIIF
+But I argue that there is a far larger drawback.
+\subsubsection{Learning Prime Numbers}
+Consider the decision problem \textsc{PrimeNumbers}.
+It is widely believed that there is no efficient algorithm that decides prime numbers.
+% TODO: Choose citation for hardness of the prime number decision problem.
+
+Empirically, none of the above algorithms perform better than ERM.
