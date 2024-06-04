@@ -11,17 +11,513 @@
 % \cite{li2008kolmogorov}
 % TODO: Cite initial paper of Kolmogorov.
 %% CONTENT OVERVIEW
+% - Conditional Kolmogorov Complexity
 % - Invariance Theorem: Constant Factor for Changing Reference Machine
 % - - Turing Machine, Goedelnumber ordering
 % - - Criticism why this additive constant should matter in our case.
 % - - - Prove that for any constant c, there is a reference machine which biases against the function f such that its Kolmogorov complexity must be larger than c
 % - Explicit Description Upper Bound for Kolmogorov Complexity of Strings
-% - Counting Lower Bound for Kolmogorov Complexity of Strings
 % - Plain vs. prefix Kolmogorov complexity
 % - Monotonic universal reference machine
 
+
+% TODO: State that we assume the following universal Turing Machine.
+% 1. It is the natural universal Turing Machine. The order of Turing Machines is determined by their Gödelnumber, which coincides with our inductive bias on computational simplicity.
+% 2. Invariance Theorem. It only differs only by an additive constant. 
+% TODO: Introduce Conditional Kolmogorov Complexity here, too.
+
+
+%%%%%%%%%%% BASIC SETUP FOR KOLMOGOROV COMPLEXITY %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% TODO: Introduce G\"odel number
+Denote by $\operatorname{enc}(\mathcal{T})$ the G\"odel number of a Turing Machine.
+
+\begin{definition}[Kolmogorov Complexity]
+	
+\end{definition}
+
+
 \subsection{The Implicit Bias within Kolmogorov Complexity}
-\subsection{Bounds and Approximations}
+\begin{theorem}[Invariance Theorem]
+	There is only an additive constant between Kolmogorov Complexities of any pair of universal Turing Machines.
+\end{theorem}
+
+% TODO: Mention that this constant might become arbitrarily large. (At least later when we deal with Information Thresholds)
+% TODO: This should be put as early as possible in the chapter.
+In the following, we assume an arbitrary, fixed, finite alphabet $\Sigma$ of cardinality $|\Sigma|=:r$.
+Without loss of generality, we identify $\Sigma$ with the field $\mathbb{Z}_r$ to which it possesses a natural isomorphism $\pi$.
+When we speak of $0,1\in Sigma$, we refer to the elements $a,b\in\Sigma$ with $\pi(a)=0, \pi(b)=1$.
+Since $r\in\mathbb{N}$ is finite, $\mathfrak{C}\cong \mathbb{Z}_r$ is equivalent to $\mathfrak{C}\equiv \mathbb{Z}_r$ for any mathematical structure $\mathfrak{C}$.
+That is, $\mathfrak{C}$ will satisfy exactly those first-order logic formulas that $\mathbb{Z}_r$ satisfies.
+In our case, this also holds for second-order logic formulas formulated over $\mathbb{Z}_r$, as quantification over predicates and relations over finite objects is expressible in first-order logic, too.
+% TODO: Purely additive vector norms are only expressible in second-order logic.
+
+\begin{definition}[Universal Turing Machine]
+	\label{def:universaltm}
+	We define a universal Turing Machine $U$ that receives both program index and input in a self-delimiting encoding.
+	The construction is in the spirit of \cite[Section 2.1]{li2008kolmogorov} as follows. 
+	% TODO: Check whether it's truly Section 2.1
+	$U$ expects input in the form $1^n 0 xy$, where $x,y\in\{0,1\}^{*}$ and $l(x)=n$.
+	$U$ hence interprets the number of leading $1$s as the length of the first input.
+	It can uniquely identify the number of leading $1$s by the first appearance of $0$ on the input tape.
+	$U$ interprets $x$ as the encoding of the index of the Turing Machine it shall execute and retrieves the Gödel number of this Turing Machine in the natural way.
+	That is, $U$ incrementally iterates through all binary strings, checks whether they encode a Gödel number and subtracts $x$ by one each time it encounters a valid Gödel number.
+	When $x$ has been reduced to the empty string, the current binary string will encode the $n_x$th valid Gödel number of some Turing Machine $\mathcal{T}_x$. 
+	
+	Then, $U$ simulates $\mathcal{T}_x$ on input $y$.
+\end{definition}
+
+\begin{definition}[Strings with Infinite Zero Padding]
+	\label{def:zero-pad-string}
+	For any $x\in\Sigma^{*}$, we define $x\overline{0}\in\Sigma^{\infty}$ as the infinite string with prefix $x$ and infinitely many subsequent $0$s.
+\end{definition}
+
+\begin{lemma}[Additional Complexity of Infinite Zero Padding]
+	\label{lemma:additional-complexity-zero-pad}
+	There is a constant $c_{pad}$ such that for every string $x\in\Sigma^{*}$, $K(x\overline{0})\leq K(x)+c_{pad}$.
+\end{lemma}
+\begin{proof}
+	We construct a Turing Machine $\mathcal{T}_{pad}$ in the following way.
+	$\mathcal{T}_{pad}$ always moves its tape head to the right. 
+	It leaves symbols $a\in\Sigma$ unchanged and replaces every blank symbol $B$ by $0$.
+	For any input $x$, $\mathcal{T}_{pad}(x)=x\overline{0}$.
+	% TODO: How do we define the output of a Turing Machine that never halts but computes infinite sequences? Check \cite{li2008kolmogorov}.
+	This Turing Machine is well-defined. In particular, it has a finite G\"odel number $\operatorname{enc}(\mathcal{T}_{pad})$ of length $c_{enc}\in\mathbb{N}$.
+	There is an $p\in\mathbb{N}$ such that $\operatorname{enc}(\mathcal{T}_{pad})$ is the $p$th G\"odel number in the natural enumeration of G\"odel numbers that is also computed by our universal Turing Machine $U$ from Definition \ref{def:universaltm}. 
+	Therefore, there exists a constant $c_0\leq\log_2(p)$ such that $K(\mathcal{T})=c_0$.
+	
+	As providing $x_p$ and $x$ to the universal Turing Machine $U$ in the self-delimiting format $1^{c_{0}} 0 x_p x$ yields $x\overline{0}$, we finally obtain $K(x\overline{0})\leq \underbrace{2c_0+1}{=:c_{pad}}+K(x)$.
+\end{proof}
+
+%
+%
+%
+%
+%
+%
+%
+%
+%%%%%%%%%%% BASIC PROPERTIES OF KOLMOGOROV COMPLEXITY %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Compressibility}
+\begin{lemma}[Incompressible Strings]
+	\label{lemma:incompressible-strings}
+	For any $n\in\mathbb{N}$, there exists a string $v\in\Sigma^n$ with $K(v)\geq l(v)=n$.
+	
+\end{lemma}
+\begin{proof}
+	Let $r:=|\Sigma|$, thus $|\Sigma^n|=|\Sigma|^n=r^n$.
+	All these strings are different objects and consequently must have different encodings.
+	For any $v,w\in\Sigma^n$, if we have $v\neq w$ and $U(p)=v$ and $U(q)=w$ for some universal reference machine $U$ and programs $p,q\in\Sigma^*$, then necessarily $p\neq q$.
+	But the geometric sum $\sum_{i=0}^{n-1}r^i=r^{n}-1$, hence there are only $r^n-1$ strings in $\Sigma^{*}$ with length at most $n-1$.
+	By the pigeonhole principle, there must be at least one $v\in\Sigma^n$ such that there exists no program $p$ of length $l(p)<n$ with $U(p)=v$.
+	For this $v$, we have $K(v)\geq n=l(v)$.
+\end{proof}
+We extend the above lemma to infinite strings with finite hamming weight.
+\begin{corollary}[Incompressible Strings with Infinite Paddings]
+	\label{cor:incompressible-zero-pad}
+	For any $n\in\mathbb{N}$, there exists a string $v_n=x_n\overline{0}\in\Sigma^{\infty}$ with $K(v_n)\geq l(x_n)=n$.
+\end{corollary}
+\begin{proof}
+	The argument is analogous to Lemma \ref{lemma:incompressible-strings}.
+	For any $n\in\mathbb{N}$, there are exactly $2^n$ strings $v\in\Sigma^{\infty}$ that satisfy $v=x\overline{0}$ for some $x\in\Sigma^{*}$. However, there are only $2^n-1$ strings of length shorter than $n$ that could serve as encodings for strings like $v$.
+	Therefore one of the $2^n$ strings is not compressible beyond length $n$.
+\end{proof}
+
+% Constructive Logarithmic Complexity Upper Bound
+\begin{lemma}[Logarithmically Compressible Strings]
+	\label{lemma:logcompress}
+	There exists a constant $c\in\mathbb{N}$ such that:
+	For every $n\in\mathbb{N}$, there exists a string $z_n\in\Sigma^{*}$ of length $l(z_n)=n$ with Kolmogorov complexity $K(z_n)\leq \log (n) + c$.
+\end{lemma}
+\begin{proof}
+	Without loss of generality, $0,1\in\Sigma$. Since $\Sigma$ is finite, it is isomorphic $\{0,1,\dots,r-1\}$, where $r=|\Sigma|$.
+	% TODO: State this somewhere in the beginning of this section. We will use it multiple times.
+	We construct a Turing Machine $\mathcal{T}$ as follows:
+	If the string $x$ on the input tape does not only consist of $0$s and $1$s, $\mathcal{T}$ immediately terminates and hence outputs $\varepsilon$.
+	In the following, we assume $x\in\{0,1\}^{*}$.
+	$\mathcal{T}$ interprets $x$ as the encoding of a natural number in the usual way. Leading zeros are ignored and immediately replaced by the blank symbol $B$.
+	We denote $n_x\in\mathbb{N}$ as the natural number encoded by $x$. 
+	Conversely, for any $n\in\mathbb{N}$, $x_n$ denotes the unique binary string encoding it without leading zeros. Accordingly, $0$ is encoded by the empty string $\varepsilon$.
+	$\mathcal{T}$ now repeats the following procedure until the input tape only holds the empty string $\varepsilon$.
+	\begin{itemize}
+		\item Write a $1$ on the next free box.
+		\item Subtract the input by $1$.
+	\end{itemize}
+	Finally, $\mathcal{T}$ returns a string of $n_x$ subsequent $1$s.
+	In particular, the partial computable function $f$ computed by $\mathcal{T}$ satisfies $f(n_x)=1^{n}$ for each $n\in\mathbb{N}$.
+	Analogously as in the proof of Lemma \ref{lemma:additional-complexity-zero-pad}, there exists a string $x_p$ and a constant $c_\mathcal{T}\leq\log_2(p),p\in\mathbb{N}$, such that $K(\mathcal{T})=c_\mathcal{T}$. 
+	
+	For any $n\in\mathbb{N}$, providing $1^{c_\mathcal{T}} 0 x_p x_n$ to the universal Turing Machine $U$ from Definition \ref{def:universaltm} as input yields $z_n:=1^n$ as output.
+	For that reason, $K(z_n)\leq 2c_\mathcal{T} + 1 + l(x_n) \leq \underbrace{2c_\mathcal{T}+2}_{=:c}+\log(n)$.
+	
+\end{proof}
+
+\begin{corollary}[Log-Compressible Strings with Infinite Zero Padding]
+	\label{cor:log-compressible-zero-pad}
+	There exists a constant $c\in\mathbb{N}$ such that:
+	For every $n\in\mathbb{N}$, there exists a string $p_n\in\Sigma^{\infty}$ such that $p_n=z_n\overline{0}$ for a string $z_n$ of length $l(z_n)=n$ and that has Kolmogorov complexity $K(p_n)\leq \log (n) + c$.
+\end{corollary}
+\begin{proof}
+	By virtue of Lemma \ref{lemma:additional-complexity-zero-pad}, padding the strings of the form $1^{n}$ with infinite $0$s required only a constant additional amount $c_{pad}$ of descriptive information.
+	Combined with the constant $c$ from the proof of Lemma \ref{lemma:logcompress}, we obtain $K(p_n)\leq \log(n) + c + c_{pad}$ for $p_n=1^n\overline{0}$.
+\end{proof}
+
+% Constructive Arbitary Complexity Upper Bound
+\begin{lemma}[Arbitrarily Compressible Strings]
+	\label{lemma:arbitrarycompress}
+	There exists a constant $c\in\mathbb{N}$ such that:
+	For every $n\in\mathbb{N}$, there exists a string $z_n\in\Sigma$ of length $l(z_n)=\left(\bigcirc_{i=1}^n \exp_2\right)(1)$ with Kolmogorov complexity $K(z_n)\leq \log (n) + c$.
+\end{lemma}
+\begin{proof}
+	This time, we construct a Turing Machine $\mathcal{T}$ that computes an exponential tower function. 
+	The function $f$ computed by $\mathcal{T}$ will satisfy $f(x_n)=\begin{cases}
+		1^{\left(\bigcirc_{i=1}^n \exp_2\right)(1)}, & n\in\mathbb{N},n\geq 1\\
+		1, & n=0\in\mathbb{N}.\\
+	\end{cases}$
+	
+	This is done in the following way:
+	Just as in the proof of Lemma \ref{lemma:logcompress}, $\mathcal{T}$ interprets the input $x$ as the encoding of a natural number $n_x$.
+	Besides the input tape and the output tape, $\mathcal{T}$ uses one auxiliary tape. 
+	If $x$ does not satisfy the expected format, $\mathcal{T}$ immediately terminates.
+	Otherwise, $\mathcal{T}$ first writes a $1$ on its output tape.
+	Now, it repeats the following procedure while the string on the input tape is not eradicated blank.
+	% TODO: Find a better wording than "eradicating blank".
+	\begin{itemize}
+		\item Remove all non-blank symbols on the auxiliary tape.
+		\item Copy the non-blank symbol sequence $x$ on the output tape to the auxiliary tape.
+		\item Interpret $x$ as the natural number $n_x\in\mathbb{N}$. Compute $x_{2^{n_x}}$ just as in the proof for Lemma \ref{lemma:logcompress} and write it on the output tape.
+		\item Subtract the number on the input tape by $1$.
+	\end{itemize}
+	
+	The string $x$ on the output tape now represents $n_x=\left(\bigcirc_{i=1}^n \exp_2\right)(1)$.
+	Finally, copy $x$ once more to the auxiliary tape and clean the output tape. 
+	Now, repeat the following procedure as long as the string on the auxiliary tape is not eradicated blank.
+	\begin{itemize}
+		\item Write a $1$ on the output tape.
+		\item Subtract the string on the auxiliary tape by $1$.
+	\end{itemize}
+	
+	With $1^{\left(\bigcirc_{i=1}^n \exp_2\right)(1)}$ written to the output tape, $\mathcal{T}$ terminates.
+	
+	By the same argument as in the proof of Lemma \ref{lemma:logcompress}, there is a program string $p$ that identifies $\mathcal{T}$ with a length of $c_{\mathcal{T}}\in\mathbb{N}$.
+	For any $n$, providing $1^{c_\mathcal{T}} 0 p x_n$ to the universal Turing Machine $U$ yields the output $z_n:=1^{\left(\bigcirc_{i=1}^n \exp_2\right)(1)}$ of length $\left(\bigcirc_{i=1}^n \exp_2\right)(1)$.
+	Henceforth, $K(z_n)\leq \log(n) + c$ for $c:=2c_\mathcal{T}+2$.
+	
+\end{proof}
+\begin{corollary}[Arbitrarily Compressible Strings with Infinite Zero Padding]
+	\label{cor:arbitrarycompress-zero-pad}
+	There exists a constant $c\in\mathbb{N}$ such that:
+	For every $n\in\mathbb{N}$, there exists a string $p_n\in\Sigma^{\infty}$ such that $p_n=z_n\overline{0}$ for a string $z_n$ of length $l(z_n)=\left(\bigcirc_{i=1}^n \exp_2\right)(1)$ and that has Kolmogorov complexity $K(p_n)\leq \log (n) + c$.
+\end{corollary}
+\begin{proof}
+	The proof works just as in Corollary \ref{cor:log-compressible-zero-pad} and merely requires replacing $c$ and $p_n$ by the respective values in the proof of Lemma \ref{lemma:arbitrarycompress}.
+\end{proof}
+
+\section{Regularization and Kolmogorov Complexity}
+
+% TODO: Somewhere, we need to introduce the big concatenation operator.
+% TODO: We need to introduce that we mean \exp_2(\cdot)\equiv 2^{I(\cdot)}, where $I$ is the identity function.
+%
+%
+%
+%
+%
+%
+%
+%
+%%%%%%%%%%% INVARIANCE KOLMOGOROV COMPLEXITY UNDER PERMUTATION, WHILE REGULARIZATION IS NOT %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Is a sequence 90909090909090... more complex than 101001000010000000010000....?
+% By the homogeneity of vector norms, regularization biases towards symbols with a smaller ordinal position.
+% But Kolmogorov Complexity is invariant under permutation.
+
+\begin{definition}[Turing Machine for Permutation]
+	\label{def:permutationtm}
+	Let $\pi$ be an arbitrary permutation over $\Sigma$.
+	We define $\mathcal{T}_\pi$ in the straightforward way.
+	$\mathcal{T}$ goes over the input and replaces every symbol $a\in\Sigma$ by $\pi(a)$. 
+	After having arrived on the right end, it moves back to the first symbol and terminates.
+\end{definition}
+\begin{table}[h]
+\begin{center}
+\begin{tabular}{| c | c | c c c |c |}
+\toprule
+$\delta$ & $0$ & $1$ & \dots & $r-1$ & $B$ \\\hline
+$q_0$ & $(q_0,\pi(0),R)$ & $(q_0,\pi(1),R)$ & \dots & $(q_0,\pi(r-1),R)$ & $(q_2,B,L)$ \\\hline
+$q_2$ & $(q_2,0,L)$ & $(q_2,1,L)$ & \dots & $(q_2,r-1,L)$ & $(q_1,B,R)$ \\\bottomrule
+\end{tabular}
+\end{center}
+\caption[Transition function of permutation Turing Machine]{The schematic transition function $\delta$ of $\mathcal{T}_\pi$. By convention, $q_1$ represents the final state and is hence omitted.}
+\label{tab:tmpermutation}
+\end{table}
+
+% First put forward a weak argument (Permutation, Binary Inverse) that illustrates the disparity between Kolmogorov complexity and vector norms
+It is trivial to show that the length of the G\"odel number of $\mathcal{T}_\pi$ is the same for all permutations $\pi$ over $\Sigma$, namely $c:=l(\mathcal{T}_\pi)=a\cdot |\Sigma|+b$ for small constants $a,b\in\mathbb{N}$. 
+The interested reader is referred to Lemma \ref{lemma:permutation-complexity-bound} in the Appendix.
+
+As is rigorously proved thereafter in Lemma \ref{lemma:optimality-permutation-tm}, the Turing Machine $\mathcal{T}_\pi$ from Definition \ref{def:permutationtm} is optimal in terms of its G\"odel number length and therefore also in terms of the Kolmogorov complexity of $\pi$.
+For any permutation $\pi$ except the identity function, there is no Turing Machine $\mathcal{T}$ that computes $\pi$ and achieves G\"odel number of shorter length than $\mathcal{T}_\pi$.
+Moreover, this optimal length is invariant across all permutations over $\Sigma$ - except the identity function.
+With Lemma \ref{lemma:permutation-complexity-bound}, the interested reader will also find a tight bound for the length of $\operatorname{enc}(\mathcal{T})_\pi$.
+
+\begin{theorem}[Kolmogorov Complexity Invariance under Permutation]
+	There exists a small constant $c_{\Sigma}$ that scales only quadratically with $|\Sigma|$ such that the following holds:
+	Let $\pi$ be an arbitrary permutation over $\Sigma$ that is not equivalent to the identity function. 
+	Let $x\in\Sigma^{*}$ be an arbitrary string over $\Sigma$.
+	Then $|K(x)-K(\pi(x))|\leq c_{\Sigma}$.
+\end{theorem}
+\begin{proof}
+	Since $\pi$ is a permutation, it has an inverse function $\pi^{-1}$.
+	Since $\pi$ is not equivalent to the identity function, $\pi^{-1}$ is neither.
+	By Lemma \ref{lemma:permutation-complexity-bound}, $K(\pi),K(\pi^{-1})\leq c_{0}:=2|\Sigma|^2+31|\Sigma|+34$.
+	
+	Let $x\in\Sigma^{*}$ be arbitrary. Denote by $\pi(x)\in\Sigma^{*}$ the string that is obtained by applying $\pi$ to every symbol in $x$.
+	
+	Then, providing $z=1^{c_{0}}0 \operatorname{enc}(\mathcal{T}_\pi) x$ to the universal Turing Machine $U$ from Definition \ref{def:universaltm} yields $U(z)=\pi(x)$.
+	Consequently, $K(\pi(x))\leq 2\cdot c_0+1+K(x)$.
+	
+	Since the above argument holds for any string $x\in\Sigma^{*}$, it also holds for $\pi^{-1}(x)$ for any $x\in\Sigma^{*}$.
+	Therefore, we symmetrically have $K(x)\leq 2\cdot c_0+1 K(\pi^{-1}(x))$ and hence $K(x)\leq 2\cdot c_0+1 K(\pi(x))$.
+	Stitching these two bounds together and choosing $c_\Sigma:=2c_0+1$, we finally obtain the desired result.
+\end{proof}
+
+%
+%
+%
+%
+%
+%
+%
+%
+%%%%%%%%%%% UNBOUNDED INCONSISTENCIES BETWEEN KOLMOGOROV COMPLEXITY AND VECTOR NORMS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% People might wonder whether there are at least some additive and multiplicative constants under which the order is preserved.
+% We prove that this is not the case.
+
+
+By elementary calculus, the following result is established. The proof is omitted here and laid out in Appendix \ref{sec:elementary-math} instead.
+\begin{lemma}[Log-Linear Inequality with Additive Constant]
+	\label{lemma:log-lin-add-inequality-placeholder}
+	Let $a\geq 1,b\geq 0$ be arbitrary real numbers.
+	For any real number $x > 2^{4(a+b)}$, it holds that $a\log_2(x)+b < x$.
+\end{lemma}
+
+\begin{definition}[Properly additive vector norms]
+	\label{def:properly-additive-vector-norms}
+	Let $\lVert \cdot \rVert:\Sigma^{\infty}\to\mathbb{R}_{\geq 0}$ be an arbitrary norm over $\Sigma^{\infty}$.
+	% TODO: Replace $\Sigma$ by $\mathbb{Z}_r$?
+	Denote by $e_1,e_2,\dots$ the unit vectors that form an orthogonal basis of $\Sigma^{\infty}$. That is, $e_i$ consists only out of $0s$ except for index $i$, where it carries a $1$.
+
+	We say that $\lVert \cdot \rVert$ is \textit{properly additive} if for any proper subset $A\subset \mathbb{N}$ and $v_A:=\sum_{i\in A}e_i$, and any $j\notin A$, it holds that
+	\begin{equation}
+		\lVert v_A + e_j \rVert > \lVert v_A \rVert.
+	\end{equation}
+	
+	Vector norms that do not satisfy this condition are called \textit{improperly additive}.
+\end{definition}
+% TODO: What about the properties of improperly additive vector norms?
+
+With this lemma an definition at hand, we now show the following.
+\begin{theorem}[Unbounded Order Inconsistencies to any Vector Norm]
+	Let $\lVert\cdot\rVert$ denote an arbitrary properly additive norm over $\Sigma^{\infty}$ as by Definition \ref{def:properly-additive-vector-norms}.
+	% TODO: We need to formally define why $\Sigma^{\infty}$ identifies a vector space.
+	For any pair of real numbers $a\geq 1, b\geq 0$, there are $v,w\in\Sigma^{\infty}$ such that $K(v)\geq a\cdot K(w)+b$, but $\lVert v \rVert < \lVert w \rVert $. 
+\end{theorem}
+\begin{proof}
+	Let $a\geq 1, b\geq 0$ be arbitrary real numbers.
+	Let $c\in\mathbb{N}$ be the constant from the proof of Corollary \ref{cor:log-compressible-zero-pad}.
+	For any $n\geq ac+b$, define $f_{a,b}$ as $f_{a,b}(n):=2^{\lfloor \frac{n}{a}-c-\frac{b}{a}\rfloor}$.
+	Fix an arbitrary $n> \max(ac+b,2^{a(c+2)+b})$.
+	
+	By Corollary \ref{cor:incompressible-zero-pad}, there must exists a string $q_n\in\Sigma^{\infty}$ with $q_n=r_n\overline{0}$ for some string $r_n\in\Sigma^n$ such that $K(q_n)\geq n$. 
+	
+	Now, consider the string $p_{n}=z_{f_{a,b}(n)}\overline{0}$ from the proof of Corollary \ref{cor:log-compressible-zero-pad}.
+	By definition, $z_{f_{a,b}(n)}=1^{f_{a,b}(n)}$.
+	Moreover, it holds that $K(p_{n})\leq \log_2(f_{a,b}(n))+c$.
+	But by definition, $f_{a,b}(n)= 2^{\lfloor \frac{n}{a}-c-\frac{b}{a}\rfloor}\leq 2^{\frac{n}{a}-c-\frac{b}{a}}$.
+	
+	Therefore, $K(p_n)\leq \frac{n}{a}-c-\frac{b}{a}+c=\frac{n}{a}-\frac{b}{a}$.
+	In total, we have 
+	\begin{equation}
+		K(q_n)\geq n = a\left(\frac{n}{a}-\frac{b}{a}\right)+b\geq a\cdot K(p_n)+b.
+	\end{equation}
+	
+	At the same time, the non-zero prefix $z_{f_{a,b}(n)}$ of $p_n$ is longer than the non-zero prefix $r_n$ of $q_n$.
+	By definition, $z_{f_{a,b}(n)}$ has length $2^{\lfloor \frac{n}{a}-\frac{b}{a}-c\rfloor}\geq 2^{ \frac{n}{a}-\frac{b}{a}-c-1}$.
+	But as $n>\max(2^{a(c+2)+b},2)$, Lemma $\ref{lemma:log-lin-add-inequality-placeholder}$ yields
+	$n\geq a\log_2(n)+a(c+1)+b$. By the monotonicity of the exponential function $\exp$, this implies
+	\begin{equation}
+		2^{n}\geq 2^{a\log_2(n)+a(c+1)+b}=n^a \cdot 2^{a(c+1)+b}.
+	\end{equation}
+	
+	Latching onto this line of reasoning, the monotonicity of the square root function $\sqrt[a]{\cdot}$ now yields
+	\begin{equation}
+	2^{\frac{n}{a}}=\sqrt[a]{2^{n}}\geq \sqrt[a]{ n^a \cdot 2^{a(c+1)+b}} =n \cdot 2^{c+1+\frac{b}{a}}.
+	\end{equation}
+	
+	Finally, dividing by the fixed factor $2^{c+1+\frac{b}{a}}$ culminates in
+	\begin{equation}
+		\label{eq:order-inconsistency-to-norm-length-inequality}
+		l\left(z_{f_{a,b}(n)}\right)=l\left(1^{f_{a,b}(n)}\right)=f_{a,b}(n)\geq 2^{ \frac{n}{a}- \left(\frac{b}{a}+c+1\right)}\geq n = l(r_n).
+	\end{equation}
+	
+	Since $z_{f_{a,b}(n)}$ consists entirely out of $1$s and is longer than $r_n$, there must exist a $w\in\{0,1\}^{*}$ such that $z_{f_{a,b}(n)}=r(n)+w$, and hence $p_n=q_n+w\overline{0}$, where addition is element-wisely identified as over the field $\mathbb{Z}_{r}, r:=|\Sigma|$.
+	% TODO: Maybe define addition already a bit earlier.
+	
+	By Equation \ref{eq:order-inconsistency-to-norm-length-inequality} and the definition of $w$, there exist proper subsets $A,B,C\subset \mathbb{N}$ such that $q_n = \sum_{i\in A}e_i, w\overline{0}=\sum_{i\in B}e_i,$ and $p_n = \sum_{i\in C}e_i$.
+	These sets satisfy $A\cap B = \emptyset, A\cup B = C$.
+	Since $q_n\neq p_n$, we further have $B\neq \emptyset$.
+	
+	Since $\lVert\cdot\rVert$ is properly additive, repeated application of Definition \ref{def:properly-additive-vector-norms} yields
+	\begin{equation}
+		\lVert p_n \rVert = \left\lVert \sum_{i\in C}e_i \right\rVert \overset{A\subset C}{>} \left\lVert \sum_{i\in A}e_i \right\rVert = \lVert q_n \rVert,
+		% TODO: This does not hold in general.
+	\end{equation}
+	which concludes our proof.
+	
+\end{proof}
+
+% TODO: Argue that improperly additive norms make little sense of regularization
+% - Maximum norm as an edge case example.
+
+% TODO: There is no need for the following result, possibly remove it:
+% - Padding Incompressible Strings
+
+% But what can we derive if the norm of some vector v is m times smaller than the norm of another vector w?
+\begin{lemma}[Padding Incompressible Strings]
+	
+\end{lemma}
+\begin{proof}
+	% Take a sufficiently long incompressible string.
+	% Define a program that computes a bijection between strings and strings with hamming weight ratio at most p, for some rational 0<p<1/2.
+	% The Kolmogorov complexity of these strings are bounded by the incompressible input and some constant. 
+	% Otherwise they could be used to retrieve the incompressible input, because the Turing Machine computes a (computable) bijection.
+	% But then the Kolmogorov Complexity of the original incompressible input string would be smaller, and this leads to a contradiction.
+\end{proof}
+
+\begin{definition}[Super-logarithmic vector norms]
+	\label{def:super-log-norm}
+	Let $\lVert \cdot \rVert:\Sigma^{\infty}\to\mathbb{R}_{\geq 0}$ be an arbitrary norm over $\Sigma^{\infty}$.
+	Denote by $e_1,e_2,\dots$ the unit vectors that form an orthogonal basis of $\Sigma^{\infty}$. That is, $e_i$ consists only out of $0s$ except for index $i$, where it carries a $1$.
+	
+	
+	We say that $\lVert \cdot \rVert$ is \textit{super-logarithmic} if there exist constants $c_{\lVert\cdot\rVert},k_{\lVert\cdot\rVert}\in\mathbb{N}$ and $m_0\in\mathbb{N}$ such that 
+	\begin{equation}
+		\left\lVert \sum_{i=1}^{m}e_i \right\rVert\geq c_{\lVert\cdot\rVert}\left(\bigcirc_{i=1}^{k_{\lVert\cdot\rVert}}\log_2\right)(m) \quad \text{ for all } m\geq m_0.  
+	\end{equation}
+\end{definition}
+
+\begin{lemma}[Basis Cascade Exponential Equality]
+	\label{lemma:cascade-exp-inequality-basis-placeholder}
+	Let $a\geq 1,b\geq 0$ be arbitrary real numbers.
+	For any $k\in\mathbb{N}$ and $n\in\mathbb{N}$ with $n>4\cdot 2^k\cdot (a+b)$, it holds that
+	\begin{equation}
+		\left(\bigcirc_{i=1}^{n-k}\exp_2\right)(1) > a\cdot n + b.
+	\end{equation}
+\end{lemma}
+\begin{theorem}[Unbounded Order Inconsistencies from any Super-Logarithmic Vector Norm]
+	Let $\lVert \cdot \rVert$ denote an arbitrary norm that is super-logarithmic as by Definition \ref{def:super-log-norm}.
+	For any real numbers $a\geq 1, b\geq 0$, there are $v,w\in\Sigma^{\infty}$ such that $\lVert v \rVert\geq a\cdot \lVert w \rVert+b$, but $K(v) < K(w)$. 
+\end{theorem}
+\begin{proof}
+	Let $\lVert \cdot \rVert$ be an arbitrary norm that is super-logarithmic with some constants $c_{\lVert\cdot\rVert},k_{\lVert\cdot\rVert}$.
+	Let $a\geq 1, b\geq 0$ be arbitrary real numbers.
+	
+	Denote by $c_{\mathcal{T}}\in\mathbb{N}$ the constant from the proof of Corollary \ref{cor:arbitrarycompress-zero-pad}.
+	
+	For any $n\in\mathbb{N}$, Corollary \ref{cor:incompressible-zero-pad} guarantees the existence of a string $q_n\in\Sigma^{\infty}$ with $q_n=r_n\overline{0}$ for some string $r_n\in\Sigma^n$ such that $K(q_n)\geq n$. 
+	Let $g:\mathbb{N} \to \Sigma^{\infty}$ be any selection function that maps $n\in\mathbb{N}$ to such a string $q_n$. In the following, we therefore denote $q_n=g(n)$.
+	
+	On the other hand, define $p_n:=1^{\left(\bigcirc_{i=1}^n \exp_2\right)(1)}\overline{0}$ for $n\in\mathbb{N}$.
+	
+	Finally, we define $f_{a,b}(n):=\left(\bigcirc_{i=1}^{k_{\lVert\cdot\rVert}} \exp_2\right)\left(\frac{a\cdot \lVert q_n \rVert+b}{c_{\lVert\cdot\rVert}}\right)$ for any $n\in\mathbb{N}$.
+	
+	Now, assume that $n>\max \left(4\cdot 2^{k_{\lVert\cdot\rVert}}\cdot \frac{a+b}{c_{\lVert\cdot\rVert}}, 2^{4\cdot (1+c_{\mathcal{T}})}\right)$.
+	
+	For the first part, we use $n>4\cdot 2^{k_{\lVert\cdot\rVert}}\cdot \frac{a+b}{c_{\lVert\cdot\rVert}}$ and combine Lemma \ref{lemma:cascade-exp-inequality-basis-placeholder} with the monotonicity of the exponential function $\exp_2$ to obtain
+	\begin{align}
+		\label{eq:exp-f_ab-inequality-1}
+		\left(\bigcirc_{i=1}^n \exp_2\right)(1) & = \left(\bigcirc_{i=1}^{k_{\lVert\cdot\rVert}} \exp_2\right)\left( \left(\bigcirc_{i=1}^{n-k_{\lVert\cdot\rVert}} \exp_2\right)(1) \right)\\
+		& > \left(\bigcirc_{i=1}^{k_{\lVert\cdot\rVert}} \exp_2\right)\left( \frac{a\cdot n + b }{c_{\lVert\cdot\rVert}}\right).
+	\end{align}
+	
+	Since $\lVert\cdot\rVert$ is a norm, it satisfies the triangle inequality.
+	For any $n\in\mathbb{N}$, denote by $A_n\subset \mathbb{N}$ the set such that $q_n=\sum_{i\in A_n}e_i$.
+	As $\lVert e_i \rVert = 1$ by definition of $e_i$, we have 
+	\begin{equation}
+		\label{eq:q_n-triangle-basis-vector-inequality}
+		n\geq \sum_{i\in A_n}\lVert e_i \rVert \geq\left\lVert \sum_{i\in A_n} e_i\right\rVert = \lVert q_n \rVert.
+	\end{equation}
+	
+	By the monotonicity of the exponential function $\exp_2$, we thereby culminate in
+	\begin{align}
+		\label{eq:exp-f_ab-inequality-full}
+		\left(\bigcirc_{i=1}^n \exp_2\right)(1) &\overset{\ref{eq:exp-f_ab-inequality-1}}{>} \left(\bigcirc_{i=1}^{k_{\lVert\cdot\rVert}} \exp_2\right)\left( \frac{a\cdot n + b }{c_{\lVert\cdot\rVert}}\right) \\
+		&\overset{\ref{eq:q_n-triangle-basis-vector-inequality}}{\geq} \left(\bigcirc_{i=1}^{k_{\lVert\cdot\rVert}} \exp_2\right)\left( \frac{a\cdot  \lVert q_n \rVert + b }{c_{\lVert\cdot\rVert}}\right)=f_{a,b}(n).
+	\end{align}
+	
+	Along with Definition \ref{def:super-log-norm}, our condition is therefore satisfied:
+	\begin{align}
+		\lVert p_n\rVert = \left\lVert 1^{\left(\bigcirc_{i=1}^n \exp_2\right)(1)}\overline{0}\right\rVert 
+		& =  \left\lVert \sum_{i=1}^{\left(\bigcirc_{i=1}^n \exp_2\right)(1)}e_i \right\rVert \\
+		&\overset{\ref{def:super-log-norm}}{\geq} c_{\lVert\cdot\rVert}\left(\bigcirc_{i=1}^{k_{\lVert\cdot\rVert}}\log_2\right) \left( \left( \bigcirc_{i=1}^n \exp_2 \right)(1)\right) \\ 
+		&\overset{\ref{eq:exp-f_ab-inequality-full}}{\geq} c_{\lVert\cdot\rVert}\left(\bigcirc_{i=1}^{k_{\lVert\cdot\rVert}}\log_2\right) \left( f_{a,b}(n) \right) \\ 
+		&= c_{\lVert\cdot\rVert}\left(\bigcirc_{i=1}^{k_{\lVert\cdot\rVert}}\log_2\right) \left( \left(\bigcirc_{i=1}^{k_{\lVert\cdot\rVert}} \exp_2\right) \left(\frac{a\cdot \lVert q_n \rVert+b}{c_{\lVert\cdot\rVert}}\right) \right) \\
+		&= c_{\lVert\cdot\rVert} \left(\frac{a\cdot \lVert q_n \rVert+b}{c_{\lVert\cdot\rVert}}\right)\\
+		&= a\cdot \lVert q_n \rVert+b.
+	\end{align}
+	
+	However, since $n> 2^{4(1+c_{\mathcal{T}})}$ and by the assumptions on the compressibility of $p_n$ and $q_n$, we conclude with Corollaries \ref{cor:arbitrarycompress-zero-pad} and \ref{cor:incompressible-zero-pad} that
+	\begin{align}
+		K(p_n)\overset{\ref{cor:arbitrarycompress-zero-pad}}{\leq}\log_2(n)+c_{\mathcal{T}} \overset{\ref{lemma:log-lin-add-inequality-placeholder}}{<} n \overset{\ref{cor:incompressible-zero-pad}}{\leq} K(q_n).
+	\end{align}
+\end{proof}
+
+\begin{corollary}[Regularization with Minkowski Norms yields no Simplicity Guarantees]
+	Let $p>0$ be an arbitrary real number and $\lVert\cdot\rVert_p$ denote the corresponding Minkowski norm.
+	For any real numbers $a\geq 1, b\geq 0$, there are both $v,w\in\Sigma^{\infty}$ such that $K(v)\geq a\cdot K(w)+b$, but $\lVert v \rVert_p < \lVert w \rVert_p $, and $v,w\in\Sigma^{\infty}$ such that $\lVert v \rVert_p \geq a\cdot \lVert w \rVert_p+b$, but $K(v) < K(w)$. 
+\end{corollary}
+\begin{proof}
+	Let $p>0$ be an arbitrary real number.
+	
+	We show that the Minkowski norm $\lVert\cdot\rVert_p$ is both properly additive (Definition \ref{def:properly-additive-vector-norms}) and super-logarithmic (Definition \ref{def:super-log-norm}).
+	
+	For the first part, let $A\subset \mathbb{N}$ be arbitrary.
+	For any $j\in\mathbb{N}$ with $j\notin A$, the monotonicity of the root function $\sqrt[p]{\cdot}$ ensures that
+	\begin{align}
+		\left\lVert \sum_{i\in A} e_i + e_j \right\rVert_p &= \left(\sum_{i\in A\cup\{j\}} 1^p \right)^{\frac{1}{p}} = \left( |A|+1 \right)^{\frac{1}{p}} > |A|^{\frac{1}{p}} = \left(\sum_{i\in A} 1^p \right)^{\frac{1}{p}} = \left\lVert \sum_{i\in A} e_i \right\rVert_p.
+	\end{align}
+	
+	For the second part, take $c=1,k=1,$ and choose a natural number $m_0>\max\left(\left(2^{4p}\right)^p,2^{4p}\right)$.
+	
+	Any $m\geq m_0$ in particular satisfies $m > 2^{4p}$.
+	Therefore, Lemma $\ref{lemma:log-lin-inequality}$ guarantees that $m > p\log(m)$ for such $m$.
+	
+	There exist a real number $x$ such that $m=x^p$.
+	Since $m>\left(2^{4p}\right)^p$, this $k$ satisfies $k>2^{4p}$. 
+	For that reason, it holds for any $m\geq m_0$ that
+	\begin{align}
+		\left\lVert \sum_{i=1}^{m} e_i \right\rVert_p = \sqrt[p]{m} = \sqrt[p]{k^p} = k > p \log_2(k) = p\cdot \log_2(m^{\frac{1}{p}}) = p \cdot \frac{1}{p} \log_2(m)=\log_2(m).
+	\end{align}
+\end{proof}
+
+\begin{corollary}[L0-Regularization yields no Simplicity Guarantees]
+	Denote by $\lVert\cdot\rVert_0$ the norm that counts non-zero components.
+	For any real numbers $a\geq 1, b\geq 0$, there are both $v,w\in\Sigma^{\infty}$ such that $K(v)\geq a\cdot K(w)+b$, but $\lVert v \rVert_0 < \lVert w \rVert_0 $, and $v,w\in\Sigma^{\infty}$ such that $\lVert v \rVert_0 \geq a\cdot \lVert w \rVert_0+b$, but $K(v) < K(w)$. 
+\end{corollary}
+\begin{proof}
+	We show that the $\lVert\cdot\rVert_0$ norm is both properly additive (Definition \ref{def:properly-additive-vector-norms}) and super-logarithmic (Definition \ref{def:super-log-norm}).
+	
+	For the first part, let $A\subset \mathbb{N}$ be arbitrary.
+	For any $j\in\mathbb{N}$ with $j\notin A$, we have
+	\begin{align}
+		\left\lVert \sum_{i\in A} e_i + e_j \right\rVert_0 &= |A|+1 > |A| = \left\lVert \sum_{i\in A} e_i \right\rVert_0.
+	\end{align}
+	
+	For the second part, take $c=1,k=1,$ and choose $m_0=1$. For any $m\geq m_0$, it holds that
+	\begin{align}
+		\left\lVert \sum_{i=1}^{m} e_i \right\rVert_0 = m > \log_2(m).
+	\end{align}
+\end{proof}
+
 
 \section{The Expressive Power of Recursion}
 % TODO: Refer to G{\"o}del's primitive recursive functions. 
@@ -60,4 +556,3 @@ But given \dots 2 4 8 16 \dots, I do not assume a cubic polynomial, but an expon
 Moreover, its descriptive complexity is far lower than the growing complexity of the polynomial alternatives.
 
 % TODO: Example: Learning a sorting algorithm
-\section{Regularization and Kolmogorov Complexity}

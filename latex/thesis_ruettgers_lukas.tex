@@ -36,9 +36,6 @@
 %						If you are using multiple languages, load the babel package in your fontset file, before the fonts.
 
 %%%%%%%%% Packages used in sample chapters (not otherwise required) %%%%%%%
-%% Math packages
-\usepackage{amsmath}
-\usepackage{amssymb}
 
 %% Package for code listing in Appendix A.
 \usepackage{listings}%   documentation is here https://ctan.org/pkg/listings
@@ -96,7 +93,28 @@
 %\newcolumntype{d}[1]{D{.}{.}{#1}}
 
 %%%%%%%%%%  Custom packages  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Math packages
+\usepackage{amsmath} % General math package
+\usepackage{amssymb} % For symbols like \mathbb
+\usepackage{amsthm} % For the proof environment
+\usepackage{marvosym} % For lightning symbol in contradiction proofs.
 
+% Immediately insert new line after theorem environment heading.
+\newtheoremstyle{break}
+{\topsep}{\topsep}%
+{\itshape}{}%
+{\bfseries}{}%
+{\newline}{}%
+\theoremstyle{break}
+% Use the following command to replace the white square by a different symbol like the black square.
+% \renewcommand{\qedsymbol}{$\blacksquare$}
+
+%%%%%%%%%%%  Customized Environments  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{corollary}{Corollary}[theorem]
+\newtheorem{lemma}[theorem]{Lemma} % This forces lemma to share the counter with theorem.
+\newtheorem{definition}[theorem]{Definition} % Same enforcement for definition.
 
 %%%%%%%%%%  Option for "double spacing" %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -127,14 +145,14 @@
 
 \hypersetup{%
 	pdfsubject={Learning by detecting recursion: single-source domain extrapolation for numeral system data},
-	% Change this to briefly state topic of your thesis 
+	% TODO: Change this to briefly state topic of your thesis 
 % 
 	pdfkeywords={RWTH, THU, Machine Learning, Theory, Deep Learning, Generalization, single source, out of distribution, Ruettgers, Rüttgers, Lukas, bachelor, thesis},
-	% Add keywords that will help search engines and libraries to find your work.
+	% TODO: Add keywords that will help search engines and libraries to find your work.
 	% Includes the name[s] of the author[s] 
 	% (If you have used \DocumentMetadata, at line 15, you can just put "\CopyrightAuthor," for the names.)
 %
-	pdfurl={},
+	pdfurl={https://github.com/lukas-ruettgers/bachelor-thesis/blob/main/latex/thesis\_ruettgers\_lukas.pdf},
 	% If you have a url for the thesis, put it here. Otherwise delete this.
 	% (MIT Libraries will put your thesis in DSPACE with a persistent url after you submit it.)
 %	
@@ -146,6 +164,7 @@
 	% If you have a title, you can include it here.
 }
 
+
 %%%%%%%%%%%%%%  End preamble %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -153,10 +172,12 @@
 
 %%% edit the following commands to match your thesis %%%%%%%%%%
 
-\title{Unlocking Recursion: On Out-of-Distribution Generalization with a Simple but Powerful Principle}
+\title{Kolmogorov Complexity and How it Illuminates our Limitations to Let Machines Learn Recursion}
 % Alternative titles: 
+% - Kolmogorov Complexity and How it Illuminates our Limitations to Let Machines Learn Recursion
+% - Unlocking Recursion: On Out-of-Distribution Generalization with a Simple but Powerful Principle
 % - Information Thresholds for the Learnability of Partial Computable Functions
-% - 
+% - Regularization over any Vector Norm Does Not Yield any Simplicity Guarantees
 % - Optimal sufficient information for Hypothesis Certification
 % - Simple to describe, hard to compute: Generalize beyond Training Domains by Learning Recursion
 % TODO: Decide title
