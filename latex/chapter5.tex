@@ -1,0 +1,313 @@
+% !TEX root = thesis_ruettgers_lukas.tex
+% From mitthesis package
+% Version: 1.04, 2023/10/19
+% Documentation: https://ctan.org/pkg/mitthesis
+
+%% ALTERNATIVE TITLE
+% - Compression Algorithms in the Face of Kolmogorov Complexity
+\chapter{Compression Algorithms against Kolmogorov Complexity}
+\label{chap:compression-kolmogorov-complexity}
+
+In Chapter \ref{chap:sufficient-information-learnability}, we formally established how Kolmogorov complexity smooths the way to quantify the information that a dataset of samples conveys about the functions that could have generated it.
+Coined \textit{functional information}, this quantity allowed to derive general, yet nearly optimal, sufficient information-theoretic learnability conditions for virtually any partial computable function.
+Moreover, we discussed how functional information not only helps to determine the relevant information content in a dataset, but also how it could realise a simplicity bias in practice that favours functions with lower Kolmogorov complexity.
+
+But because it would evoke the same paradox as the halting problem, Kolmogorov complexity is not uniformly computable in general \cite{chaitin1974information}.
+Notwithstanding that, heuristics could yield feasible approximations of this measure in practice.
+Because we want to employ such a approximation algorithm to \textit{compare} the functional information of different objects, a necessary requirement for such an algorithm $A$ would be to yield at least some rough guarantee about the order between two strings $v,w$ in terms of their Kolmogorov complexity.
+That is, there should be some exponential, multiplicative, and additive approximation offsets $a,b,k$ such that for any strings $v,w\in\{0,1\}^{*}$, if $A(v)\geq \exp_2^{(k)}\bigl(a\cdot A(w) + b\bigr)$, then $K(v)\geq K(w)$.
+Here, $\exp_2^{(k)}$ designates the k-wise concatenation of the exponential function with basis $2$, just as in Definition \ref{def:recursive-concatenation}.
+
+To date, compression algorithms are typically suggested to yield such a feasible approximation of Kolmogorov complexity.
+Most importantly, several compression algorithms based on the classic Lempel-Ziv-Welch (LZW) algorithm \cite{welch1984technique} have been employed to cluster data of various formats \cite{cilibrasi2005clustering}.
+However, this chapter proves that for any encoding of Turing Machines, the Lempel-Ziv-Welch algorithm can not yield any approximate guarantee about the order of the Kolmogorov complexity of two strings, rendering it at least theoretically undesirable for our purpose of approximating functional information.
+In Theorem \ref{theorem:unbounded-order-inconsistencies-from-lzw-to-kolmogorov}, we prove that such approximation offsets $a,b,k$ as formulated above do not exist for the LZW algorithm.
+This chapter therefore points up that practical implementations of a simplicity bias that yield at least approximate guarantees still need advances in compression algorithms.
+
+But to that end, we first introduce the LZW algorithm in Section \ref{sec:limpel-ziv-welch-algorithm}, and state some required results about the compressibility of strings in Section \ref{sec:compressibility}.
+In Section \ref{sec:unbounded-order-inconsistencies}, we eventually culminate in the aforementioned Theorem.
+
+\section{The Lempel-Ziv-Welch algorithm}
+\label{sec:limpel-ziv-welch-algorithm}
+However, we substantiate that such methods still exhibit two essential shortcomings for our purpose to approximate functional information.
+To that end, we first present how the Lempel-Ziv-Welch algorithm would actually compress binary strings.
+Some adjustments have been made for the ease of exposition, but they do not affect our later argument.
+\begin{algorithm}
+	\caption{Lempel-Ziv-Welch algorithm \cite{welch1984technique}.}
+	\label{alg:limpel-ziv-welch-algorithm}
+	\small % Adjust font size
+	\raggedright
+	\renewcommand{\algorithmicrequire}{\textbf{Given:}} % Set name of subalgorithm
+	\begin{algorithmic}[1]
+		\REQUIRE{The binary alphabet $\Sigma=\{0,1\}$ and a non-empty string $x\in\{0,1\}^{*}$}
+		\STATE{Instantiate a bidirectional key-value directory $T$ to save patterns. 
+			\begin{enumerate}[label=(\alph*)]
+				\item $T$ saves tuples $(\operatorname{id},v)$, where $v\in\{0,1\}^{*}$ is a pattern, and $\operatorname{id}\in\{0,1\}^{*}$ is its identifier.
+				\item We write $T(v)=\begin{cases}
+					\operatorname{id}, & (\operatorname{id},v)\in T\\
+					\bot, & (\operatorname{id},v)\notin T \text{ for any }\operatorname{id}\in\mathbb{N}.
+				\end{cases}$
+				\item When a pattern $v$ is \textit{added} to $T$, the tuple $([|T|,\varepsilon],v)$ is added to $T$, where $|T|$ is the length of the directory $T$ and $[|T|,\varepsilon]$ its self-delimiting encoding. Once added, elements are not deleted. This way, the identifier is always unique.
+				\item We add the symbols $0,1\in\Sigma$ as the elementary patterns to $T$. Therefore, it now holds that $(0,100),(1,101)\in T$, and $|T|=2$.
+			\end{enumerate}
+		}
+		\STATE{Instantiate the empty output string $p:=\varepsilon$ that represents the compression of $x$.}
+		\STATE{\textbf{While} $x$ is not in $T$ empty:
+			\begin{enumerate}[label=(\roman{enumi})]
+				\item Incrementally determine the shortest prefix $x_1x_2\cdots x_k$ of $x$, $x_i\in\{0,1\}$, that is not in $T$. 
+				\item Append the identifier $T(x_1x_2\cdots x_{k-1})$ to $p$.
+				\item Add the new pattern $x_1x_2\cdots x_k$ to $T$.
+				\item Remove the prefix $x_1x_2\cdots x_{k-1}$ from $x$.
+			\end{enumerate}
+		}
+		\STATE{Append the identifier $T(x)$ to $p$.}
+		\RETURN{$p$, $T$}
+	\end{algorithmic}
+\end{algorithm}
+%The length of $p$ could therefore be taken as the an approximation of $K(x)$, although there is no theoretical guarantee on the approximation factor.
+The algorithm above merely looks for repetitions in the symbols sequences of a string.
+The more often certain sequences of symbols occur in $x$, the smaller will the compression $p$ be.
+However, this algorithm does not go further and consider the patterns \textit{across} the stored strings themselves.
+Strings that are generated from quite simple recursive algorithm do however exhibit precisely such patterns, which the algorithm does yet not draw upon.
+
+For this reason, the maximum compression ratio --- namely the ratio between the length of $n$ and its compression $p$ --- is bounded by a polynomial in the length of $n$, as the following Lemma ascertains.
+\begin{lemma}[Bounded compression ratio Lempel-Ziv-Welch]
+	\label{lemma:lzw-bounded-compression-ratio}
+	Let $x\in\{0,1\}^{*}$ be an arbitrary string.
+	Then the Lempel-Ziv-Welch compression $p$ that is output from Algorithm \ref{alg:limpel-ziv-welch-algorithm} satisfies $l(p)\geq\sqrt{l(x)}$.
+\end{lemma}
+\begin{proof}
+	For an arbitrary $n\in\mathbb{N}$, consider the string $1^n$, that is the concatenation of $n$ $1$s.
+	
+	We show that this string achieves the optimal compression length that strings of length $n$ could possibly achieve.
+	
+	In each iteration, the prefix $x_1x_2\cdots x_{k}$ that is added to $T$ can at most be one symbol longer than the longest string in $T$.
+	For if that was not the case, it holds that $k\geq 3$, because $0$ and $1$ are in $T$ from the beginning.
+	But then $x_1x_2\cdots x_{k-1}$ is already not in $T$, which contradicts the assumption.
+	For that reason, the optimal compression length is achieved if in each iteration, the prefix that is added achieves this maximal length.
+	Because if such an $x_1x_2\cdots x_{k}$ is added to $T$, then $x_1x_2\cdots x_{k-1}$ is logarithmically compressed to $T(x_1x_2\cdots x_{k-1})$ and appended to $p$. 
+	The longer this compressed sequence $x_1x_2\cdots x_{k-1}$ is, the shorter will $p$ be.
+	
+	Now, we show that $x=1^n$ achieves this optimal compression property.
+	If $n=1$, then $p=1^1=1$, which is optimal.
+	Below, we hence assume $n\geq 2$.
+	In the first iteration $i=1$, $1$ is added to $p$ and $11$ is added to $T$.
+	Therefore, $T$ contains a pattern string $v$ of length $i+1$ after iteration $i=1$.
+	Now, assume that after some iteration $i=j$, $T$ contains all strings $1,11,\dots,1^{j+1}$.
+	Then, in iteration $j+1$, if the remaining string $x$ is not longer than $j+1$, $T(x)$ is added to $p$, which is optimal since all prefixes $x_1x_2\cdots x_{k-1}$ that were added to $p$ had maximum length.
+	Otherwise, if the remaining string $x$ is longer than $j+1$, then $1^{j+2}$ is the shortest prefix that is not in $T$, which is also optimal because there could be no such prefix that is longer.
+	
+	Now, let us define a lower bound on the length of $p$.
+	Let $k$ be the smallest natural number such that $\sum_{i=1}^{k}i=\frac{k(k+1)}{2}\geq n$.
+	Then, Algorithm \ref{alg:limpel-ziv-welch-algorithm} terminates after $k$ iterations, because in each iteration $i$ that is not the last one, $i$ symbols are removed from $x$.
+	
+	The string $T(x_1x_2\cdots x_{k-1})$ that is appended to $p$ in each such iteration obviously has a length of at least $1$.
+	Because $\frac{(k+1)^2}{2}\geq n$, we also have $k\geq \sqrt{2n-1}$.
+	Finally, since $n\geq 2$, $2n-1=n + (n-1)\geq n$. 
+	By the monotonicity of the square root function, we therefore conclude
+	\begin{equation}
+		|p|\geq k \geq \sqrt{2n-1}\geq \sqrt{n} = \sqrt{(l(x))}.
+	\end{equation}
+\end{proof}
+
+On the other hand, there is of course also an upper bound on the length of $p$.
+Although the following upper bound is grossly conservative, it is sufficient for our needs and all the more simple to show.
+
+\begin{lemma}[LZW Compression length upper bound]
+	\label{lemma:lzw-compression-length-upper-bound}
+	Let $x\in\{0,1\}^{*}$ be an arbitrary string.
+	Then the Lempel-Ziv-Welch compression $p$ that is output from Algorithm \ref{alg:limpel-ziv-welch-algorithm} satisfies $l(p)\leq 3\cdot \bigl(l(x)\bigr)^2$.
+\end{lemma}
+\begin{proof}
+	Let $x$ be an arbitrary string of length $n$.
+	Because $0$ and $1$ are in $T$ from the beginning, the shortest prefix $x_1x_2\cdots x_{k}$ that is not in $T$ must have length $k\geq 2$.
+	Therefore, at least one symbol is removed from $x$ in each iteration. Consequently, the LZW algorithm runs for at most $n-1$ iterations, since after $n-1$ iterations, the remaining $x$ will at most comprise one symbol, which is certainly in $T$.
+	By the same argument as in the proof of Lemma \ref{lemma:lzw-bounded-compression-ratio}, $T$ can contain at most $n+1$ strings after iteration $n-1$, since $0$ and $1$ are added from the beginning.
+	All in all, $p$ can at most contain $n$ compressions of strings whose identifying natural number is at most $n+1 -1 =n$.
+	By the additional length of the self-delimiting encoding, we therefore conclude
+	\begin{equation}
+		l(p)=n\cdot (2\lceil\log_2(n)\rceil+1)\leq n\cdot (2n+1)=2n^2+n\leq 3n^2. 
+	\end{equation}
+\end{proof}
+
+In contrast to the quadratic upper bound on the compression ratio of the Lempel-Ziv-Welch algorithm, the compression ratio that Turing Machines achieve are arbitrarily large, as the next Section illustrates.
+
+\section{Compressibility of strings}
+\label{sec:compressibility}
+In the following, we fix $\Sigma=\{0,1\}$.
+This section ascertains both the existence of incompressible strings and arbitrarily compressible strings, which smooths the way to Theorem \ref{theorem:unbounded-order-inconsistencies-from-lzw-to-kolmogorov} in the next section.
+In the same vein as Lemma \ref{lemma:incompressible-strings-conditional}, we first argue that there must exist an incompressible string for each length $n$.
+\begin{lemma}[Incompressible Strings]
+	\label{lemma:incompressible-strings}
+	For any $n\in\mathbb{N}$, there exists a string $v_n\in\{0,1\}^n$ with $K(v_n)\geq n$.
+\end{lemma}
+\begin{proof}
+	Let $n\in\mathbb{N}$ be arbitrary.
+	There are $2^n$ strings of length $n$, but only $\sum_{i=0}^{n-1}2^i=2^{n}-1$ strings that are shorter than $n$. 
+	By the pigeonhole principle, there must be at least one $v\in\{0,1\}^n$ such that there exists no program $p$ of length $l(p)<n$ with $U(p)=v$.
+	For this $v$, we have $K(v)\geq n$.
+\end{proof}
+In general, since the number of strings grows exponentially in their length, most strings are almost completely incompressible \cite{li2008kolmogorov}. 
+Conversely, there are however also a few strings that are arbitrarily compressible.
+While the Lempel-Ziv-Welch algorithm could not compress strings $z_n=1^n$ beyond a quadratic factor, there is a Turing Machine that achieves a compression ratio that scales faster than any polynomial, and even faster than any fixed concatenation of the exponential function, as the following Lemma certifies.
+
+% Constructive Arbitary Complexity Upper Bound
+\begin{lemma}[Arbitrarily Compressible Strings]
+	\label{lemma:arbitrarycompress}
+	Let $\operatorname{enc}(\cdot)$ be an arbitrary, prefix-free encoding of Turing Machines.
+	Let $\exp_2^{(m)}$ denote the $m$-wise recursive concatenation of $\exp_2(x):=2^x$ as in Definition \ref{def:recursive-concatenation}.
+	There exists a constant $c\in\mathbb{N}$ such that:
+	For every $n\in\mathbb{N}$, there exists a string $w_n\in\{0,1\}$ of length $l(w_n)=\exp_2^{(n)}(1)$ with Kolmogorov complexity $K(w_n)\leq \log_2(n) + c$.
+\end{lemma}
+\begin{proof}
+	Given everything as above, we construct a Turing Machine $\mathcal{T}$ that on input $x_n$ outputs the the string $w_n=(1)^{\exp_2^{(n)}(1)}$, which is the $\exp_2^{(n)}(1)$-wise concatenation of $1$. 
+	Besides an input tape and an output tape, $\mathcal{T}$ uses one auxiliary tape.
+	
+	First of all, $\mathcal{T}$ asserts that the input $x\in\{0,1\}^{*}$ correctly encodes a natural number $n_x$ as by Definition \ref{def:natural-numbers-binary-strings-encoding}.
+	Then, $\mathcal{T}$ writes a $1$ on the output tape and repeats the following procedure until the input tape only holds the empty string $\varepsilon$.
+	
+	%	The function $f$ computed by $\mathcal{T}$ will satisfy $f(x_n)=\begin{cases}
+		%		1^{\left(\bigcirc_{i=1}^n \exp_2\right)(1)}, & n\geq 1\\
+		%		1, & n=0.\\
+		%	\end{cases}$
+	\begin{itemize}
+		\item Remove all non-blank symbols on the auxiliary tape.
+		\item Copy the non-blank symbol sequence $x$ on the output tape to the auxiliary tape.
+		\item Interpret $x$ as the natural number $n_x\in\mathbb{N}$. Compute $x_{2^{n_x}}$ and write it on the output tape.
+		\item Subtract the number on the in
+		put tape by $1$.
+	\end{itemize}
+	
+	After this procedure, $\mathcal{T}$ copies $x$ once more to the auxiliary tape and eradicates the output tape blank. 
+	Now, it repeats the following procedure as long as the string on the auxiliary tape is not blank, and terminates afterwards.
+	\begin{itemize}
+		\item Write a $1$ on the output tape.
+		\item Subtract the string on the auxiliary tape by $1$.	
+	\end{itemize}
+	
+	If $\mathcal{T}$ is invoked on $x_n$ for any $n\in\mathbb{N}$, the string on the output tape after the first iterative procedure encodes $\exp_2^{(n)}(1)$.
+	After the second iterative procedure, we therefore have $(1)^{\exp_2^{(n)}(1)}$ written to the output tape as desired, and the universal Turing Machine $U$ from Section \ref{text:universal-tm} equally yields $(1)^{\exp_2^{(n)}(1)}$ when invoked on $\operatorname{enc}(\mathcal{T})x_n$.
+	
+	For that reason, choosing the constant as $c=l(\operatorname{enc}(\mathcal{T}))+1$, the Kolmogorov complexity of this string is bounded by
+	\begin{align}
+		K((1)^{\exp_2^{(n)}(1)})= K(\mathcal{T}(x_n)) = K\bigl(U(\operatorname{enc}(\mathcal{T})x_n)\bigr)
+		\leq  l(\operatorname{enc}(\mathcal{T})) + l(x_n) \leq c+\log_2(n).
+	\end{align}
+	Finally, this string has length $\exp_2^{(n)}(1)$, which concludes our proof.
+\end{proof}
+
+These compressibility results already reveal the fundamental reason why the Lempel-Ziv-Welch algorithm and Kolmogorov complexity induce disparate orders on binary strings $v\in\{0,1\}^{*}$.
+%Strings that are arbitrarily compressible by Turing Machines cannot be compressed beyond a polynomial factor by the LZW algorithm.
+For sufficiently large $n$, there is a string $w_n$ of length $\exp_2^{(n)}(1)$ whose Kolmogorov complexity is smaller than that of an incompressible string $v_n$ of length $n$.
+However, the compression length of the LZW algorithm cannot exceed a polynomial factor, rendering the compression of $w_n$ far larger than that of $v_n$. 
+Since the exponential tower function $\exp_2^{(n)}(1)$ grows faster than any fixed concatenation of exponential functions,
+Theorem \ref{theorem:unbounded-order-inconsistencies-from-lzw-to-kolmogorov} in the next section will demonstrate that this inconsistency even holds if we make arbitrarily large allowances for exponential, multiplicative, and additive approximation offsets.
+
+\section{Unbounded order inconsistencies }
+\label{sec:unbounded-order-inconsistencies}
+On the one hand, Lemma \ref{lemma:lzw-bounded-compression-ratio} demonstrated that the maximum compression ratio of the LZW algorithm merely scales quadratically with growing length. 
+Conversely, Lemma \ref{lemma:arbitrarycompress} demonstrated that strings such as $(1)^{\exp_2^{(n)}(1)}$ are arbitrarily compressible for increasing $n$, because their Kolmogorov complexity scales only logarithmically for increasing $n$.
+No matter that prefix-free encoding of Turing Machines we choose, this discrepancy allows us to conclude that for any additive and multiplicative, and even exponential offset constants $a,b,k\in\mathbb{N}$, there are infinitely many strings $v,w$ such that 
+\begin{equation}
+	l\bigl(A(v)\bigr)\geq \exp_2^{(k)}\bigl(a\cdot l\bigl( A(w)\bigr) + b\bigr), \text{ but } K(v) < K(w),
+\end{equation}
+where $A$ is the LZW compression $p$ from Algorithm \ref{alg:limpel-ziv-welch-algorithm}.
+
+But first and foremost, we concretize the dominance of exponential growth over polynomial growth by means of elementary calculus.
+The proofs of the following two results are omitted here and laid out in Appendix \ref{sec:elementary-math} instead.
+\begin{lemma}[Log-Linear Inequality with Additive Constant]
+	\label{lemma:log-lin-add-inequality-placeholder}
+	Let $a\geq 1,b\geq 0$ be arbitrary real numbers.
+	For any real number $x > 2^{4(a+b)}$, it holds that $a\log_2(x)+b < x$.
+\end{lemma}
+The second Lemma ascertains the growth of the recursive exponentiation of a constant over linear functions.
+\begin{lemma}[Special Cascade Exponential Equality]
+	\label{lemma:cascade-exp-inequality-basis-placeholder}
+	Let $\exp_2^{(m)}$ denote the $m$-wise recursive concatenation of $\exp_2(x):=2^x$ as in Definition \ref{def:recursive-concatenation}.
+	Let $a,b$ be an arbitrary real scalars with $a\geq 1,b\geq 0$, and $k\in\mathbb{N}$. 
+	For any natural number $n\in\mathbb{N}$ with $n>2^{k+2}\cdot (a+b)$, it holds that
+	\begin{equation}
+		\exp_2^{(n-k)}(1) > a\cdot n + b.
+	\end{equation}
+\end{lemma}
+
+The aforementioned order inconsistencies more generally hold for any compression algorithm $A$ whose compression ratio is bounded by a fixed concatenation of exponential functions.
+Therefore, even the aforementioned suggested proposal to recursively compress the pattern string dictionary would not resolve this issue, since the length of $p$ would still scale at least logarithmically with the length of $x$.
+Because it even streamlines some technical details in the proof, we therefore prove this more general result in the following Theorem.
+\begin{theorem}[Unbounded compression order inconsistencies]
+	\label{theorem:unbounded-order-inconsistencies-from-lzw-to-kolmogorov}
+	Let $\operatorname{enc}(\cdot)$ be an arbitrary, prefix-free encoding of Turing Machines.
+	Let $A$ be an arbitrary compression algorithm such that there exist a length threshold $n_0$, an exponential compression ratio offset $m_0\in\mathbb{N}$, and a polynomial compression upper bound $p(x)=\sum_{i=0}^{k_0}a_ix^i$ such that for all inputs $x$ with length $l(x)\geq n_0$, it holds that $\log_2^{(m_0)}\bigl(l(x)\bigr) \leq l\bigl(A(x)\bigr)\leq p\bigl(l(x)\bigr)$.
+	
+	Then, for any real numbers $a\geq 1,b\geq 0$, and any $k\in\mathbb{N}$,
+	there are strings $v,w\in\{0,1\}^{*}$, such that
+	\begin{equation}
+		l\bigl(A(v)\bigr)\geq \exp_2^{(k)}\bigl(a\cdot l\bigl( A(w)\bigr) + b\bigr), \text{ but } K(v) < K(w).
+	\end{equation}
+\end{theorem}
+\begin{proof}
+	Given $\operatorname{enc}(\cdot)$, the compression algorithm $A$ with $n_0,m_0,p(x)=\sum_{i=0}^{k_0}a_ix^i$, and the constants $a,b,k$ as above.
+	Let $c$ be the constant from Lemma \ref{lemma:arbitrarycompress}.
+	Fix an arbitrary $n\in\mathbb{N}$ with $n>\max\Bigl(2^{4 (1+c)},n_0,2^{k+m_0+3}\cdot\bigl(k_0+a\cdot \sum_{i=0}^{k_0}a_i + b\bigr)\Bigr)$.
+	
+	On the one hand, Lemma \ref{lemma:incompressible-strings} guarantees the existence of an incompressible string $v_n\in\{0,1\}^{*}$ with $K(v_n)\geq n$.
+	On the other hand, we consider the compressible string $w_n=1^{\exp_2^{(n)}(1)}$ from Lemma \ref{lemma:arbitrarycompress} with $K(z_n)\leq \log_2(n)+c$.
+	
+	%% 1. KOLMOGOROV INEQUALITY
+	\textbf{1. Kolmogorov Complexity Inequality}
+	
+	Because $n>2^{4(1+c)}$, Lemma \ref{lemma:log-lin-add-inequality-placeholder} asserts that 
+	\begin{align}
+		K(v_n)\overset{\ref{lemma:incompressible-strings}}{\geq} n \overset{\ref{lemma:log-lin-add-inequality-placeholder}}{>} \log_2(n)+c \overset{\ref{lemma:arbitrarycompress}}{\geq} K(w_n).
+	\end{align}
+	
+	%% 2. LEMPEL-VIZ-WELCH INEQUALITY
+	\textbf{2. Compression Inequality}
+	
+	Since $n>n_0$, the compression ratio bound of $A$ ensures that
+	\begin{align}
+		\label{eq:theorem-arbitrary-order-inconsistency-avn-to-exp-m0}
+		l\bigl(A(v_n)\bigr)\geq \log_2^{(m_0)}\bigl(l(v_n)\bigr) = \log_2^{(m_0)}\bigl(\exp_2^{(n)}(1)\bigr)=\exp_2^{(n-m_0)}(1).
+	\end{align}
+	
+	Because $2^n>n$ and $n\geq 1$, we also have
+	\begin{align}
+		\label{eq:theorem-arbitrary-order-inconsistency-exp-to-p}
+		2^{k_0n+a\cdot \sum_{i=0}^{k_0}a_i + b} = \bigl(2^{a\cdot \sum_{i=0}^{k_0}a_i + b}\bigr)\bigl(2^{n}\bigr)^{k_0}>\Bigl(a\cdot \sum_{i=0}^{k_0}a_i + b\Bigr) n^{k_0} \geq a\cdot \Bigl( \sum_{i=0}^{k_0}a_in^{i} \Bigr) + b. 
+	\end{align}
+	
+	Because $n>2^{k+m_0+3}\cdot\bigl(k_0+a\cdot \sum_{i=0}^{k_0}a_i + b\bigr)$, Lemma \ref{lemma:cascade-exp-inequality-basis-placeholder} also guarantees that 
+	\begin{align}
+		\label{eq:theorem-arbitrary-order-inconsistency-exp-to-lin}
+		\exp_2^{(n-k-m_0-1)}(1)> k_0n+a\cdot \sum_{i=0}^{k_0}a_i + b.
+	\end{align}
+	
+	By the strict monotonicity of $\exp_2$, we therefore conclude our proof with
+	\begin{align}
+		l\bigl(A(v_n)\bigr)&\overset{(\ref{eq:theorem-arbitrary-order-inconsistency-avn-to-exp-m0})}{\geq}\exp_2^{(n-m_0)}(1)\\
+		&= \exp_2^{(k)}\bigl(\exp_2^{(n-k-m_0)}(1)\bigr) \\
+		&= \exp_2^{(k)}\Bigl(\exp_2\bigl(\exp_2^{(n-k-m_0-1)}(1)\bigr)\Bigr) \\
+		&\overset{(\ref{eq:theorem-arbitrary-order-inconsistency-exp-to-lin})}{>} \exp_2^{(k)}\Bigl(\exp_2\bigl(k_0n+a\cdot \sum_{i=0}^{k_0}a_i + b\bigr)\Bigr)\\
+		&\overset{(\ref{eq:theorem-arbitrary-order-inconsistency-exp-to-p})}{>}\exp_2^{(k)}\Bigl( a\cdot \bigl( \sum_{i=0}^{k_0}a_in^{i} \bigr) + b \Bigr)\\
+		&\geq \exp_2^{(k)}\Bigl( a\cdot l\bigl(A(w_n)\bigr) + b \Bigr).
+	\end{align}
+\end{proof}
+The Lempel-Ziv-Welch compression from Algorithm \ref{alg:limpel-ziv-welch-algorithm} certainly satisfies these bounded compression ratio conditions.
+On the one side, Lemma \ref{lemma:lzw-compression-length-upper-bound} allows us to choose $p(x)=3x^2$ as an upper bound on the compression length.
+On the other side, since any $n>2^{16}$ satisfies $\sqrt{n}>\log_2(n)$ by virtue of Lemma \ref{lemma:log-lin-add-inequality-placeholder}, the compression length lower bound in Lemma \ref{lemma:lzw-bounded-compression-ratio} renders $\log_2(n)$ a sufficient lower bound with $n_0=2^{16}$.
+But even more modern compression algorithms like the DEFLATE algorithm \cite{deutsch1996rfc1951}, which is widely adopted in file compression, or the Brotli compression \cite{alakuijala2018brotli}, which recently exhibited experimental superiority over the so far unchallenged DEFLATE algorithm \cite{alakuijala2015comparison}, would not yield satisfactory approximations of the Kolmogorov complexity order between two strings.
+Furthermore, although it sufficed to neglect it for the above proof, the length of the additional pattern dictionary $T$ must also be taken into account when quantifying the compression ratio, because $x$ cannot be restored from $p$ without $T$.
+
+But even if compression algorithms were to yield such rough guarantees, the implementation of functional information would still require some further adjustments to such algorithms.
+While compression algorithms usually compress data ad hoc without prior knowledge, functional information instead conditions on the information of the given instances $x_i$. 
+In this vein, we merely require to find the shortest prefix $p$ such that $U(px_i)=y_i$.
+Moreover, functional information imposes \textit{multiple} constraints on $p$, because $p$ needs to satisfy $U(px_i)=y_i$ for all samples $(x_i,y_i)$ in the dataset $D$.
+The larger $D$ becomes, the harder will this constrained optimization problem appear too.
+
+If the second requirements renders too difficult to realise, it might hence also be acceptable to work with the \textit{joint} functional information $K_{JF}(D)$, as this definition simply concatenates the labels and instances to one long string.
+Although this comes at the cost of spoiling theoretical guarantees, it might yield satisfactory approximations in practice.
+
+This discussion stresses how the problem of learning a simplest consistent function is deeply intertwined with compression.
+An algorithm that would be able to compress the causal mechanism that determines $y_i$ given $x_i$ into a small string $p$ directly tackles the learning problem itself.
+The recent advances in compression theory \cite{campi2023compression} could therefore impact both the theory of generalization and practical algorithms in machine learning.
+

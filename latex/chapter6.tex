@@ -1,0 +1,33 @@
+% !TEX root = thesis_ruettgers_lukas.tex
+% From mitthesis package
+% Version: 1.01, 2023/07/04
+% Documentation: https://ctan.org/pkg/mitthesis
+
+\chapter{Conclusion}
+\label{chap:conclusion}
+%% DISCUSSION
+Our limitations to let machines learn simple functions are yet manifold.
+First of all, recursion is a powerful, yet simple computational concept that constitutes a multitude of simple functions.
+However, feed-forward neural networks and other models with non-recursive structure can not even express some simple recursive functions, and hence disregard a broad range of relevant patterns in nature.
+At the same time, learnability conditions for standard optimization objectives like ERM or IRM rely on some constraints what the representation class can express.
+Incorporating the discriminative power of Kolmogorov complexity as a simplicity bias into the optimization objective would however guarantee that at least all total computable functions are learnable with finite statistical information, even in the overarching setting where all partial computable functions are admitted to the representation class, a scenario for which classical PAC learnability based on the VC dimension or Rademacher complexity bounds could not yield any guarantee.
+Moreover, this additional discriminative power can also reduce the number of samples that are required to information-theoretically guarantee learnability below the typical thresholds in the PAC model, such as was shown for $d$-dimensional parity functions, where less than $d$ samples can suffice to render all hypotheses with a lower Kolmogorov complexity suboptimal.
+
+Our distribution-free setting where learnability is merely conditioned on the functional information in the dataset substantiates that limited training distributions that do not cover the entire support of possible instances can certainly suffice to learn any computable function, as long as the samples from this limited distribution are sufficiently informative that they cannot be losslessly compressed below the shortest description length of the true function.
+
+Learning is therefore inseparably linked to compression, because learning the true function can be regarded as identifying the shortest compression that encompasses sufficient information to generate the labels when given the samples.
+However, compression algorithms do not keep up with the compression power of Turing Machines, and therefore can not even yield approximate guarantees on the \textit{order} between the Kolmogorov complexity of two strings.
+
+Explicitly realising such an approximation of at least the ordering that Kolmogorov complexity induces seems hard and directly related to the learning problem itself. 
+In practice, viable heuristics that indirectly pursue the simplicity bias of Kolmogorov complexity might however already take advantage from its aforementioned benefits.
+
+\section{Future work}
+The steps towards such a powerful simplicity bias must be taken gradually and carefully.
+One of these next steps could include to further study the role of recursion to enable models to express simple functions.
+Although feed-forward networks alone might not exhibit this ability, modern architectures such as attention models notably advanced the expressive power and empirical generalization ability of large language models \cite{brown2020language}.
+Signs of simplicity biases within these models would further corroborate the theoretical foundation for these empirical capabilities.
+
+At the same time, bestowing compression algorithms with recursive procedures to enable them to take further advantage of recursive patterns in the data might scale their compression ratio limits.
+Although these limits might yet not yield approximate guarantees on the order induced by Kolmogorov complexity in the generality in which it was studied here, it might certainly be an important step towards it.
+
+%Finally, it might be interesting to characterize the Kolmogorov complexity of hypothesis class by means of \textit{symmetries} between the functional description of members.
