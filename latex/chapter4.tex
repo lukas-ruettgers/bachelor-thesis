@@ -3,24 +3,611 @@
 % Version: 1.04, 2023/10/19
 % Documentation: https://ctan.org/pkg/mitthesis
 
-\chapter{Identifying the Simplest Consistent Algorithm}
-We fix a universal reference machine $U$ and consider its induced enumeration of partial computable functions $f_1,f_2,\dots$.
-Let $f:\Sigma^{*}\to\Sigma^{*}$ be an arbitrary, partial computable function over an arbitrary, but fixed, finite alphabet $\Sigma$.
-For any $D\subseteq \Sigma^{*}$, we define
-\begin{align}
-	m_U(f\mid D)&:=\min_{\mathcal{S}\subset (D\times \Sigma^{*})^{*}}\{|S|\mid \text{The smallest } f_i \text{ consistent with } \mathcal{S} \text{ satisfies } f_i\equiv f\}, \text{ and}\\
-	m_U(f)&:= \min_{D\subseteq \Sigma^{*}} m_U(f\mid D).
-\end{align}
-Analogously, we consider the amount of information that certainly suffices for all possible training domains and define $\mathcal{F}\subseteq 2^{\Sigma^{*}}$ as the collection of subsets of $\Sigma^{*}$ in which $f$ is still identifiable. That is, for any partial computable function $g\not\equiv f$, $g\lvert_D\not\equiv f\lvert_D$ for all $D\in \mathcal{F}$. Then, we define
-\begin{align}
-	M_U(f)&:= \max_{D\in\mathcal{F}} m_U(f\mid D).
-\end{align}
-\section{Out-Sampling Erroneous Simpler Algorithms}
-What qualitative and quantitative criteria must the training sample meet to ensure that the simplest algorithm that is consistent with the sample truly coincides with the true function?
+%% ALTERNATIVE TITLES
+% Identifying the Simplest Consistent Algorithm
+% Information Thresholds for...
+\chapter{Sufficient Information for Out-of-Distribution Learnability}
+\label{chap:sufficient-information-learnability}
+In Chapter \ref{chap:models-optimization-kolmogorov}, we argued that the reasonable maximum demand we can pose on generalizing observations in a dataset $D$ is to infer a \textit{simplest consistent function} with $D$.
+With simplest consistent function, we refer to a function $f$ with minimal Kolmogorov complexity $K(f)$ that still coincides with every functional tuple $(x,y)\in D$. 
+Accordingly, Theorem \ref{theorem:surpass-kolmogorov-complexity-threshold} demonstrated how optimization objectives that exerted the discriminative power of Kolmogorov complexity to determine such simplest consistent functions could already filter out a huge fraction of false hypotheses $f'$.
+Particularly, it stated that for any function $f$ from a certain class of recursive functions, there exists a threshold $n_0$ such that for all datasets $D$ comprised of more than $n_0$ instances, all non-recursive functions $f'$ that still remain consistent with $D$ must have a higher Kolmogorov complexity than the true function $f$, rendering $f$ distinguishably optimal.
+This learnability condition is \textit{distribution-free} to the extent that it merely requires the $n\geq n_0$ instances in $D$ to be pairwise different. 
+Apart from that, the training distribution these instances stem from can be arbitrary.
 
-\section{Hypothesis Certification}
-% see Chapter 5.2 in \cite{li2008kolmogorov}
+Such statistical conditions that suffice to guarantee learnability even out-of-distribution are of essential interest in the domain generalization setting, where the training distribution can theoretically differ arbitrarily from the distribution during testing or deployment.
+But so far, such conditions are either quite conservative, or restricted to a specific class of functions \cite{arjovsky2019invariant,ahuja2021invariance}.
 
-\section{Retrievability of the Algorithm}
-% \cite{richens2024robust} Nearly Optimal Policies for Local Interventions imply Retrievability of Causal Model.
-We avail to the idea of \cite{richens2024robust} to derive sufficient conditions when the true algorithm is retrievable.
+Similarly, the aforementioned theorem has two critical drawbacks:
+\begin{enumerate}
+	\item The scope of functions for which this learnability guarantee applies is drastically limited. It only holds for functions $f=f_{\tau}^{\lozenge}$ from a particular class of recursive functions (see Definition \ref{def:recursive-completion}).
+	\item Secondly, the hypothesis class $\mathcal{H}$ is limited, since the statement only targets the suboptimality of non-recursive functions $f\in\mathcal{F}_{\tau}$. Even for datasets with more than $n_0$ instances, there could still be other partial computable functions with a lower Kolmogorov complexity than $f_{\tau}^{\lozenge}$.
+\end{enumerate}
+As will be shown later, there are realistic cases in which even datasets of infinite size could still fail to render the true function $f$ the simplest consistent function.
+In general, it is therefore delusive to condition learnability on the \textit{number} of samples in $D$. 
+Large datasets do not necessarily contain much information when their samples result from monotonously applied regularities with small description length.
+
+Instead, we will see that it is more meaningful to directly quantify the \textit{information} that $D$ conveys about the functions that could have \textit{generated} the samples.
+In our noise-free setting, generating a dataset means that $f(x_i)=y_i$ for each sample $(x_i,y_i)$ in $D$.
+In particular, this chapter puts forward how Kolmogorov complexity smooths the way to a holistic information-theoretic condition for the learnability of \textit{any} partial computable function $f:D\to\{0,1\}^{*}, D\subseteq\{0,1\}^{*}$, thus any function we could reasonably desire to learn computationally.
+% NOTE: PARTIAL COMPUTABLE FUNCTIONS might not be identified because of arbitrarily small definition ranges.
+This condition quantifies both the data-generating function $f$ and the dataset $D$ in terms of their Kolmogorov complexity and does not require further information on $f$ or $D$.
+Despite the generality of this condition, it still remains optimal in terms of the informational resources that are necessary to learn $f$.
+This result hence substantiates that small, but informative datasets can suffice to correctly infer the underlying function, even if the hypothesis class is as large as the class of all partial computable functions.
+
+Beyond this condition, given \textit{any} dataset $D$ generated by some $f$, this chapter provides an upper bound on the number of consistent yet inequivalent partial computable functions $f'$ that do not have a higher Kolmogorov complexity than $f$ and hence still stand in the way of inferring $f$.
+
+\section{Sample size does not avail learnability}
+\label{sec:sample-size-does-not-avail-learnability}
+We first state the underlying question this chapter seeks to answer in the first instance:
+\begin{quote}
+	Given an arbitrary partial computable function $f:\{0,1\}^{*}\to\{0,1\}^{*}$ with Kolmogorov complexity $K(f)$, what conditions does a dataset $D$ comprised of samples $(x,f(x))$ need to satisfy to render $f$ the partial computable function with the lowest Kolmogorov complexity that remains consistent with $D$?
+\end{quote}
+
+Theorem \ref{theorem:surpass-kolmogorov-complexity-threshold} merely required $D$ to contain sufficiently many samples.
+However, merely conditioning learnability on the sample size is not possible if we can not rest on the $i.i.d.$ assumption.
+
+We demonstrate on two realistic examples why such a condition would be vacuous.
+Firstly, there are functions $f$ with low Kolmogorov complexity such that even some infinite datasets would still not render $f$ the simplest consistent function.
+Secondly, we prove that there are functions with arbitrarily large Kolmogorov complexity that can be identified by a single sample.
+In both cases, we point up that the paradox resolves if we instead regarded datasets by a quantity based on Kolmogorov complexity.
+
+%% 1. PARADOX: INFINITE DATASETS - LOW KOLMOGOROV COMPLEXITY
+\textbf{1. Infinite datasets despite low Kolmogorov complexity}
+
+Consider the constant functions $f_0(x)=0,f_1(x)=1$ for all $x\in\{0,1\}^{*}$.
+On the opposite site, take the $\operatorname{mod}_2$ function $\operatorname{mod}_2(x)=x\mod 2$.
+$f_0$ and $f_1$ arguably both have a lower Kolmogorov complexity than $\operatorname{mod}_2$ because they directly write a symbol on the output tape and terminate while a Turing Machine that computes $\operatorname{mod}_2$ would intuitively require two states to represent whether the last encountered symbol was $0$ or $1$.
+For that reason, we assume $K(f_0),K(f_1)<K(\operatorname{mod}_2)$ without loss of generality.
+If this inequality would hold conversely for $f_1$ or $f_0$, we can conduct the same argument symmetrically.
+The two datasets $D_0^{n}:=\{(2k,0)\mid k\in\mathbb{N},k\leq n\}$ and $D_1^{n}:=\{(2k+1,0)\mid k\in\mathbb{N},k\leq n\}$ remain consistent with $f_0$ and $f_1$ respectively for any sample size $n$.
+This consistency even holds for the infinite datasets $D_0:=\{(2k,0)\mid k\in\mathbb{N}\}$ and $D_1:=\{(2k+1,0)\mid k\in\mathbb{N}\}$.
+A guarantee that conditioned the learnability of $\operatorname{mod}_2$ merely on the sample size does therefore not exist.
+This paradox fades away if we consider the Kolmogorov complexity of the datasets $D_0^{n}$ and $D_1^{n}$ instead.
+Provided the instances $x_{2k},k\leq n$ in a self-delimiting format, a Turing Machine with a similar simplicity as the one that computes the constant function $f_0$ could generate the dataset $D_0^{n}$.
+As we prove later in a more general scope, the \textit{conditional Kolmogorov complexity} $K\bigl((y_0,y_2,\dots,y_{2n}) \mid (x_0,x_2,\dots,x_{2n})\bigr)$, where $y_i=f_0(x_i)$, does not exceed the Kolmogorov complexity $K(f_0)$ by a constant.
+
+%% 2. PARADOX: SINGLE SAMPLE FOR ARBITRARILY HIGH KOLMOGOROV COMPLEXITY
+\textbf{2. Single samples despite arbitrarily high Kolmogorov complexity}
+
+On the other hand, there are functions with arbitrarily high Kolmogorov complexity that can be learned by datasets $D=\{(x_1,y_1)\}$ with only a single sample.
+For any $y\in\{0,1\}^{*}$, consider the dataset $D_y=\{(0,y)\}$.
+There must exist a partial computable function $f_y$ that is consistent with $D$ and achieves the lowest Kolmogorov complexity among all such $f$.
+If there are multiple ones with the same lowest complexity, take any of them.
+As an intuitive example, this function $f_y$ could be the constant function $f_y(x)=y, x\in\{0,1\}^{*}$.
+For any $y\neq y'$, the functions $f_{y},f_{y'}$ are pairwise different, since $f_{y}(0)\neq f_{y'}(0)$.
+Consequently, the set of functions $\{f_y\mid y\in\{0,1\}^{*}\}$ is infinite, and there hence exists no upper bound on the Kolmogorov complexity of the functions comprised.
+Again, let us take a look at this paradox from the viewpoint of Kolmogorov complexity.
+Although each $D_y$ comprised solely one sample, an algorithm that produces $D_y$ on input $0$ has to generate $y$ from scratch. 
+These algorithms therefore have a Kolmogorov complexity that similarly grows to infinity as $y\to\infty$, by the same counting argument as in the Incompressibility Lemma \ref{lemma:incompressible-strings-conditional}.
+Likewise will the conditional Kolmogorov complexity $K\bigl(y \mid 0\bigr)$ scale to infinity. 
+
+These examples expose the discrepancy between the mere number of samples in a dataset and the actual \textit{information} these samples convey about the functions that could have generated it.
+In the next section, \textit{functional information} is proposed as a quantity that measures this kind of information within a dataset.
+It will be shown that functional information has a tight relation with the Kolmogorov complexity of the function that could have generated this dataset and hence allows us to culminate in an learnability condition for the overarching hypothesis class of arbitrary partial computable functions.
+
+\section{Quantifying the functional information in a dataset}
+\label{sec:quantify-functional-information}
+To quantify how much information a dataset $D$ conveys about the functions that could have generated it, it is delusive to directly consider the \textit{unconditional} Kolmogorov complexity of $D$, because it also incorporates the information that is required to generate the instances $x_i$.
+These $x_i$ are however independent from the actual function $f$, but the $y_i$ are not. Therefore, it is more accurate to consider how much information is \textit{added} after the instances $x_1,\dots,x_n$ are completed by their labels $y_1,\dots,y_n$.
+At first glance, this notion of information could be formalised by the Kolmogorov complexity of $[y_1,\dots,y_n]$ given $[x_1,\dots,x_n]$, where $[z_1,z_2,\dots,z_n]$ denominates the self-delimiting encoding of the string sequence $z_1,z_2,\dots,z_n$ just as in Equation \ref{eq:self-delimiting-enc-sequence}.
+%Although this formulation already satisfies some desirable properties, 
+Aggregating all instances and labels into one long self-delimited string respectively however entails cumbersome peculiarities that spoil some desirable properties.
+Although the following definition does hence not ultimately identify the aforementioned notion of information, its treatment elucidates the necessity of the definition we eventually end up with.
+To that end, we first formalise the aforementioned idea as the \textit{joint functional information} in a dataset.
+%Therefore, the subsequently proposed quantity accurately reflects the information within a dataset that is related to the data-generating function, and is hence referred to as \textit{functional information} in $D$.
+\begin{definition}[Joint functional information in a dataset]
+	Let $D=\{(x_1,y_1),\dots,(x_n,y_n)\},n\in\mathbb{N}$ be an arbitrary finite, ordered dataset, where $x_i,y_i\in\{0,1\}^{*}$.
+	We denominate by $[z_1,z_2,\dots,z_n]$ the self-delimiting encoding of the string sequence $z_1,z_2,\dots,z_n$ just as in Equation \ref{eq:self-delimiting-enc-sequence}.
+	Then, the joint functional information in $D$ is defined as
+	\begin{equation}
+		K_{JF}(D):=K\bigl([y_1,y_2,\dots,y_n] \mid [x_1,x_2,\dots,x_n]\bigr).
+	\end{equation}
+	
+\end{definition}
+% - The former is easier to compute but has some mathematically undesirable properties
+% - - Permutation variance, no monotonicity for supersets, lower bound hard to quantify
+% - - Second question in maldesigned exam hints at the right answer to the first question.
+% - The latter is harder to approximate with compression algorithms but satisfies some desirable properties.
+To some extent, the joint functional information in a dataset is already closely related to the information within the functions that could have produced it, which is formally established in the Theorem below.
+\begin{theorem}[Joint functional information bound of datasets]
+	\label{theorem:dataset-joint-functional-information-bound}
+	Let $\operatorname{enc}$ be an arbitrary prefix-free encoding of Turing Machines.
+	There is an additive constant $c\in\mathbb{N}$ such that the following holds:
+	
+	Let $D=\{(x_1,y_1),\dots,(x_n,y_n)\},n\in\mathbb{N}$ be an arbitrary finite, ordered dataset.
+	For any partial computable function $f$ that satisfies $f(x_i)=y_i$ for all $1\leq i\leq n$, we have
+	
+	\begin{equation}
+		K\bigl([y_1,\dots,y_n] \mid [x_1,\dots,x_n]\bigr) \leq K(f) + c.
+	\end{equation}
+\end{theorem}
+\begin{proof}
+	We construct a Turing Machine $V$ that generates datasets in the following way.
+	
+	$V$ expects as input a string that begins with the prefix-free encoding $\operatorname{enc}(\mathcal{T})$ of a Turing Machine $T$.
+	Thereon follows the self-delimited encoding of the self-delimited sequence $\bigl[[x_1,\dots,x_n],\varepsilon\bigr]$, where the enclosing self-delimitation arises from the convention in the Definition \ref{def:conditional-kolmogorov-complexity} of conditional Kolmogorov complexity.
+	
+	For each input $x_i$, $V$ simulates $\mathcal{T}$ on $x_i$. 
+	After the simulation terminates with output $y_i$, 
+	$V$ appends $[y_i,\varepsilon]$ to the string on the output tape.
+	If $x_i$ was the last string, $i=n$, which $V$ recognizes by the self-delimiting encoding, it merely appends $y_i$ to the output tape instead.
+	Denote the encoding length of this Turing Machine by $c:=l(\operatorname{enc}(V))$.
+	
+	Now, let $f$ be an arbitrary partial computable function and $D=\{(x_1,y_1),\dots,(x_n,y_n)\}$ be an arbitrary finite, ordered dataset such that $f(x_i)=y_i$.
+	Let $\mathcal{T}_f$ be the Turing Machine with the shortest encoding that computes $f$.
+	It thence holds that $K(f)=l(\operatorname{enc}(\mathcal{T}_f))$.
+	Because $f(x_i)=y_i$ by assumption, the instances $x_i$ in $D$ all belong to the definition range of $f$.
+	For that reason, $\mathcal{T}_f$ will certainly terminate on every input $x_i$.
+%	Even if $f$ is not total computable, i.e. there are some inputs outside the definition range of $f$ on which $\mathcal{T}_f$ does not halt, the instances $x_i$ in $D$ all belong to this definition range.
+%	Because $f$ is total computable, $\mathcal{T}_f$ will terminate on every input.
+	
+	Therefore, invoking the universal Turing Machine $U$ on the string $\operatorname{enc}(V)\operatorname{enc}(\mathcal{T}_f)[x_1,\dots,x_n]$ yields the output $[y_1,\dots,y_n]$, and we conclude that
+	\begin{align}
+		K([y_1,\dots,y_n] \mid [x_1,\dots,x_n]) 
+		&= K\Bigl( U\bigl( \operatorname{enc}(V)\operatorname{enc}(\mathcal{T}_f)\bigl[[x_1,\dots,x_n],\varepsilon\bigr] \bigr) \Bigr)\\
+		&\leq l(\operatorname{enc}(V)) + l(\operatorname{enc}(\mathcal{T}_f))
+		= K(f) + c.
+	\end{align}
+\end{proof}
+
+Equivalently, this Theorem lower bounds the Kolmogorov complexity of partial computable functions that could have generated a dataset.
+For that reason, it sets the stage to a general, sufficient condition for the simplest consistent function to coincide with the true function $f$.
+Specifically, all datasets $D$ generated by $f$ satisfy $K_{JF}(D)\leq K(f) + c$.
+The closer the functional information in $D$ approaches this upper bound, the more simpler functions must have been rendered inconsistent with some functional tuples $(x,y)$ in $D$.
+Therefore, knowledge of the functional information in $D$ enables to determine an upper bound on the number of alternative functions $f'$ that do not have a higher Kolmogorov complexity than $f$ but still remain consistent with a dataset $D$.
+Nonetheless, this leaves an essential question open. For any partial computable function $f$, \textit{are} there actually datasets $D$ generated by $f$ that reach this functional information upper bound $K(f)+c$ and ergo narrow down the number of alternative simplest consistent functions?
+Or in greater detail, what is the maximum functional information that the class of ordered datasets generated by $f$, hereinafter denoted by $\mathcal{D}_f$, exhibits?
+Accordingly, we denote this maximum by 
+\begin{equation}
+	\label{eq:max-functional-information}
+	M_f:=\max_{D\in\mathcal{D}_f}\{K_{JF}(D)\}.	
+\end{equation}
+This maximum is well-defined for each $f$, since any dataset $D$ that was generated by $f$ satisfies $K_{JF}(D)\leq K(f)+c$.
+But can we guarantee that $M_f$ remains close to $K(f)$, say up to an additive constant?
+Or to go one step further:
+\begin{quote}
+	if $D$ is inconsistent with all partial computable functions with $K(f)<k$, is the joint functional information $K_{JF}(D)\geq k$?
+\end{quote} 
+
+\subsection{The inconveniences of joint functional information}
+\label{sec:inconvenience-joint-functional-information}
+For our definition of joint functional information, such a desirable lower bound for $M_f$ is unfortunately impossible if we consider the class of partial computable functions as a whole. 
+The datasets above comprise merely tuples over the \textit{definition range} of a partial computable function $f$.
+On inputs where $f$ is undefined, the Turing Machines that compute $f$ will never halt.
+But this halting behaviour also contributes to the information within a Turing Machine.
+Turing Machines $\mathcal{T}$ that output $0$ for all inputs $x$ not longer than $m$ but never halt when invoked on longer inputs arguably require more information to describe than Turing Machines $\mathcal{T}'$ that simply output $0$ on any input.
+Consequently, the partial computable function $f$ such that $f(w)$ is constantly $0$ for all inputs that are not longer than $m$ and undefined otherwise has a higher Kolmogorov complexity than the constant function $f'(w)=0$ that is defined for all inputs.
+If we however want to learn the partial computable function $f$ and not the total computable function $f'$, any dataset over the definition range of $f$ will not render $f'$ inconsistent.
+
+Even when the above question is only addressed for \textit{total} computable functions, this restriction introduces the next quandary, because the halting problem is not computable \cite{chaitin1974information}. 
+
+Therefore, there exists no universal Turing Machine that accepts exactly the encodings of total computable functions.
+Any universal Turing Machine that accepts the encodings of total computable functions must necessarily also accept some non-total, partial computable functions.
+Without making particular assumptions on the encoding, such lower bounds on the Kolmogorov complexity of a class of elements usually rest on the pigeonhole principle and the limitations of the encoding space, as we will later employ in Lemma \ref{lemma:incompressible-strings-conditional}.
+In this case however, the total computable functions could constitute only a tiny fraction of this encoding space, rendering such lower bounds vacuous.
+
+\label{text:discriminative-dataset}
+On the other hand, for any \textit{total} computable $f$ there certainly exist datasets $D$ such that any \textit{partial} computable $f'\not\equiv f$ with $K(f')\leq K(f)$ is rendered inconsistent with $D$.
+For any such $f'$, there must namely either exist an instance $x$ with $f(x)\neq f'(x)$, or an instance $x$ that is out of the definition range of $f'$.
+Gathering all these $x$ together into one dataset $D^{*}$ will certainly render $f$ the unique simplest consistent function.
+But proving that the joint functional information in this dataset $K_{JF}(D^{*})$ is also close to $K(f)$ is non-trivial, if not impossible.
+
+The reason for that is that joint functional information does not satisfy some elementary mathematical properties that would render useful in such an argument.
+We provide two examples.
+Firstly, joint functional information is not monotonous with growing datasets.
+That is, it does not necessarily hold that $K_{JF}(D)\leq K_{JF}(D')$ for $D\subset D'$.
+Secondly, joint functional information is not invariant under permutation, it is sensitive to the order of the elements in $D$.
+Both of these peculiarities substantiate that joint functional information is yet inconsistent with the notion of information that we desire to quantify.
+But to advance these arguments, we first need to become aware of the existence of \textit{incompressible} strings, which cannot be compressed beyond their own length.
+\begin{lemma}[Incompressible Strings]
+	\label{lemma:incompressible-strings-conditional}
+	For any $n\in\mathbb{N}$ and any $x\in\{0,1\}^{*}$, there exists a string $v_n\in\{0,1\}^n$ with $K(v_n\mid x)\geq n$.
+	
+\end{lemma}
+\begin{proof}
+	Let $n\in\mathbb{N}$ be arbitrary.
+	There are $2^n$ strings of length $n$, but only $\sum_{i=0}^{n-1}2^i=2^{n}-1$ strings that are shorter than $n$. 
+	By the pigeonhole principle, there must be at least one $v\in\{0,1\}^n$ such that there exists no program $p$ of length $l(p)<n$ with $U(p)=v$.
+	For this $v$, we have $K(v\mid x)\geq n$.
+\end{proof}
+
+With this Lemma at hand, let us begin with the monotonicity for growing subsets.
+Our initial objective was to quantify the information that functions that could have generated a dataset exhibit.
+But as introduced in the beginning, \textit{generating} a dataset $D$ refers to generating each sample \textit{in isolation}, not generating the joint label sequence $[y_1,\dots,y_n]$ when given the joint instance sequence $[x_1,\dots,x_n]$.
+However, the latter more loose definition allows to leak information across different samples.
+That is, some instance $x_j$ might convey information about a different label $y_i$, and hence artificially simplify the production of $[y_1,\dots,y_n]$.
+For this very reason, producing larger datasets must not necessarily require algorithms with more information that producing smaller datasets, as the following Lemma illustrates.
+\begin{lemma}[Joint functional information is not monotonous with growing subsets]
+	There exist subsets $D,D'$ such that $D\subset D'$ but irrespective of the ordering of $D$ and $D'$, $K_{JF}(D)>K_{JF}(D')$.
+\end{lemma}
+\begin{proof}
+	Fix an arbitrary $x\in\{0,1\}^{*}$.
+	For any $n\in\mathbb{N}$, Lemma \ref{lemma:incompressible-strings-conditional} guarantees the existence of a string $y^{(n)}\in\{0,1\}^{*}$ with $K(y^{(n)}\mid x)\geq n$.
+	Now, consider the three ordered datasets $D^{(n)}_1=\{(x,y^{(n)})\},D^{(n)}_2=\{(y^{(n)},0),(x,y^{(n)})\},D^{(n)}_3=\{(x,y^{(n)}),(y^{(n)},0)\}$.
+	Obviously, $D^{(n)}_1\subset D^{(n)}_2, D^{(n)}_3$.
+	We will prove that $D^{(n)}_2$ and $D^{(n)}_3$ have a lower joint functional information than $D^{(n)}_1$ for sufficiently large $n$.
+	
+	First, we construct two Turing Machines $\mathcal{T}_2,\mathcal{T}_3$ that can generate datasets of the kind $2$ and $3$ for arbitrary strings $x$ and $y^{(n)}$.
+	The Turing Machine $\mathcal{T}_2$ expects its input as a self-delimited sequence of two strings $\bigl[[y,x],\varepsilon\bigr]$.
+	$\mathcal{T}_2$ just reads $y$ and returns $[0,y]$.
+	Similarly, $\mathcal{T}_3$ also expects its input as a self-delimited sequence of two strings $\bigl[[x,y],\varepsilon\bigr]$.
+	But $\mathcal{T}_3$ now ignores $x$, reads $y$ and returns $[y,0]$.
+	Hereinafter, we denote the encoding lengths of $\mathcal{T}_2$ and $\mathcal{T}_3$ as $c_2$ and $c_3$, respectively.
+	For that reason, $K_{JF}(D^{(n)}_2)=K([0,y^{(n)}] \mid [y^{(n)},x])\leq c_2$. 
+	Symmetrically, $K_{JF}(D^{(n)}_3)\leq c_3$.
+	However, $K_{JF}(D^{(n)}_1)\geq n$ by the definition of $y^{(n)}$.
+	For $n> c_2,c_3$, we therefore conclude $K_{JF}(D^{(n)}_1)>K_{JF}(D^{(n)}_2),K_{JF}(D^{(n)}_3)$, although $D^{(n)}_1\subset D^{(n)}_2,D^{(n)}_3$.
+\end{proof}
+A realistic example that illustrates this inconsistency is a poorly designed exam, where the second question already hints at the true answer to the first question. 
+The above proof already elicits the second inconsistency, namely that joint functional information is sensitive to the order in the dataset.
+The ordering of the samples might allow Turing Machines to draw on benign regularities within the output, which the subsequent Lemma exemplifies.
+\begin{lemma}[Joint functional information is not ordering-invariant]
+	There exists an ordered dataset $D:=\{(x_1,y_1),\dots,(x_n,y_n)\}$ and a permutation $\pi$ over $\{1,\dots,n\}$ such that 
+	\begin{equation}
+		K([y_1,\dots,y_n]\mid [x_1,\dots,x_n]) \neq K([y_{\pi(1)},\dots,y_{\pi(n)}] \mid [x_{\pi(1)},\dots,x_{\pi(n)}]).
+	\end{equation}
+\end{lemma}
+\begin{proof}
+	Fix an arbitrary, pairwise different binary strings $x_1,x_2,\dots\in\{0,1\}^{*}$.
+	Hereinafter, we fix an arbitrary $n\in\mathbb{N}$.
+	For notational clarify, we avoid superscripts $(n)$ in the definition of the ensuing objects, although all of them are different for different $n$. 
+	For the example of the dataset $D$, we explicitly write $D^{(n)}$ if we want to clarify $n$.
+	
+	Lemma \ref{lemma:incompressible-strings-conditional} guarantees the existence of a string $y\in\{0,1\}^{n}$ with $K(y\mid x)\geq n$.
+	We construct the ordered dataset $D:=\{(x_1,y_1),\dots,(x_n,y_n)\}$ where $y_i$ is the $i$th bit in the binary string $y$.
+	
+	Without loss of generality, $y$ contains not more $0$s than $1$s. (Otherwise, the argument is symmetric.)
+	There exists a permutation $\pi$ over $\{1,\dots,n\}$ that rearranges the bits in $y$ in such a way that $y_{\pi(1)}\cdots y_{\pi(n)}=0^{j}1^{n-j}$ for some $j\leq \frac{n}{2}$.
+	Accordingly, denote the resulting ordered dataset by
+	\begin{equation}
+		D_{\pi}:=\{(x_{\pi(1)},y_{\pi(1)}),\dots,(x_{\pi(n)},y_{\pi(n)})\}.
+	\end{equation} 
+	
+	First, we show that $K_{JF}(D)\geq n-c_0$ for some constant $c_0$.
+	
+	Let $\mathcal{T}_{con}$ be the concatenation Turing Machine that on input of a self-delimited sequence $[z_1,\dots,z_n]$ outputs the concatenated string $z_1\cdots z_n$ without delimiters.
+	
+	Moreover, let $V$ be the Turing Machine that concatenates two functions.
+	On input $\operatorname{enc}(\mathcal{T})p$, $V$ first simulates the universal Turing Machine $U$ on $p$. 
+	After the simulation terminated with output $y$, $V$ simulates $\mathcal{T}$ on $y$ and returns the output from $\mathcal{T}$.
+	
+	Let $c_{con}$ and $c_v$ denominate the encoding lengths of these Turing Machines $\mathcal{T}_{con}$ and $V$.
+	For any string $p,p'$ such that $U(p\bigl[[x_1,\dots,x_n],\varepsilon\bigr]p')=[y_1,\dots,y_n]$, 
+	If there are strings $p,p'$ that outputs $[y_1,\dots,y_n]$ when provided to the universal Turing Machine $U$ along with $[x_1,\dots,x_n]$, then we also have
+	\begin{equation}
+		U(\operatorname{enc}(V)\operatorname{enc}(\mathcal{T}_{con})p\bigl[[x_1,\dots,x_n],\varepsilon\bigr]p')=y_1\cdots y_n=y.
+	\end{equation}
+	But as $K(y\mid [x_1,\dots,x_n])\geq n$, it must also hold that 
+	\begin{equation}
+	n\leq l(\operatorname{enc}(V))+l(\operatorname{enc}(\mathcal{T}_{con}))+l(p)+l(p')=c_v+c_{con}+l(p)+l(p').	
+	\end{equation}
+	
+	By the definition of conditional Kolmogorov complexity (see Definition \ref{def:conditional-kolmogorov-complexity}), we conclude that
+	\begin{equation}
+		K_{JF}(D)=K([y_1,\dots,y_n]\mid [x_1,\dots,x_n])\geq n-c_0
+	\end{equation}  
+	for the constant $c_0:=c_v+c_{con}$.
+	
+	On the other hand, we now show that $K_{JF}(D_{\pi})\leq \log_2(n)+c_1$ for some constant $c_1$.
+	
+	To that end, we construct the Turing Machine $\mathcal{T}_1$.
+	$\mathcal{T}_1$ expects its input as $\bigl[[z_1,\dots,z_n],x_j\bigr]$, where $x_j$ is the binary string encoding the natural number $j\in\mathbb{N}$.
+	Using the outer delimiters, $\mathcal{T}_1$ counts the number of samples and saves this number $n$ on an auxiliary tape.
+	Subsequent to that, $\mathcal{T}_1$ checks whether $j\leq n$, and writes $[y_1,\dots,y_n]$ on the output tape, where the first $j$ $y_i$ are $0$ and the remaining $y_i$ are $1$.
+	
+	Let $c_1$ be the encoding length $l(\operatorname{enc}(\mathcal{T}_1))$.
+	Since $j\leq \frac{n}{2}$, we have 
+	\begin{align}
+		K_{JF}(D_{\pi})&=K\bigl([y_{\pi(1)},\dots,y_{\pi(n)}]\mid [x_{\pi(1)},\dots,x_{\pi(n)}]\bigr) \\
+		&\leq l(\operatorname{enc}(\mathcal{T}_1)) + \lceil \log_2(j)\rceil \\
+		&\leq c_1 +  \left\lceil\log_2\left(\frac{n}{2}\right)\right\rceil \\
+		& \leq c_1 + \log_2(n) + 1 + \underbrace{\log_2\left(\frac{1}{2}\right)}_{=-1} = c_1 + \log_2(n).
+	\end{align}
+	
+	For sufficiently large $n$, we thus eventually have $n-c_0>\log_2(n)+c_1$, and therefore $K_{JF}(D^{(n)})\neq K_{JF}(D^{(n)}_{\pi^{(n)}})$.
+\end{proof}
+
+Both these drawbacks suggests that reconciling joint functional information with our notion of \textit{generating} a dataset necessitates to \textit{isolate} the samples.
+In this manner, we hinder Turing Machines from availing themselves of hardly controllable information leaks \textit{across} samples.
+The refined definition in the next subsection satisfies not only the two desirable properties above, but allows general, yet nearly optimal, sufficient conditions for learnability of \textit{any} partial computable function.
+
+\subsection{Isolating functional information}
+The insight from the last subsection leads our formalisation of the information in a dataset $D$ back to the roots of unconditional Kolmogorov complexity.
+The functional information in a dataset is equivalent to the least information required to describe an algorithm that produces the correct label $y_i$ for each instance $x_i$ in $D$.
+\begin{definition}[Functional information in a dataset]
+	\label{def:functional-information}
+	Let $D=\{(x_1,y_1),\dots,(x_n,y_n)\},n\in\mathbb{N}$ be an arbitrary finite (unordered) dataset, where $x_i,y_i\in\{0,1\}^{*}$.
+	Then, the functional information in $D$ is defined as
+	\begin{equation}
+		K_{F}(D):=\min_{p\in\{0,1\}^{*}}\{l(p)\mid U(px_i)=y_i \text{ for all } (x_i,y_i)\in D\}.
+	\end{equation}
+\end{definition}
+In this vein, the functional information in $D$ bears resemblance to the Kolmogorov complexity of a function $K(f)$ with the difference that in latter, the constraints $U(px)=f(x)$ are imposed for all $x\in\{0,1\}^{*}$, while the constraints $U(px_i)=y_i$ in the former are merely imposed of the set of instances in $D$. Beyond $D$, any such function encoded by the string $p$ may behave arbitrarily.
+
+The definition regards $D$ as an unordered set and is hence not sensitive to the order of the enumeration of samples in $D$.
+Moreover, functional information is also monotonously increasing for larger datasets, since larger datasets add new constraints to the string $p$, while the prior ones remain unaltered.
+Clearly, this definition also sharpens the bound from Theorem \ref{theorem:dataset-joint-functional-information-bound}, as it removes the additive constant. Since we will often refer to this result, it is stated as a Lemma.
+\begin{lemma}[Functional information is bounded by generating function]
+	\label{lemma:functional-information-bounded-by-generating-function}
+	Let $D=\{(x_1,y_1),\dots,(x_n,y_n)\},n\in\mathbb{N}$ be an arbitrary finite dataset, where $x_i,y_i\in\{0,1\}^{*}$.
+	For any partial computable function $f$ that satisfies $f(x_i)=y_i$ for all $1\leq i\leq n$, we have $K_D(F)\leq K(f)$.
+\end{lemma}
+\begin{proof}
+	Given $D$ and $f$ be as above.
+	
+	The string $p$ with $l(p)=K(f)$ that satisfies the constraints $U(px)=f(x)$ in the Kolmogorov complexity will also satisfy the constraints $U(px_i)=y_i$, because $f(x_i)=y_i$ for all $(x_i,y_i)\in D$.
+\end{proof}
+At the same time, this definition also resolves the conundrum that was posed just before the beginning of Subsection \ref{sec:inconvenience-joint-functional-information} about the maximal possible functional information that datasets generated by $f$ can exhibit.
+At least for \textit{total} computable functions $f$, there certainly exist datasets $D$ that remain consistent with $f$ and satisfy $K_F(D)=K(f)$, thus paving the way to sharp learnability conditions later.
+First, we briefly state this result formally.
+\begin{lemma}[Maximal functional information]
+	\label{lemma:maximal-function-information}
+	For any total computable function $f$, there exists a dataset $D$ that remains consistent with $f$ and satisfies $K_F(D)=K(f)$.
+\end{lemma}
+\begin{proof}
+	Fix an arbitrary total computable function $f$.
+	Let $p\in\{0,1\}^{*}$ be a string with $K(f)=l(p)$ such that $U(px)=f(x)$ for all $x\in\{0,1\}^{*}$. 
+	For any string $\hat{p}$ with $l(\hat{p})<l(p)$, there exists an $x\in\{0,1\}^{*}$ such that $U(\hat{p}x)\neq f(x)$.
+	We collect all these samples $(x,f(x))$ into one dataset $D^{*}$ just as in Subsection \ref{text:discriminative-dataset}.
+	This dataset has a functional information $K_F(D)\geq K(f)$.
+	But by Lemma \ref{lemma:functional-information-bounded-by-generating-function}, it also holds that $K_F(D)\leq K(f)$, which yields the desired result.
+\end{proof}
+For partial computable functions however, such a dataset does not exist in general.
+Consider the example from beginning of Subsection \ref{sec:inconvenience-joint-functional-information} that juxtaposed the total computable constant function $f'(x)=0$ with the partial computable function $f$ that is constantly $0$ for all strings not longer than $m$ but undefined for all other strings.
+Since datasets are restricted to the definition range of the data-generating function, any dataset generated by $f$ remains consistent with $f'$.
+However, $f'$ arguably has a lower Kolmogorov complexity than $f$, since this threshold $m$ can be chosen arbitrarily large.
+Therefore, there is no dataset that renders $f$ its simplest consistent function.
+But admittedly, such synthetic examples do not matter much in practical cases since we only care about that the machine executes the desired function correctly within its definition range.
+
+%Therefore, we focus on total computable functions by now.
+%Even if we want to learn meaningful functions undefined for some input such as $f(w)=\frac{1}{l(w)}$, we could reserve a dedicated string that is output as an error code if the input is not in the definition range of $f$.
+%In the above case, we could instead decide to learn $f(w):=\begin{cases}
+%		\frac{1}{l(w)},& w\neq \varepsilon\\
+%		\varepsilon, & w=\varepsilon.
+%	\end{cases}$
+\subsection{Sufficient learnability conditions for any computable function}
+As announced earlier, the functional information in a dataset $D$ directly allows to upper bound the number of simpler consistent functions that still stand in the way of rendering the true function $f$ the simplest consistent function. 
+This upper bound holds across all prefix-free encodings of Turing Machines and can be understood as a worst-case guarantee for arbitrarily dense encodings.
+
+\begin{theorem}[Maximum number of alternative simpler consistent functions]
+	\label{theorem:max-alternative-simpler-consistent-functions}
+	Let $D=\{(x_1,y_1),\dots,(x_n,y_n)\},n\in\mathbb{N}$ be an arbitrary, finite dataset with functional information $K_{F}(D)$.
+	Given an arbitrary partial computable function $f:\{0,1\}^{*}\to\{0,1\}^{*}$ that is consistent with $D$.
+	Then, there are at most $2^{K(f)+1} - 2^{K_{F}(D)}$ different partial computable functions $f'$ with $K(f')\leq K(f)$ that are consistent with $D$ but are not equivalent to $f$, $f'\not\equiv f$.
+\end{theorem}
+\begin{proof}
+	Given an arbitrary, not necessarily prefix-free, encoding $\operatorname{enc}(\cdot)$ of Turing Machines.
+	Given $D$ with functional information $K_F(D)$ and a consistent partial computable function $f$ as above.
+	By Lemma \ref{lemma:functional-information-bounded-by-generating-function}, any partial computable function $f'$ that is consistent with $D$ satisfies $K(f') \geq K_F(D)$.
+	By the geometric sum, the number of strings $v$ with length $K_F(D)\leq v \leq K(f)$ are 
+	$2^{K(f)+1} -1 - (2^{K_{F}(D)}-1)=2^{K(f)+1}-2^{K_{F}(D)}$.
+	This also upper bounds the number of different partial computable functions $f'$ with $K_F(D)\leq K(f')\leq K(f)$.
+\end{proof}
+After all, the above condition sheds light on a blind spot that the principle of inferring a simplest consistent function yet exhibits.
+
+In general, even prefix-free encodings $\operatorname{enc}(\cdot)$ of Turing Machines can be quite dense in the sense that for each length $n$, $2^n-1$ strings are used as the encoding $\operatorname{enc}(\mathcal{T})$ of some Turing Machine $\mathcal{T}$.
+For any partial computable function $f$ with Kolmogorov complexity $K(f)$, there could be theoretically $\Theta(2^{K(f)})$ different partial computable functions $f'$ with the same Kolmogorov complexity $K(f')=K(f)$.
+If such functions would also remain consistent with a dataset $D$ generated by $f$, then the choice of a simplest consistent function is grossly ambiguous.
+In theory, this drawback can in fact be resolved easily since each encoding $\operatorname{enc}$ of Turing Machine can be transformed into a sparse encoding $\operatorname{enc}'$ that preserves the order of $\operatorname{enc}$ and admits only one Turing Machine $\mathcal{T}$ with encoding length $m$ for each $m\in\mathbb{N}$.
+%% TRANSFORM ENC TO ENC' WITH UNAMBIGUOUS ENCODING LENGTH
+To corroborate this argument, we order binary strings primarily by their length and secondly by their lexicographic order.
+The binary strings are thus ordered as $\varepsilon,0,1,00,01,10,\dots$. 
+Given an arbitrary encoding $\operatorname{enc}$ and an according universal Turing Machine $U$, we can construct a prefix-free encoding $\operatorname{enc}'$ and a universal Turing Machine $U'$ that works as follows.
+$U'$ restricts inputs to take the format $1^{i}0,i\in\mathbb{N}$.
+Invoked on $1^{i}0$, $U'$ replaces $1^{i}0$ by the $i$-th binary string in the aforementioned order and simulates $U$ on this string.
+This way, we are guaranteed that for each length there is only one input string that produces a well-defined output on $U'$. 
+Therefrom, we could guarantee that $K(f)<K(f')$ for all partial computable functions with $f\not\equiv f'$ and the upper bound in Theorem \ref{theorem:max-alternative-simpler-consistent-functions} would shrink to a \textit{constant}, as the following Corollary illustrates.
+\begin{corollary}[Constant maximum number of alternative simpler consistent functions]
+	\label{cor:constant-max-alternative-simpler-consistent-functions}
+	Assume an encoding of Turing Machines such that there are no partial computable functions with $f\not\equiv f'$ and $K(f)=K(f')$.
+	Let $D$ be an arbitrary finite dataset, and $f$ an arbitrary consistent partial computable function $f$ just as in Theorem \ref{theorem:max-alternative-simpler-consistent-functions}. 
+	If $D$ has functional information $K_F(D)$, there are at most $K(f)-K_F(D)$ inequivalent partial computable functions $f'\not\equiv f$ with $K(f')\leq K(f)$ that are still consistent with $D$.
+\end{corollary}
+\begin{proof}
+	Given $D$ and $f$ as above.
+	Any partial computable function $f'\not\equiv f$ with $K(f')\leq K(f)$ must satisfy $K(f')<K(f)$ by the assumption on the encoding.
+	Moreover, any $f'$ that is consistent with $D$ satisfies $K(f')\geq K_F(D)$ because of Lemma \ref{lemma:functional-information-bounded-by-generating-function}.
+	Since $K(f')\neq K(f'')$ for all $f'\not\equiv f''$, there can be only $K(f)-1 - (K_F(D) -1)=K(f)-K_F(D)$ such functions $f'$. 
+\end{proof}
+Admittedly, such encodings with unambiguous length come a the cost of using only an exponential fraction of the available encoding space.
+Accordingly, the Kolmogorov complexity of functions $K(f)$ would be exponentially higher than in dense encodings.
+But in the case of dense encodings, representing the information in a dataset with functional information $K_F(D)$ still has blind spots.
+To see this, consider a dataset $D$ with maximum functional information $K_F(D)=K(f)$ that renders all other partial computable functions $f'$ with $K(f')<K(f)$ inconsistent achieves the same functional information as an even more discriminative dataset that excludes all $f'$ with $K(f')\leq K(f)$.
+The above Corollary merely shows that this blind spot of the simplest consistent function inference principle is not a problem in general, but mainly arises as a trade-off with the density of the encoding space.
+Moreover, the number of different functions with equal Kolmogorov complexity that remain consistent with a dataset might be low in practice, albeit nothing but a conjecture of the author.
+%Compression algorithms in practice should certainly not give up this additional encoding space and instead allow as dense encodings as possible.
+Before we proceed, we first compare these generalization conditions in the light of prior works in statistical learning theory, domain generalization, and compression theory.
+
+\subsection{Comparison to prior learnability conditions}
+One of the earliest frameworks in statistical learning theory is the probably approximately correct (PAC) learnability of a hypothesis class $\mathcal{H}$ \cite[Chapter 3]{shalev2014understanding}.
+Just as in our case, the PAC model relies on the \textit{realizability assumption}, i.e. the true function $h$ is in fact a member of $\mathcal{H}$.
+Moreover, the classical PAC model assumes that the labels $y_i$ in the dataset $D$ were generated \textit{perfectly} devoid of noise or other corruption by this true function, $y_i=h(x_i)$.
+This is an assumption we must make equally, since we merely consider functions that are perfectly \textit{consistent} with the samples in $D$.
+Finally, all instances $x_i$ are supposed to arise $i.i.d.$ from a uniform, unadulterated distribution $P$.
+PAC learnability considers how many samples a learning algorithm $A$ like ERM requires to output a hypothesis $\hat{h}$ such that the expected risk $R(\hat{h})\leq \varepsilon$ with probability $1-\delta$, where the latter probability both incorporates randomness in the algorithm $A$ and the marginal distribution $P$ from which the instances $x_i$ arise.
+If there exists such a sample number threshold $m_0(\varepsilon,\delta)$ that is independent of the underlying marginal distribution $P$ and the true function $h\in\mathcal{H}$, then the hypothesis class $\mathcal{H}$ is said to be PAC-learnable. 
+While PAC learnability guarantees an probabilistic upper bound on the expected risk $R(\hat{h})\leq \varepsilon$, our setting is per se \textit{distribution-free}, and hence does not assume a distribution $P$ to quantify the expected risk function over.
+Instead, our conditions guarantee the ensuing statement:
+\begin{quote}
+	The function $\hat{h}$ with the lowest Kolmogorov complexity that is consistent with the dataset $D$ coincides with the true function $h$ that generated $D$.
+\end{quote} 
+For the PAC model, our framework can therefore only yield sufficient information-theoretic conditions for the \textit{perfect} case $R(\hat{h})=0$.
+%Conversely, if these all-or-none conditions are violated, no non-trivial upper bound $\varepsilon<1$ on the risk $R(\hat{h})$ of the hypothesis $\hat{h}$ is guaranteed, since our \textit{distribution-free} setup does not assume a distribution $P$ from with the instances $x_i$ arise.
+
+However, the consequence of our statement is also stronger than merely $R(\hat{h})=0$.
+Such a $\hat{h}$ is guaranteed to not only attain optimal expected risk with regard to some distribution $P$, but to coincide with the true function $h$ on its \textit{entire} definition range. 
+Likewise, the conditions in our statement are stronger than in the PAC model too.
+Not only must $\hat{h}$ be fully consistent with $D$, hence achieve empirical risk $\hat{R}(\hat{h})=0$, but also achieve the \textit{lowest} Kolmogorov complexity among such consistent functions.
+As we now show for the hypothesis class of \textit{parity functions}, these additional discriminative constraints can enable learnability guarantees with less samples than in the usual PAC model.
+\begin{lemma}[Sufficient sample size for simplest consistent parity function]
+	\label{lemma:sufficient-sample-size-parity-functions}
+	Let $\mathcal{H}=\bigl\{f_\beta:\{0,1\}^{d}\to \{0,1\}, f(x)=\langle \beta, x \rangle \mod 2\mid \beta\in\{0,1\}^{d}\bigr\}$ be the class of parity functions over $d$-dimensional binary inputs.
+	Let $P=\operatorname{Ber}\bigl(\frac{1}{2}\bigr)^{\otimes d}$ be the distribution over strings in $\{0,1\}^{d}$ where each component is distributed independently according to $\operatorname{Ber}\bigl(\frac{1}{2}\bigr)$.
+	
+	For any $f_\beta\in\mathcal{H}$ and any $0\leq k\leq d$, if there are $0\leq i\leq 2^d-1$ other $f'_\beta\in\mathcal{H}$ with $K(f'_\beta)\leq K(f_\beta)$, then with probability at least $1-i\cdot\bigl(\frac{1}{2^k}\bigr)$, datasets $D$ comprised of $k$ samples $x_i\overset{i.i.d}{\sim}P$, $y_i=f(x_i)$, suffice to render $f_\beta$ the simplest consistent function in $\mathcal{H}$ with $D$.
+	
+	%Moreover, with probability at least $1-\frac{d^2}{2^d}$, datasets $D$ with $d$ samples render $f_\beta$ the simplest consistent function in $\mathcal{H}$ with $D$.
+	%Then, for any $1\leq k\leq d$, there are $2^k$ functions $f\in\mathcal{H}$ such that with probability $1-\delta$, datasets $D$ comprised of $k$ samples $x_i\overset{i.i.d}{\sim}P$, $y_i=f(x_i)$, suffice to render $f$ the simplest consistent function in $\mathcal{H}$ with $D$.
+\end{lemma}
+\begin{proof}
+	Given $\mathcal{H}$ and $P$ as above.
+	Let $f_\beta\in\mathcal{H}$ be an arbitrary parity function such that $i$ other parity functions $f'_\beta\in\mathcal{H}$ achieve $K(f'_\beta)\leq K(f_\beta)$, $0\leq i\leq 2^d-1$.
+	
+	For any $f_\beta,f'_\beta\in\mathcal{H}$ with $f_\beta\not\equiv f'_\beta$, it is well-known (cf. \cite[Section 1.3]{o2014analysis}) that 
+	\begin{align}
+		\label{eq:parity-disagree-probability}
+		\operatorname{Pr}_{x\sim P}\bigl[f_\beta(x)=f'_\beta(x)\bigr]=\frac{1}{2}.	
+	\end{align}
+	
+	Let $0\leq k\leq d$ be arbitrary.
+	
+	Hereinafter, we denominate the dataset $D:=\{(x_i,f_\beta(x_i))\mid i=1,\dots,k\}$.
+	
+	Then, by union bound, the failure probability $\beta$ satisfies
+	\begin{align}
+	\beta :&=\underset{x_i\overset{i.i.d}{\sim} P}{\operatorname{Pr}}\bigl[f_\beta \text{ is not the simplest consistent function with } D \bigr]	\\
+	&=\underset{x_i\overset{i.i.d}{\sim} P}{\operatorname{Pr}}\bigl[\text{There exists another consistent }f'_\beta\in\mathcal{H} \text{ with } K(f'_\beta)\leq K(f_\beta)\bigr]\\
+	&\leq \sum_{\substack{f'_\beta\in\mathcal{H}, f_\beta\not\equiv f'_\beta \\ K(f'_\beta)\leq K(f_\beta)}} \underset{x_i\overset{i.i.d}{\sim} P}{\operatorname{Pr}}\bigl[f_\beta(x_i)=f'_\beta(x_i) \text{ for all }i=1,\dots,k \bigr]\\
+	&\overset{(\ref{eq:parity-disagree-probability})}{=} \sum_{\substack{f'_\beta\in\mathcal{H}, f_\beta\not\equiv f'_\beta \\ K(f'_\beta)\leq K(f_\beta)}} \left(\frac{1}{2}\right)^j.\\
+	& = i\cdot \left(\frac{1}{2}\right)^j,
+	\end{align}
+	which concludes our proof.
+\end{proof}
+The required sample size therefore now additionally depends on the Kolmogorov complexity $K(h)$ of the true function $h$, and can undercut the typical required sample thresholds if $K(h)$ is low. 
+
+Vice versa, $R(\hat{h})=0$ alone does not necessarily imply that $\hat{h}$ is the simplest consistent function with the dataset $D$.
+Obviously, there might be simpler consistent partial computable functions outside of $\mathcal{H}$.
+But even within $\mathcal{H}$, there could be simpler consistent functions if the support of $P$ does not cover the entire definition range of functions in $\mathcal{H}$. 
+
+
+%To see this more generally, let $\mathcal{H}$ be an arbitrary hypothesis class that is PAC learnable with any failure probability $\delta\in(0,1)$ by a learning algorithm $A$ that is given $n_0(\varepsilon=0,\delta)$ $i.i.d.$ samples.
+%For any marginal distribution $P$ and any true function $h\in\mathcal{H}$, $A$ hence produces a hypothesis $\hat{h}$ such that $R(\hat{h})=0$.
+%Let $\mathcal{X}$ be the definition range of the functions in $\mathcal{H}$. If any instance $x\in\mathcal{X}$ occurs with a non-zero probability in $P$, then $h\equiv\hat{h}$, because for any $h'\in\mathcal{H}$ with $h'\not\equiv h$, it holds that $R(h')>0$ since $h'$ disagrees with $h$ on at least one instance, and each instance occurs with a non-zero probability.
+%Because $h$ is the only consistent function with any dataset $D$ comprised of these $n_0(0,\delta)$ $i.i.d.$ samples, $h$ is obviously also the simplest consistent function in $\mathcal{H}$.
+%But outside $\mathcal{H}$, there might of course be consistent, partial computable functions that achieve a lower Kolmogorov complexity than $h$.
+%Therefore, we might possible have a functional information of $K_F(D)<K(h)$.
+%However, if we restrict the definition of $K_F$ to only admit strings $p$ that encode Turing Machines that compute functions in $\mathcal{H}$, we certainly have $K_F(D)=K(h)$.
+
+For the \textit{agnostic} PAC model and uniform convergence where the labels are not strictly generated from the true function $h$ but follow a distribution that can integrate noise or corruptions, our setup is yet not applicable because we assumed noise-free samples.
+In classical learning theory, VC dimension or the Rademacher complexity are usually adopted to derive sufficient sample sizes for the PAC learnability or uniform convergence of hypothesis classes \cite[Chapters 4,6,26]{shalev2014understanding}.
+In terms of both VC dimension and Rademacher complexity, the class of partial computable functions does however not obtain a finite complexity.
+Even under the $i.i.d.$ assumption, these complexity quantities hence do not yield learnability conditions for this overarching hypothesis class, while Kolmogorov complexity assures that at least each total computable function can be learned with finitely many samples.
+
+%%Notwithstanding that, Vapnik et al. first quantified the expressive power of hypotheses classes for binary decision problems.
+%%Guarantees for uniform convergence however from their VC dimension however required the hypothesis class to be finite, which does not admit sufficiently expressive classes such as the class of all partial computable binary classifiers $f:\{0,1\}^{*}\to\{0,1\}$, which functional information allows to quantify learnability conditions for.
+%%
+%%Instead of VC dimension, Rademacher Complexity took also into account the distribution of the available data and remained finite for hypothesis classes of infinite cardinality such as the class of linear predictors whose weights are bounded by some norm.
+%%However, for any finite dataset, classes as expressive as partial computable functions comprise functions that map these instances to arbitrarily large values.
+%%Therefore, this class would obtain an infinite Rademacher complexity, impeding generalization guarantees even if the loss function is bounded.
+%%
+%%On the other hand, these frameworks provide probabilistic guarantees about the performance of a predictor or classifier on unobserved instances.
+%%Considering only datasets without any assumptions on an underlying distribution, the learnability condition above does merely quantify how many simpler consistent functions $f'$ bar the way to the true function $f$ to become the simplest consistent function.
+%%It can hence only guarantee perfect learnability, or not guarantee anything.
+%%The simpler consistent functions $f'$ that the simplicity bias favours over $f$ could still mismatch the true function $f$ on arbitrarily many instances. 
+
+Moving on with compression theory, a recent advance first provided tight generalization guarantees for the probability that a dataset generated by $i.i.d.$ samples \textit{changes} its optimal compression \cite{campi2023compression}.
+In their work, compression schemes were algorithms that compressed larger datasets into smaller ones.
+Sufficiently informative datasets $D$ in \cite{campi2023compression} might at some point be compressed to the same smaller dataset as any of their supersets, because only redundant information is added.
+At such a point, guarantees about the in-distribution generalization of predictors that were trained on $D$ by appropriate learning algorithms might become quite tight, as was shown later in \cite{paccagnan2024pick}.
+% TODO: Read paccagnan this paper more thoroughly.
+This directly relates to the implications of the functional information in $D$. 
+If a dataset $D$ generated by some function $f$ already contains maximal information about $f$ and hence satisfies $K_D(F)=K(f)$, larger datasets $\hat{D}\supset D$ will not achieve a longer compression.
+First of all, the difference with this work lies in our more general notion of compression by virtue of Kolmogorov complexity. 
+But as for PAC learning, our statements are distribution-free and do not rest on the $i.i.d.$ assumption.
+%Their message is therefore related to the one of this thesis, as the mere size of a dataset does not determine its information content.
+%But such guarantees yet rest on the $i.i.d.$ assumption, and therefore do hardly transfer to scenarios in practice.
+
+Our work therefore adopts the problem setting of domain generalization, where theoretical guarantees were however usually conducted for exemplary classes such as linear predictors or classifiers, and still draw upon strong assumptions about the support of the training distributions \cite{arjovsky2019invariant,ahuja2021invariance}.
+
+% TODO: Read \cite{goldblum2023no}.
+
+%% TRANSITION TO NEXT SECTION: REALISE A SIMPLICITY BIAS
+All in all, the functional information of a dataset accurately captures how much information it conveys about the functions that could have generated it.
+Not only does it allow to specify information-theoretic learnability conditions for any partial computable function in hypothesis classes as large as the partial computable functions.
+The next section demonstrates how functional information can also realise a simplicity bias in practice.
+
+\section{Functional information as a simplicity bias in practice}
+\label{sec:functional-inforamtion-simplicity-bias}
+Because it culminates in the same paradox as the halting problem, Kolmogorov complexity and thus also functional information are incomputable in general.
+However, there are computable alternatives such as compression algorithms that approximate Kolmogorov complexity.
+For that reason, this section first presents how functional information can realise a simplicity bias within \textit{any} hypothesis class.
+Later, we will then address how functional information could be efficiently approximated in practice.
+
+For any hypothesis class $\mathcal{H}$, any dataset $D$ yields some simplest consistent functions $f\in\mathcal{H}$.
+Lemma \ref{lemma:functional-information-bounded-by-generating-function} guarantees $K_F(D)\leq K(f)$, no matter how much $D$ is extended by samples from such a function $f$.
+If we therefore generate some pseudo-samples $(x'_i,f(x'_i))$ by evaluating $f$ on some unlabeled instances $x'_i$ that do not occur in $D$, and extend $D$ by these samples to a larger dataset $\hat{D}$, we can reevaluate $K_F(\hat{D})$ to see how much the functional information has \textit{increased}. 
+The more informative $\hat{D}$, the more will $K_F(\hat{D})$ approach $K(f)$.
+Even for the simplest consistent functions $f\in\mathcal{H}$, $K_F(\hat{D})$ might hence increase a little because there might be simpler consistent computable functions \textit{outside} of $\mathcal{H}$.
+But if $f$ instead is not a simplest consistent function but rather $K(f)\gg K_F(D)$, $K_F{\hat{D}}$ will arguably increase sharply.
+
+For that reason, the closer $K_F(\hat{D})$ remains to $K_F(D)$, the closer might $K(f)$ be to the simplest consistent function.
+The simplest consistent functions $f$ within $\mathcal{H}$ will arguably receive the smallest increase and thus the strongest favour.
+\begin{algorithm}
+	\caption{Simplicity bias with functional information $K_F(D)$.}
+	\label{alg:simplicity-bias-functional-information}
+	\small % Adjust font size
+	\raggedright
+	\renewcommand{\algorithmicrequire}{\textbf{Given:}} % Set name of subalgorithm
+	\begin{algorithmic}[1]
+		\REQUIRE{\noindent
+			\begin{itemize}
+				\item A labeled dataset $D:=\{(x_1,y_1),\dots,(x_n,y_n)\}$,
+				\item A set of unlabeled instances $D':=\{x'_1,\dots,x'_m\}$,
+				\item A function $f$ consistent with $D$,
+				\item An oracle for the functional information $K_F(\cdot)$ of datasets.
+			\end{itemize}
+			  }
+		\STATE{Compute $K_F(D)$.}
+		\STATE{ Evaluate unlabeled instances on $h$:
+			\begin{enumerate}[label=(\alph*)]
+				\item Select some instances $x'_{i_1},\dots,x'_{i_K}$ from $D'$.
+				\item Compute $y'_{i_j}=f(x'_{i_j})$ for $1\leq j\leq K$.
+				\item Collect them together with the true samples into $\hat{D}:=D\cup\{(x'_{i_1},y'_{i_1}),\dots,(x'_{i_K},y'_{i_K})\}$.
+			\end{enumerate}
+			}
+		\STATE{Compute $K_F(\hat{D})$. }
+		\COMMENT{The closer ${K_F(\hat{D})}$ is to ${K_F(D)}$, the closer is $f$ to the simplest consistent functions.)}
+		\RETURN{$K_F(D),K_F(\hat{D})$}
+	\end{algorithmic}
+\end{algorithm}
+
+Before we discuss the drawbacks of this algorithm, let us first consider some benefits.
+%%% BENEFITS OF THIS ALGORITHM
+%% MODEL-FREE, DISTRIBUTION-FREE
+% - No assumptions on model class $h\in\mathcal{H}$. We only require inputs and outputs.
+
+%% INTEGRATES UNLABELED DATA
+% - Much more unlabeled data available than labeled data.
+% - - Just label sufficiently informative dataset and the rest can remain unlabeled
+Apart from the oracle for $K_F(D)$, the above procedure merely requires labeled and unlabeled samples and a hypothesis $h$.
+It can therefore be applied to any model class.
+Moreover, it takes advantage of the massive amount of unlabeled data in the internet, while labeled data is costly to generate.
+The number of unlabeled instance $m$ for the dataset $\hat{D}$ can therefore be chosen quite high, since the evaluation of $f$ is mostly computationally feasible too.
+The more samples $\hat{D}$ incorporates, the more significant is $K_F(\hat{D})$ as an approximation of $K(f)$.
+
+%%% SHORTCOMINGS OF THIS METHOD
+%% 2. PROBLEM: Kolmogorov complexity incomputable
+% - At least in general, because programs may not halt. (evokes same paradox as halting problem) \cite{chaitin1974information}
+% - SOLUTION: Compression algorithms in practice \cite{cilibrasi2005clustering}
+However, there are still some fundamental hindrances that obstruct the way to implement this algorithm in practice. 
+First and foremost, Kolmogorov complexity is incomputable in a hard sense.
+That is, for any infinite set of strings, there is no partial computable function that correctly outputs their Kolmogorov complexity \cite{vitanyi2020incomputable}.
+Because its incomputability revolves around the halting problem, Levin devised an extended version of Kolmogorov complexity which does not only take into account the length of a program, but also its running time \cite{levin1973universal}.
+That way, extremely short programs that yet never halt are not attributed a finite value anymore.
+A Turing Machine could hence incrementally simulate the first $p$ strings $x_1,\dots,x_p$ on the universal Turing Machine for $m$ time steps, where $m$ starts at $\log_2(p)$ and decreases linearly with the length of $x_i$, and check if one of them returns the desired string.
+The running time of this exhaustive procedure is however far from feasible.
+
+As an alternative, lossless compression algorithms such as the widely employed Lempel-Ziv-Welch algorithm \cite{welch1984technique} have been proposed to approximate the Kolmogorov complexity of strings in practice \cite[p.~696]{li2008kolmogorov}.
+Given a string $x$, such algorithms yield both a compression $p$ and a method to reconstruct $x$ from $p$.
+In the next, final chapter, we however substantiate that the Lempel-Ziv-Welch algorithm can not yield even approximate guarantees about the order between the Kolmogorov complexity $K(v),K(w)$ of two strings $v,w$, no matter what exponential, multiplicative, and additive approximation factors we allow.
+Such approximation ratios would however be necessary if we desire a realisation of a simplicity bias like in Algorithm \ref{alg:simplicity-bias-functional-information} that also yields some guarantees about the approximation accuracy of the functional information $K_F(D)$.
+Therefore, the final chapter corroborates that practical realisations of the above simplicity bias are yet out of reach. 
+But at the same time, it points up how compression and learning are interrelated, and encourages advancements in the study of algorithms that detect and compress regularities in data for the sake of learning simple functions.
+
+%% 3. PROBLEM: Compression algorithms are not differentiable
+% - This objective can not be reconciled with gradient descent
+% - NOT A SOLUTION : Use regularization to at least approximate the Kolmogorov Complexity \ref{chap:regularization-kolmogorov-complexity}
+% POSTPONE REGULARIZATIN TO LATER
+
+

@@ -3,25 +3,25 @@
 % Version: 1.01, 2023/07/04
 % Documentation: https://ctan.org/pkg/mitthesis
 
-\chapter{Theory and Proofs}
+\chapter{Secondary Theory and Proofs}
 
 \lstdefinestyle{mystyle}{
-    backgroundcolor=\color{CadetBlue!15!white},   
-    commentstyle=\color{Red3},
-    numberstyle=\tiny\color{gray},
-    stringstyle=\color{Blue3},
-    basicstyle=\small\ttfamily,
-    breakatwhitespace=false,         
-    breaklines=true,                 
-    numbers=left,                    
-    numbersep=5pt,                  
-    showspaces=false,                
-    showstringspaces=false,
-    showtabs=false,                  
-    tabsize=2
+	backgroundcolor=\color{CadetBlue!15!white},   
+	commentstyle=\color{Red3},
+	numberstyle=\tiny\color{gray},
+	stringstyle=\color{Blue3},
+	basicstyle=\small\ttfamily,
+	breakatwhitespace=false,         
+	breaklines=true,                 
+	numbers=left,                    
+	numbersep=5pt,                  
+	showspaces=false,                
+	showstringspaces=false,
+	showtabs=false,                  
+	tabsize=2
 }%
 \lstset{language=C++,style={mystyle}}%
-\section{Elementary mathematics}
+\section{Elementary calculus}
 \label{sec:elementary-math}
 
 \begin{lemma}[Log-Linear Inequality]
@@ -44,7 +44,7 @@
 	Therefore, for any $x\geq 1$, it holds that
 	\begin{equation}
 		\label{eq:exp-lin-inequality}
-		2^x=h(x)=h(1)+\int_{1}^{x}h'(x')dx'\overset{\ref{eq:exp-lin-derivative-inequality}}{>} g(1)+\int_{1}^{x}g'(x')dx'=g(1)+g(x)-g(1)=g(x).
+		2^x=h(x)=h(1)+\int_{1}^{x}h'(x')dx'\overset{(\ref{eq:exp-lin-derivative-inequality})}{>} g(1)+\int_{1}^{x}g'(x')dx'=g(1)+g(x)-g(1)=g(x).
 	\end{equation}
 	
 	In particular, the above result implies $\log_2(x)< x$ for all $x\geq 1$ by substituting $x=2^z$ into Equation \ref{eq:exp-lin-inequality}.
@@ -60,14 +60,14 @@
 	Now, take $x=2^{4a}$. Since $2^{2a} \geq 2^2 = 4$ by the assumption $a\geq 1$, it holds that
 	\begin{equation}
 		\label{eq:log-lin-factor-inequality-init}
-		g_a(x)=a\log_2(x)=a\log_2(2^{4a})=4\cdot a \cdot a \overset{\ref{eq:exp-lin-inequality}}{<}2^{2a}\cdot 2^a\cdot 2^a=2^{4a}=x=h(x).
+		g_a(x)=a\log_2(x)=a\log_2(2^{4a})=4\cdot a \cdot a \overset{(\ref{eq:exp-lin-inequality})}{<}2^{2a}\cdot 2^a\cdot 2^a=2^{4a}=x=h(x).
 	\end{equation}
 	
 	As $2^{4a}\geq 2^{2a}\geq 2a$, for all $x> 2^{4a}$ this eventually yields
 	\begin{align}
 		\label{eq:log-lin-inequality}
 		x=h(x)&=h(2^{4a})+\int_{2^{4a}}^{x}h'(x')dx'\\
-		&\overset{\ref{eq:log-lin-factor-derivative-inequality}}{>} g_a(2^{4a})+\int_{2^{4a}}^{x}g_a'(x')dx'\\
+		&\overset{(\ref{eq:log-lin-factor-derivative-inequality})}{>} g_a(2^{4a})+\int_{2^{4a}}^{x}g_a'(x')dx'\\
 		&=g_a(2^{4a})+g_a(x)-g_a(2^{4a})=g_a(x)=a\log_2(x).
 	\end{align}
 \end{proof}
@@ -84,13 +84,15 @@
 
 \begin{lemma}[General Cascade Exponential Inequality]
 	\label{lemma:cascade-exp-inequality}
+	Let $\exp_2^{(m)}$ denote the $m$-wise recursive concatenation of $\exp_2(x):=2^x$ as in Definition \ref{def:recursive-concatenation}.
 	Let $a$ be an arbitrary real scalar with $a\geq 1$, and $k\in\mathbb{N}$. 
 	For any natural number $n\in\mathbb{N}$ with $n>4\cdot 2^k\cdot a$ and any real number $x\geq 2$, it holds that
 	\begin{equation}
-		\left(\bigcirc_{i=1}^{n-k}\exp_2\right)(x) > a\cdot n \cdot x.
+		\exp_2^{(n-k)}(x) > a\cdot n \cdot x.
 	\end{equation}
 \end{lemma}
 \begin{proof}
+	% TODO: Replace $\bigcirc$ notation by the $m$-wise recursive concatenation.
 	Denote by $g_2$ the real function $g_2(x)=2x$.
 	A similarly elementary argument as in the proof of Lemma \ref{lemma:log-lin-inequality} yields $\exp_2(x)=2^x\geq 2x=g_2(x)$ for any $x\geq 2$.
 	Repeated application of this inequality thence yields 
@@ -106,12 +108,12 @@
 	For that reason, we obtain
 	\begin{align}
 		\label{eq:cascade-exp-inequality}
-		\left(\bigcirc_{i=1}^{n-k}\exp_2\right)(x) &\overset{\ref{eq:multi-exp-2x-inequality}}{\geq} 2^{n-k}\cdot x\\
+		\left(\bigcirc_{i=1}^{n-k}\exp_2\right)(x) &\overset{(\ref{eq:multi-exp-2x-inequality})}{\geq} 2^{n-k}\cdot x\\
 		&\overset{\ref{lemma:log-lin-inequality}}{>} 2^{-k}\cdot 2^k\cdot a\cdot n \cdot x = a\cdot n\cdot x.
 	\end{align}
 	
 \end{proof}
-\begin{corollary}[Basis Cascade Exponential Equality]
+\begin{corollary}[Special Cascade Exponential Equality]
 	\label{cor:cascade-exp-inequality-basis}
 	Let $a\geq 1,b\geq 0$ be arbitrary real numbers.
 	For any $k\in\mathbb{N}$ and $n\in\mathbb{N}$ with $n>4\cdot 2^k\cdot (a+b)$, it holds that
@@ -127,153 +129,56 @@
 	For $k=0$, we similarly have $n>4\cdot 2^k=4>k+1$.
 	Therefore, we may reduce $\left(\bigcirc_{i=1}^{n-k}\exp_2\right)(1)=\left(\bigcirc_{i=1}^{n-k-1}\exp_2\right)(2)$ and conclude in the same fashion as Lemma \ref{lemma:cascade-exp-inequality}:
 	\begin{align}
-		\left(\bigcirc_{i=1}^{n-k-1}\exp_2\right)(2) &\overset{\ref{eq:multi-exp-2x-inequality}}{\geq} 2^{-k-1}\cdot 2^n \cdot 2\\
-		&\overset{\ref{eq:cascade-exp-inequality}}{>} 2^{-k-1} \cdot 2^k\cdot (a+b)\cdot n \cdot 2\\
+		\left(\bigcirc_{i=1}^{n-k-1}\exp_2\right)(2) &\overset{(\ref{eq:multi-exp-2x-inequality})}{\geq} 2^{-k-1}\cdot 2^n \cdot 2\\
+		&\overset{(\ref{eq:cascade-exp-inequality})}{>} 2^{-k-1} \cdot 2^k\cdot (a+b)\cdot n \cdot 2\\
 		& = (a+b)\cdot n \overset{n\geq 1}{\geq} an+b.
 	\end{align}
 \end{proof}
-
-\section{Out-of-distribution limitations}
-\subsection{Extrapolation of ReLU MLPs with L2-Regularization}
-% ReLU MLPs extrapolate
-\subsection{Prime Numbers are not learnable by IRM}
-% Independent of which model we choose.
-\section{Properties of Kolmogorov Complexity}
-\subsection{Unbounded Kolmogorov Complexity across Reference Machines}
-\subsection{No Order Preservation between Vector Norms and Kolmogorov Complexity}
-\section{Invariance under Permutation}
-\begin{lemma}[Complexity Bound for Class of Permutations]
-	\label{lemma:permutation-complexity-bound}
-	% TODO: Write out.
-	For an arbitrary permutation $\pi$ over $\Sigma$ the Turing Machine $\mathcal{T}_\pi$ that computes $\pi$ as in Definition \ref{def:permutationtm} has a G\"odel number of length $10$. 	
-\end{lemma}
+\section{Inexpressivity of scaled recursive completion}
+\label{app:scaled-recursive-completion-inexpressible}
+\begin{corollary}[Scaled Recursive Completion is not non-recursively expressible]
+	\label{cor:scaled-recursive-completion-not-non-recursive-expressible}
+	Let $\tau$ be as in Theorem \ref{theorem:recursive-completion-not-non-recursive-expressible}.
+	
+	For any $a\in\mathbb{N}$, define the scaled recursive completion over $\tau$ as
+	$\left(f_{\tau}\right)_{a}^{\lozenge}(n):=f_{\tau}^{(n)}(a\cdot n)$.
+	
+	Then, $\left(f_{\tau}\right)_{a}^{\lozenge}\notin \mathcal{F}_{\tau}$ for any $a \geq 1$.
+	Let $f\in\mathcal{F}_{\tau}$ be an arbitrary non-recursive function over $\tau$.
+	Then, for the same $n_0(f)$ as in Theorem \ref{theorem:recursive-completion-not-non-recursive-expressible}, we have that for all $a\in\mathbb{N}$ with $a\geq 1$ and $n\geq n_0$, $f(n)\neq \left(f_{\tau}\right)_{a}^{\lozenge}(n)$ for all $n\geq n_0(f)$.
+\end{corollary}
 \begin{proof}
-	We briefly recall how G\"odel numbers are composed on the example of $\mathcal{T}$:
-	% TODO: Insert citation to a work that introduces this format.
-	\begin{itemize}
-		\item Frame Delimiters $111$ at the start and the end of the G\"odel number
-		\item Inter Delimiters $11$ between the encodings of each transition
-		\item Intra Delimiters $1$ between each symbol encoding inside the encoding of a transition
-		\item Symbol Encodings of the form $0^i$ that encode the $i$-th symbol in the tape alphabet $\Gamma$, the state set $Q$ and the direction set $\{L,R,N\}$ respectively.
-	\end{itemize}
-	Since we only have one blank symbol $B$, $\Gamma=\Sigma\cup\{B\}$.
-	A Turing Machine with $Q$ states among which exactly one identifies the final state $q_1$ has a transition function $\delta$ with a definition range of cardinality $|\Gamma|\cdot(|Q|-1)=(|\Sigma|+1)\cdot(|Q|-1)$.
-	Therefore, we require $(|\Sigma|+1)\cdot(|Q|-1)-1$ Inter Delimiters.
-	Moreover, the encoding of each functional tuple $(q,a,q',a',d)\in Q\times \Gamma \times Q \times \Gamma \times \{L,R,N\}$ requires four intra delimiters.
-	Since $\mathcal{T}_\pi$ computes a permutation, every symbol must appear equally often in the encoding.
-	In the $q_0$ state where $\mathcal{T}_\pi$ replaces each symbol $b$ by $\pi(b)$, every symbol must occur exactly once in the second a forth position of the tuple $(q_0,a,q',a',d)$. As soon as $\mathcal{T}_\pi$ reaches the blank symbol $B$, it writes $B$ again and shifts into state $q_2$.
+	We show that the thresholds $n_0$ in the proof of Theorem \ref{theorem:recursive-completion-not-non-recursive-expressible} maintain to hold for $\left(f_{\tau}\right)_{s}^{\lozenge}$ for any scale $s\in\mathbb{N}_{\geq 1}$.
+	In the following, let $s\in\mathbb{N}$ be arbitrary with $s\geq 1$.
 	
-	The same holds in state $q_2$ where $\mathcal{T}_\pi$ merely traverses back over the input to the first symbol. Each symbol $b$ is replaced with itself, and therefore occurs exactly once in the second and forth position of tuples of the form $(q_2,a,q',a',d)$, too.
+	Analogously to Theorem \ref{theorem:recursive-completion-not-non-recursive-expressible}, we prove a stronger argument by induction over the depth of non-recursive functions.
+	That is, we show that for all non-recursive functions $f\in\mathcal{F}_{\tau}$, there is an $n_0\in\mathbb{N}$ such that $f(n+a)<f_{\tau}^{(n)}(s\cdot(n+a))$ for all $n\geq n_0$ and all offsets $a\in\mathbb{N}$.
+	Note that this statement was already proved for $s=1$ in the original theorem.
 	
-	As the overview in Table \ref{tab:tmpermutation} illustrates, state changes only take place when $\mathcal{T}_\pi$ encounters the blank symbol at the right or left end of the word. For tuples of the form $(q_0,a,q',a',d)$, we therefore only have one tuple with $q'\neq q_0$, namely $(q_0,B,q_2,B,L)$.
-	
-	Similarly, the only tuple of the form $(q_2,a,q',a',d)$ with $q'\neq q_2$ is $(q_2,B,q_1,B,R)$.
-	
-	The direction symbols $L$ and $R$ appear equally often in the tuples.
-	When defining the universal Turing Machine in Definition \ref{def:universaltm}, we did not specify the specific ordering of the direction indicator set $\{L,R,N\}$. As this only has a tiny impact on the final constant, we can generously assume that $L$ and $R$ are associated with the longest encodings $\{0^2,0^3\}$.
-	
-	An overview for the overall number of bits of $\mathcal{T}_\pi$'s G\"odel number is depicted in Table \ref{tab:goedelnum-permutation-tm}.
-	With $|Q|=3$, we accordingly conclude that the G\"odel number of $\mathcal{T}_\pi$ has a length bounded by
+	Since the assumptions on $\tau$ are the same as in Theorem \ref{theorem:recursive-completion-not-non-recursive-expressible}, we can directly avail to its equations.
+	For depth $0$ and any $n\geq n_0=1,a\in\mathbb{N}$, we extend Equations \ref{eq:theorem:recursive-completion-not-non-recursive-expressible-self-lower-bound} and \ref{eq:theorem:recursive-completion-not-non-recursive-expressible-inequality} to
 	\begin{align}
-		a\cdot |\Sigma|^2+b\cdot|\Sigma|+c, \text{ where } &\\
-		a&=2,\\
-		b&=4+8+1+3+1+3+6+5=31,\\
-		c&=6+2+8+1+3+3+2+4+5=34.
+		f_{\tau}^{(n)}(s\cdot (n+a)) &\overset{(\ref{eq:theorem:recursive-completion-not-non-recursive-expressible-inequality})}{\geq} f_m^{(n)}(s\cdot (n+a))\\
+		&\geq f_m^{(n)}(n+a)\\
+		\label{eq:cor-scaled-recursive-completion-not-non-recursive-expressible-self-lower-bound}
+		&\overset{(\ref{eq:theorem:recursive-completion-not-non-recursive-expressible-self-lower-bound})}{>}n+a  = f(n+a).
 	\end{align}
 	
-	This length is invariant of the specific permutation $\pi$ but holds equally across the entire class of permutations.
+	Proceeding with the induction hypothesis (IH), assume that there is some $p\in\mathbb{N}$ such that for every non-recursive function $f\in\mathcal{F}_{\tau}$ with $\operatorname{dep}(f)\leq p$, there exists an $n_0\in\mathbb{N}$ such that $f_\tau^{(n)}(s\cdot(n+a))>f(n+a)$ for all $n\geq n_0$ and $a\in\mathbb{N}$. 
+	As in Theorem \ref{theorem:recursive-completion-not-non-recursive-expressible}, we expand any $f\in\mathcal{F}_{\tau}$ with depth $p+1\geq 1$ as $f(n)=f_m(g_1(n),\dots,g_k(n))$ for some $f_m\in\tau$ with arity $k\in\mathbb{N}$ and non-recursive functions $g_i\in \mathcal{F}_{\tau}$ with depth $\operatorname{dep}(g_i)\leq p$ and distinguish by the cases where $f_m$ is bounded or strictly monotonously increasing.
 	
-	Recall that the universal Turing Machine $U$ encodes a program $p$ not by its explicit G\"odel number but by the index $i$ it possesses in the natural enumeration of valid G\"odel numbers.
-	Since a large majority of the strings in $\{0,1\}^{*}$ do not identify valid G\"odel numbers, the encoding of this index is smaller than the encoding of the G\"odel number itself.
-	Therefore, the above bound for the G\"odel number $\operatorname{enc}(\mathcal{T}_\pi)$ also serves as a more loose bound for the Kolmogorov complexity $K(\mathcal{T}_\pi)$ of the class of permutations over $\Sigma$.
+	In the case that $f_m$ is bounded by some $c_m$, the same $n_0=c_m$ as in Equation \ref{eq:theorem:recursive-completion-not-non-recursive-expressible-induction-step-bounded} in the proof of the original theorem satisfies $f_{\tau}^{(n)}(s\cdot (n+a)) \overset{(\ref{eq:cor-scaled-recursive-completion-not-non-recursive-expressible-self-lower-bound})}{>} n+a \geq c_m \geq f(n+a)$.
+	
+	In the other case where $f_m$ is strictly monotonously increasing, we adopt $n_0=\max_{1\leq i\leq k} n_0(g_i)$ as it stands from the proof of Theorem \ref{theorem:recursive-completion-not-non-recursive-expressible}.
+	Similarly, let $n\geq n_0$ and $a\geq 1$ be arbitrary and substitute $n'=n+1$ and $b=a-1$. Then we analogously have
+	\begin{align}
+		f(n'+b)=f(n+a)&=f_m(g_1(n+a),\dots,g_k(n+a))\\
+		&\overset{(IH)}{<}f_m(f_\tau^{(n)}(s\cdot (n+a)),\dots,f_\tau^{(n)}(s\cdot (n+a)))=f_m^{-}(f_\tau^{(n)}(s\cdot (n+a)))\\
+		&\overset{\ref{lemma:max-bound-recursive-concatenation-sum}}{\leq} f_\tau^{-}(f_\tau^{(n)}(s\cdot (n+a)))=f_{\tau}^{(n+1)}(s\cdot (n+a))=f_{\tau}^{(n')}(s\cdot(n'+b)).
+	\end{align}
+	
+	The overall statement consequently follows by the induction principle, and as a special case, we obtain that for any non-recursive function $f\in\mathcal{F}_{\tau}$, there exists an $n_0(f)\in\mathbb{N}$ such that $f(n)<f_{\tau}^{(n)}(s\cdot n)=\left(f_{\tau}\right)_{s}^{\lozenge}(n)$ for all $n\geq n_0$.
+	
+	This $n_0$ does not depend on $s$ and applies for all $s\geq 1$, which proves our result.
+	
 \end{proof}
-\begin{table}
-	\begin{center}
-		\begin{tabular}{l | c}
-			Start and End Delimiter $111$ & $2\cdot 3=6$\\\hline
-			Inter Transition Delimiter $11$ & $((|Q|-1)\cdot(|\Sigma|+1)-1)\cdot2$\\\hline
-			Intra Transition Delimiter $1$ & $4\cdot(|Q|-1)\cdot(|\Sigma|+1)$\\\hline
-			From States & \begin{tabular}{c}
-				$(|\Sigma|+1)\cdot 1$ ($q_0$ tuples)\\
-				$(|\Sigma|+1)\cdot 3$ ($q_2$ tuples)
-			\end{tabular}\\\hline
-			To States & \begin{tabular}{c}
-				$|\Sigma|\cdot 1+3$ ($q_0$ tuples) \\
-				$|\Sigma|\cdot 3+2$ ($q_2$ tuples)
-			\end{tabular}\\\hline
-			Symbols & $2\cdot 2 \cdot \sum_{i=1}^{|\Sigma|+1}i=2(|\Sigma|+1)(|\Sigma|+2)$ \\\hline
-			Directions & $\leq(|\Sigma|+1)\cdot(2+3)$\\\bottomrule
-			\textbf{Total} & $2|\Sigma|^2+31|\Sigma|+34$\\
-		\end{tabular}
-	\end{center}
-	\caption[G\"odel number composition of permutation Turing Machine]{G\"odel number of $\mathcal{T}_\pi$ for any permutation $\pi$ over a finite alphabet $\Sigma$. For the sake of clarity, $|Q|$ was specified in the terms although $|Q|=3$ is constant across all $\Sigma$. To preserve generality, the worst case where the directions $L$ and $R$ possess the worst encoding lengths $2$ and $3$ are assumed.}
-	\label{tab:goedelnum-permutation-tm}
-\end{table}
-
-\begin{lemma}[Optimality of $\mathcal{T}_\pi$]
-	\label{lemma:optimality-permutation-tm}
-	For any permutation $\pi$ over $\Sigma$ besides the identity function, there exists no program $p$ with a shorter G\"odel number
-\end{lemma}
-\begin{proof}
-	Let $\pi$ be an arbitrary permutation over $\Sigma$ that is not equivalent to the identity function $I:a\mapsto a$.
-	Let $\mathcal{T}$ be a Turing Machine that computes $\pi$.
-	In the following, we denote by $B$ the default blank symbol on the tape.
-	Besides that, we fix $q_0$ as the initial state and $q_1$ as the final state just as in the natural encoding.
-	
-	$\mathcal{T}$ must encounter each symbol of the input at least once.
-	Since the Turing Machine's tape head starts over the leftmost symbol of the input, it must necessarily encounter the blank symbol $B$ right next to the input.
-	Otherwise, there would be a symbol in the input it never traverses over, and hence never permutes. This would violate the assumption that $\mathcal{T}$ computes $\pi$ for all possible inputs $x\in\Sigma^{*}$.
-	
-	When a Turing Machine halts, the output is interpreted as to start from the symbol the current tape head is positioned over.
-	Therefore, the Turing Machine must move its head back to the start of the permuted sequence. By the same argument as above, it must encounter the blank symbol right left to the sequence.
-	
-	Now assume $\mathcal{T}$ had only one non-final state. Denote this non-final state by $q_0$. 
-	In both situations, where $\mathcal{T}$ encounters the right end and left end of the sequence, the input to its transition function $\delta$ is necessarily $(q_0,B)$. For that reason, $\mathcal{T}$ must execute the same operation $\delta(q_0,B)=(q,a,d)$ in both situations. 
-	
-	When $\mathcal{T}$ encounters the blank symbol right next to the sequence, it may not halt, because it still has to move back to the start of the sequence. For that reason, $q=q_0$. 
-	Moreover, $d\neq N,R$, since $\mathcal{T}$ would never halt and compute perpetually when it reaches the the blank symbol next to the input sequence. 
-	But at the same time, $d\neq L$, because $\mathcal{T}$ would drift off for the same reason when it reaches the blank symbol left to the input sequence.
-	This leads to a contradiction. \text{\Lightning}
-	
-	Therefore, $\mathcal{T}$ must have at least two non-final states. No matter how $\mathcal{T}$ operates, it must traverse at least once from left to right over the sequence and at least once back again. There must be two different states representing these different directions by the above argument. The most efficient encodings for these states are $0^1$ and $0^3$ for $q_0$ and $q_2$ respectively. 
-	This means that there must occur at least as many delimiters $111$,$11$, and $1$ as in the G\"odel number of $\mathcal{T}_\pi$.
-	Moreover, there must be at least $(|\Sigma|+1)\cdot (1+3)$ $0$s to encode the first element in the transition tuples from states $q_0,q_2$.
-	
-	In the end, each symbol $a$ in the input sequence must have been overwritten at least once by a symbol $b(a)$, which is read again on the way back to the start and eventually surely overwritten by $\pi(a)$.
-	This mapping $b$ must be a bijective function too, otherwise the image of $b$ would not encompass all symbols in $\Sigma$ and there would be some input strings $x$ for which $\mathcal{T}$ does not correctly compute the permutation, again contradicting our assumption.
-	
-	Since $b$ and $\pi$ are both bijective, each symbol encoding must occur equally often in the transitions of at least two states by the same argument as in the proof of Lemma \ref{lemma:permutation-complexity-bound}.
-	Henceforth, we require at least $\underbrace{2}_{q_0,q_2}\cdot\underbrace{2}_{(q,\cdot,q',\cdot,d)}\cdot\underbrace{\sum_{i=1}^{|\Sigma|+1}i}_{\text{equally often}}$ $0$s to encode the symbols at the second and forth positions of the transition tuples.
-	
-	Similarly, the directions $L$ and $R$ must occur equally often in the image of $\delta$ restricted on input symbols $\Sigma\cup\{B\}$.
-	Consequently, we require at least $(|\Sigma|+1)\cdot(2+3)$ $0$s to encode these directions, assuming the worst-case encoding of $L$ and $R$ as in the proof of Lemma \ref{lemma:permutation-complexity-bound}.
-	
-	Finally, we inevitably require some transition from $q_0$ to another non-final state that represents the directional change.
-	Eventually, a transition to $q_1$ is required in the very end.
-	As the most efficient encodings for the two states that traverse over the input are achieved by choosing $q_0$, $q_2$, the encodings for the third symbol in the tuples necessarily requires $\underbrace{|\Sigma|\cdot 1}_{0^1 \text{ for } q_0} + \underbrace{|\Sigma|\cdot 3}_{0^3 \text{ for } q_2} + \underbrace{3 + 2}_{\text{transitions to }q_2,q_1}$ $0$s.
-	
-	In total, the encoding of $\mathcal{T}$ hence can not be shorter than $\mathcal{T}_\pi$, as these lower bounds are exactly the encodings listed in Table \ref{tab:goedelnum-permutation-tm} for $\mathcal{T}_\pi$.
-	This concludes the proof.
-\end{proof}
-\section{Information Thresholds for Learnability}
-\subsection{Abysmal Minimal Sample Count to Kolmogorov Complexity Ratio}
-We are interested if there exists a function $m$ that - given the Kolmogorov complexity of a function $f$ - serves a lower bound on the required sample count to identify $f$ in the learning by enumeration framework. As it turns out, there is no effective lower bound. In other words, the sample count might become as small as one for arbitrarily high Kolmogorov complexities.
-
-This demonstrates that it should not be the sample count we seek to relate the Kolmogorov complexity to, but instead quantify the training sample itself by its Kolmogorov complexity, too.
-
-Proof.\\
-Since $\Sigma^{*}$ is countably infinite, consider an arbitrary order of $\Sigma^{*}$ as $x_1,x_2\dots$.
-Fix an arbitrary definition range $D\subseteq\Sigma^{*}, D \neq \emptyset$, and an arbitrary $c\in D$.
-For any $x_j$, let $f_{i_{j}}$ be the simplest function consistent with $\mathcal{S}_j:=\{(c,x_j)\}$. Then, $f_{i_{j}}$ is learnable from the Kolmogorov enumeration by a sample of size $1$.
-
-Obviously, $f_{i_{j}}\not \equiv f_{i_{k}}$ for any $j,k\in\mathbb{N}$ with $j\neq k$, since they disagree for input $c$.
-
-Therefore, there are infinitely many functions over $\Sigma^{*}$ that are learnable from the Kolmogorov enumeration by a sample of size $1$. However, for each $n\in\mathbb{N}$, there are only finitely many objects with Kolmogorov complexity $n$. 
-% TODO: Refer to proof in \cite{li2008kolmogorov} for lower bound counting argument that shows that there are only finitely many objects with Kolmogorov complexity $n$.
-\subsection{Kolmogorov Complexity Upper Bound for $K_U$}
-% Trivial enumeration upper bound that depends on the Kolmogorov complexity of f
-\subsection{Unbounded $K_U$ across $U$ for fixed finite $D$}
-% Is the function that identifies if $f_i\equiv f$ truly computable?
-\subsection{Unbounded $K_U$ across $U$ for fixed countably infinite $D$}
-% That is hard.
-\subsection{Lower Bound for $K_U$}

@@ -3,44 +3,280 @@
 % Version: 1.04, 2023/10/19
 % Documentation: https://ctan.org/pkg/mitthesis
 
+% TODO: Give Prime Number example either here or in the Comparison in Chapter 4.
+\chapter{Preliminaries and Related Work}
+\label{chap:preliminaries}
+Generalization guarantees in classical learning theory via the Probably Approximately Correct (PAC) Model, uniform convergence, or Rademacher complexity all rely on the assumption that the samples that a model observes during training are identically independently distributed ($i.i.d.$) from an underlying, pristine distribution \cite[Chapter 3f]{shalev2014understanding}.
+In practice however, it is infeasible to design data collection procedures that satisfy this assumption. Instead, training datasets naturally incorporate severe biases and consequently only account for a small fraction of the diversity of the entire distribution.
+The field of \textit{domain generalization} tries to model this distortion of the training distribution and studies what statistical conditions this distribution must yet satisfy to still enable certain models optimized with certain objective functions and techniques to provably learn the overall true function \cite{wang2022generalizing}.
+As these statistical conditions are yet quite strong, scientists in this field are also dedicated to incorporate more inductive biases into models and optimization functions that coincide with our notion of reasonable inference \cite{arjovsky2019invariant}\cite{krueger2021out}.
+After all, we human beings seem to be able to infer \textit{simple} regularities that generalize particular and quite limited observations.
+% TODO: CITE evidence for this ability of human generalization.
+% - brain sciences or something
+First of all, we introduce the formal setting of domain generalization in Section \ref{sec:domain-generalization}, the most prominent optimization objectives it has produced, but also demonstrate their indifference regarding the \textit{simplicity} of the learned representation function. 
 
-\chapter{Domain Generalization of Neural Networks}
-\section{Extrapolation Drawbacks of Models}
-
-\begin{figure}[t]
-	% sample image is from mwe package, but should be found by latex in the tex tree w/o loading that package
-	\centering\includegraphics[alt={sample image},width=6.67cm]{example-image-b} 
-	\caption[Empirical Extrapolation of ReLU MLP.]{This figure is yet a placeholder and is supposed to showcase experimental visualizations of the immediate extrapolation behaviour of ReLU MLPs trained with L2 Regularization in experiments.}
-	\label{fig:mlp-extrapolation}
-\end{figure}
-\subsection{ReLU MLPs Extrapolate Linearly}
-% \cite{hornik1989multilayer} MLPs are universal function approximators
-% \cite{xu2019can} ReLU MLP extrapolation in NTK regime
-% \cite{jacot2018neural} NTK
-Within the support of the training distribution, MLPs are universal function approximators.
-In the NTK regime, ReLU MLPs converge to linear functions outside the training distribution with a linear convergence rate.
-Instead, the non-linearities in the architecture are the crucial foundation for encoding task-specific non-linearities. Compare Graph Neural Networks and Dynamic Programming Problems.
-% TODO: Show own proof outside the NTK regime with regularized ReLU MLPs.
-
-\section{Invariant Causal Mechanisms}
-% TODO: At some point we need to introduce the notions of causality.
-\section{Invariant Risk Minimization}
-% TODO: Describe and criticize IRM.
-% TODO: Understand the drawback of the linearization of IRM. At what cost did they derive IRMv1?
-
-% \cite{arjovsky2019invariant} IRM
-\subsection{Fully Informative Invariant Features}
-% \cite{ahuja2021invariance} IB-IRM, FIIF vs. PIIF
-But I argue that there is a far larger drawback.
-\subsection{Learning Prime Numbers}
-Consider the decision problem \textsc{PrimeNumbers}.
-It is widely believed that there is no efficient algorithm that decides prime numbers.
-% TODO: Choose citation for hardness of the prime number decision problem.
-
-\section{Other Optimization Objective Reformulations}
-\subsection{Risk Extrapolation}
-%\cite{krueger2021out} REx
-\subsection{Distributionally Robust Optimization}
+To establish a formal definition of \textit{simplicity}, Kolmogorov complexity is presented in Section \ref{sec:kolmogorov-complexity} as a natural measure of the descriptive simplicity of objects such as functions or strings.
 
 
-Empirically, none of the above algorithms perform better than ERM.
+\section{Domain generalization}
+\label{sec:domain-generalization}
+Consider some function $f:\mathcal{X}\to\mathcal{Y}$ from spaces $\mathcal{X},\mathcal{Y}$.
+When trying to learn this function $f$ given some functional tuples $(x_1,y_1),\dots,(x_n,y_n)\in\mathcal{X}\times\mathcal{Y}$. 
+Throughout this thesis, we refer to $(x_i,y_i)$ as a \textit{sample}, where $x_i$ is an \textit{instance} of the learning problem $f$ and $y_i$ its \textit{label}.
+Since a candidate hypothesis $h$ is rated by its \textit{expected risk}, we have to assign a probability to each instance $x$.
+For that reason, problem instances are usually assumed to originate from a \textit{marginal} probability distribution $x\sim P_\mathcal{X}$ over $\mathcal{X}$.
+
+The expected risk therefore writes as
+\begin{align}
+	R(h):=\mathbb{E}_{x\sim P_{\mathcal{X}}}\left[\ell(h(x),f(x))\right],	
+\end{align}
+where $\ell$ is a \textit{loss function} evaluating the deviation of the estimation $h(x)$ from the ground truth $f(x)$.
+
+However, both the marginal $P_{\mathcal{X}}$ and the true function $f$ are usually impossible to specify exactly. 
+Without further assumptions, the former is best approximated by the empirical distribution $\hat{P}_{\mathcal{X}}$ of training instances. 
+
+The expected risk is accordingly estimated by the \textit{empirical risk} 
+\begin{align}
+	\hat{R}(h):=\mathbb{E}_{x\sim \hat{P}_{\mathcal{X}}}\left[\ell(h(x),f(x))\right]=\frac{1}{n}\sum_{i=1}^{n} \ell(h(x_i),y_i).
+\end{align}
+
+A fundamental problem in learning theory is to bound the expected risk $R(h)$ of some hypothesis $h$ given only its empirical risk $\hat{R}(h)$.
+If we assume that each instance observed during training is independently drawn from the true marginal $P_{\mathcal{X}}$, $\hat{P}_{\mathcal{X}}$ is an optimal estimate of $P_{\mathcal{X}}$.
+Upon this i.i.d. assumption, several frameworks in statistical learning theory have decades ago provided bounds on the deviation of $R(h)$ from $\hat{R}(h)$ that become increasingly sharp for growing sample size $n$.
+% PAC, VC, Uniform Convergence, Rademacher Complexity
+
+However, the data-collection procedures that generate the training instances in practice naturally deviate strongly from the randomness by which instances occur according to $P_{\mathcal{X}}$.
+This is particularly the case for audiovisual data, where measurements are accompanied with noise and context-specific superfluous information that is in general yet unrelated with the function $f$.
+In such settings where the $i.i.d.$ assumption is profoundly violated, a small empirical risk on the training dataset does not necessarily guarantee a small expected risk.
+Of course, dropping the $i.i.d.$ assumption without replacement renders any general guarantee on the expected risk impossible, since $\hat{P}_{\mathcal{X}}$ could now be arbitrarily unrepresentative of $P_{\mathcal{X}}$.
+
+Instead, the \textit{domain generalization} literature identifies the aforementioned superfluous information with \textit{measurement conditions} $\varepsilon$ \cite{wang2022generalizing}.
+These measurement conditions incorporate anything that sufficiently determines the information in a measured instance $x$ that does generally not relate to the output $y=f(x)$.       
+For images, such measurement conditions include lighting conditions, color encoding, resolution, filters, noise, and unrelated artifacts such as the background behind a measured object.
+
+Now, the instances observed during training stem from a distribution $P_\varepsilon$ that in turn originates from a parametrized family of distributions $\mathcal{P}_{\mathcal{E}}:=\{P_{\varepsilon}\mid \varepsilon\in \mathcal{E}\}$, where $\mathcal{E}$ is the set of all possible measurement conditions.
+The objective is to derive a hypothesis that achieves a minimal risk in \textit{all} distributions $P_{\varepsilon}\in\mathcal{P}_{\mathcal{E}}$.
+
+\subsection{Invariant Risk Minimization}
+One of the most prominent publications in this domain is Invariant Risk Minimization (IRM) \cite{arjovsky2019invariant}, which extends the ubiquitous Empirical Risk Minimization (ERM) principle \cite{vapnik1991principles} by invariance constraints.
+
+Given multiple training distributions $\mathcal{P}_{tr}:=\{P_{1},\dots,P_{j}\}$ with functional tuples $(x,y)$, $x\in\mathbb{R}^d$, and a model with a class of realizable hypotheses $\mathcal{H}$, a single hypothesis $h\in\mathcal{H}$ is learned for all distributions $P_{\varepsilon}\in\mathcal{P}_{\mathcal{E}}$.
+This hypothesis is composed of a representation function $\Phi:\mathbb{R}^d\to\mathbb{R}^{r}$ and a predictor $w:\mathbb{R}^r\to\mathbb{R}^{k}$. For that reason, we denote $h=(w\circ \Phi)$.
+% TODO: Do we need to introduce $X,Y$ to refer to the random variables? 
+Moreover, we distinguish the random variables $X\sim P_{\mathcal{X}_{\varepsilon}},Y=f(X)$ by the specific realisations $x\in\mathcal{X}_{\varepsilon},y=f(x)$ of draws from this distribution $P_{\mathcal{X}_{\varepsilon}}$.
+
+As the presence of multiple distributions furnishes a fit occasion for concepts of \textit{causality}, the authors assume that the function $f$ incorporates an \textit{invariant causal mechanism} as in \cite[Section 4]{scholkopf2021toward} that describes a fixed causal relationship between the label $y$ and some information in $x$ that is always extractable from any instance $x$ drawn from any distribution $P_{\varepsilon}\in\mathcal{P}_{\mathcal{E}}$.
+The representation $\Phi$ should merely encode information that has a high predictive power of the true label $y=f(x)$ in all training distributions $P_i$ and could therefore belong to this invariant mechanism in $f$.
+Accordingly, the authors refer to this essential piece of information as the \textit{invariant} information $x_{inv}$.
+
+However, there is also information that might correlate with the label $y=f(x)$ in some training distributions, but fails to render useful for prediction in some other training distributions.
+By the assumption of an invariant causal mechanism $f$, this piece of information shall be ignored by the representation learned by $h$.
+The authors coin the attribute \textit{spurious} to describe such information $x_{spu}$.
+
+% TODO: Show a causal graph to clarify the causal relations.
+
+To force $h$ to effectively restrict itself to information that yields an invariantly optimal predictive power, the authors introduced IRM, an optimization objective that constraints the predictor $w$ in $h$ to achieve the lowest possible risk $R_i$ in \textit{all} training distributions $P_i\in\mathcal{P}_{tr}$ given the information in $\Phi$.
+If that was not the case, then there are two possible scenarios. 
+Either, there is a predictor $w'$ that performs better in all distributions and thus shall be preferred over $w$.
+Otherwise, there is another $w'$ that only surpasses $w$'s accuracy in \textit{some} training distributions.
+For these training distributions $P_i$, this implies that there is some spurious information in $X\sim P_i$ that is preserved by the representation $\Phi(X)$ which $w'$ again utilizes to gain an edge over $w$. 
+As this information does not belong to the invariant causal mechanism $f$, it shall therefore rightfully be omitted by $\Phi$.
+A representation $\Phi'$ that would not include this spurious information anymore would render the risk of $w\circ \Phi'$ at least as low as that of $w'\circ\Phi'$.
+While the first case concerns the optimization over the predictor $w$ given $\Phi$, the latter case affects the representation function $\Phi$ itself.
+
+The optimization objective IRM is therefore formally written as
+\begin{align}
+	\label{eq:irm-objective}
+	\min_{(w\circ \Phi)\in\mathcal{H}}\sum_{i=1}^{j}R_i(w\circ \Phi) \quad \text{such that } \;w\in\arg\min_{w}R_i(w\circ \Phi) \text{ for all } 1\leq i \leq j.
+\end{align}
+
+Indeed, the IRM objective might successfully avoid to integrate noise or spurious features that only occur in some of the training distributions into the representation $\Phi$.
+However, for such spurious features to be excluded, they must increase the predictive power $w$ in some, but not all training distributions.
+
+%% PIIF vs. FIIF
+\subsection{Invariant spurious information}
+\label{sec:invariant-spurious-information}
+It therefore still lacks a fundamental problem that was already partially addressed by \cite{kamath2021does,rosenfeld2020risks,ahuja2021invariance}.
+Spurious features that do not increase the predictive power of $w$ in any training distribution but \textit{aggravate} the predictive power outside of the training distributions are not excluded by $\Phi$.
+If these spurious features introduce additional noise and consequently increase the entropy of the distribution of $\Phi(X)$ for some training environment $X\sim P_i$, then the extension of IRM by an additional entropy penalty on the representation would encourage $\Phi$ to exclude any such features if they do not increase the predictive power in every training distribution.
+They call this extended objective \textit{Information Bottleneck IRM}, short IB-IRM.
+% Do we require a formal introduction of PIIF and FIIF?
+
+%% THE INVARIANT SUPPORT OVERLAP ASSUMPTION OF IB-IRM
+In the following, we adopt the notation of the authors and define
+\begin{equation}
+	\label{eq:support-distribution}
+	\operatorname{supp}(P):=\{x\in\mathcal{X}\mid P(X=x)>0\}
+\end{equation} 
+as the set of all elements with a non-zero probability according to some distribution $P$ over $\mathcal{X}$.
+This set is commonly referred to as the \textit{support} of $P$.
+For the specific class of noise-distorted, linear classifiers $f$ they assume in their formal setup, $x_{inv}$ and $x_{spu}$ are retrievable by a linear transformation of $x$.
+Consequently, there exists a matrix $A_{inv}$ such that, $x_{inv}=A_{inv} x$.
+
+With this setup at hand, they prove that information-theoretically, the global optimum of IB-IRM coincides with the true classifier $f$ if 
+% it holds that each invariant information $x_{inv}\in \cup_{\varepsilon \in \mathcal{E}}\mathcal{X}_{\varepsilon}$ that has a non-zero probability in any distribution $P_{\varepsilon}\in\mathcal{P}_{\mathcal{E}}$ also has a non-zero probability in some of the training distributions $P_i\in \mathcal{P}_{tr}$. 
+\begin{equation}
+	\label{eq:ib-irm-support-overlap-condition}
+	\cup_{\varepsilon \in \mathcal{E}}A_{inv} \operatorname{supp}(P_\varepsilon) \subset \cup_{1\leq i \leq k} A_{inv}\operatorname{supp}(P_i),
+\end{equation}
+where the multiplication of a matrix $A$ with a set of vectors $\Sigma$ is understood as the set of matrix-vector products $\{A x \mid x\in\Sigma\}$.
+In more natural language, they assume that the training distributions must already include any realisation of invariant information $x_{inv}$ that could occur in the entire distribution family $\mathcal{P}_\mathcal{E}$.
+
+To support the necessity of this strong assumption, they state in their Theorem 2 that for any $\mathcal{P}_{tr}$ that does not satisfy this condition, no deterministic algorithm will always identify the correct linear classifier $f$. 
+The reason is that for linearly separable classes, there could always be another linear classifier $f'$ that could have generated the same training data but disagrees with $f$ on some instance outside out of $\mathcal{P}_{tr}$.
+As any deterministic algorithm has to decide for at most one of $f$ or $f'$, it will certainly fail to generalize out-of-distribution for the other one.
+
+%% REBASING OUT-OF-DISTRIBUTION ON THE MAXIMUM DEMAND WE COULD REASONABLY POSE
+On the first sight, this argument seems to annihilate any hope to attain out-of-distribution generalization with means beyond an overarching training dataset.
+However, this notion of out-of-distribution generalization that was proved impossible in the aforementioned work excels the maximum demand that we could reasonably pose to out-of-distribution generalization.
+% - Or some work of Solomonoff.
+Without any additional prior knowledge, the most reasonable inference one could make given some observations is arguably to assume the \textit{simplest} underlying pattern that could have generated these observations \cite{solomonoff1964formal}.
+Of course, in general there are infinitely many functions that remain consistent with any finite training dataset, but most of them do not identify simple concepts.
+
+Optimization objectives like IRM or IB-IRM are however indifferent about the simplicity of an hypothesis $h$, as they only evaluate $h$ within $\mathcal{P}_{tr}$, and assign the optimal score to $h$ as long as these in-distribution optimality conditions are satisfied.
+In fact, the mere constraints that control how $h$ behaves outside of $\mathcal{P}_{tr}$ are imposed by the choice of the hypothesis class $\mathcal{H}$.
+However, this work argues that commonly employed model classes can not represent an important body of simple functions and instead restrict themselves to more complex ones, resulting in unreasonable out-of-distribution behaviour.
+% - It is not steered by the optimization, but engineered by the model class $\mathcal{H}$.
+
+%% EXAMPLE: ReLU MLPs
+Take the Multilayer Perceptron (MLP) \cite{rosenblatt1962principles} as an example.
+
+When endowed with the omnipresent ReLU activation function $ReLU(x)=\max(0,x)$, the MLP will fit the data-generating function $f$ within the training distribution by a function $h$ of piece-wise linear interpolations.
+
+If samples were actually drawn $i.i.d.$ from an underlying distribution, we did not have to care for what happens outside the training distribution, as MLPs are evidentially universal function approximators when provided with a sufficiently large hidden layer width or appropriate activation functions \cite{hornik1989multilayer} \cite{LESHNO1993861}.
+
+In practice however, where training and deployment distributions differ, $h$ will quickly converge to a linear function outside, irrespective of what pattern $h$ was imitating inside the training distribution \cite{haley1992extrapolation}.
+
+In the infinite hidden layer width limit, Xu et al. even formally proved that this convergence occurs with a linear rate outside of the training distribution support \cite{xu2019can}.
+Based on the example of Graph Neural Networks and Dynamic Programming problems, they further argued that the generalization ability of models is largely determined by how well task-specific non-linearities are encoded into the model class.
+
+%% TRANSITION TO KOLMOGOROV COMPLEXITY
+Generalization is therefore still not learned by inference principles that favour simplicity, but mainly engineered ab initio by model designers.
+To substantiate this insight with formal arguments, we first require a definition of the \textit{simplicity} of a function.
+This is subject of the next section, which introduces Kolmogorov complexity as an rigorous measure for this informal notion.
+By and large, the Kolmogorov complexity of a function $f$ considers how much information is needed to describe the simplest algorithm that produces the same output as $f$.
+Although an entire theory of inductive inference was developed around this complexity \cite{solomonoff1964formal}, its incomputable quantities are hard to incorporate into models and viable learning algorithms \cite{levin1973universal}; with the consequences that are pointed up in the subsequent sections.
+
+\section{Kolmogorov Complexity}
+\label{sec:kolmogorov-complexity}
+%% MOTIVATION OF TURING MACHINES
+The Turing Machine is a formal description scheme for algorithms that was invented to study what are the functions that are computable.
+The finding that the expressive power of this computational framework coincides with that of other contemporary formalisms of computability led to the nowadays widely accepted Church-Turing Thesis \cite{turing1936computable}\cite{turing1937computability}.
+
+It states that \textit{effectively calculable} functions --- those functions that we intuitively believe to be computable by some algorithm --- are also computable by the class of Turing Machines \cite{turing2004intelligent}.
+
+%% FORMAL DEFINITION OF TURING MACHINES
+Formally, a Turing Machine is a tuple $\mathcal{T}=(Q,\Sigma,\Gamma,B,q_0,q_1,\delta)$.
+It receives its input $x$ as a word over an alphabet $\Sigma$, which is a finite set of symbols. 
+In this work, we will always assume $\Sigma=\{0,\dots,k-1\}=\mathbb{Z}_k$ for some $k\in\mathbb{N}_{\geq 2}$ and stick to the binary alphabet $\{0,1\}$ if not specified otherwise.
+This word is provided on a working tape of infinite cells, which can be understood as an infinite amount of working memory that $\mathcal{T}$ can utilize. Each cell comprises exactly one symbol from the tape alphabet $\Gamma=\Sigma\cup\{B\}$, where $B\notin\Sigma$ is the blank symbol that indicates unused tape cells.
+The expressive power of Turing Machines does not change if we allow them access to multiple tapes, and we will adopt the convention that $\mathcal{T}$ always has a dedicated input and output tape.
+The finite set $Q$ comprises different internal states that describe the contextual information that $\mathcal{T}$ requires apart from the input $x$ to compute the output. 
+The algorithmic behaviour of $\mathcal{T}$ that produces the output is captured in its \textit{transition function} $\delta:Q\times \Gamma \to Q \times \Gamma \times \{L,R,N\}$.
+Endowed with a tape head, $\mathcal{T}$ can access only one cell at once. 
+Depending on the internal state $q$ it is situated into and the symbol $a$ it reads, $\delta(q,a)=(q',a',D)$ determines to what internal state $q'$ to transition, what symbol $a'$ to write, and into what direction --- left, right, or none --- to move the tape head.
+Functionally, $\mathcal{T}$ coincides with a \textit{partial computable} function $f_{\mathcal{T}}(x):=\begin{cases}
+	y, & \mathcal{T} \text{ halts and outputs } y\\
+	\bot, & \mathcal{T} \text{ does not halt}
+\end{cases}$,
+
+where $\bot$ means that the output is undefined.
+If $\mathcal{T}$ halts on all inputs, we call $f$ \textit{total computable}.
+
+%% ENCODING OF TURING MACHINES
+As there are only countably infinitely many distinct Turing Machines, each of them can be uniquely associated with a binary string, which is accordingly called the \textit{G\"odel number} of a Turing Machine.
+A suitable approach to obtain such a G\"odel numbering is to directly encode the transition function $\delta$ of a Turing Machine $\mathcal{T}$.
+
+Besides merely identifying $\mathcal{T}$, $\delta$ \textit{describes} the algorithm that $\mathcal{T}$ computes. 
+An encoding of $\delta$ with a computable inversion thereby allows to fully reconstruct $\mathcal{T}$ in a uniform algorithmic manner.
+\label{text:universal-tm}
+For any such encoding $\operatorname{enc}:\mathcal{T}\mapsto \operatorname{enc}(\mathcal{T})$, there is a \textit{universal Turing Machine} $U$ that given input $\operatorname{enc}(\mathcal{T}),x$ can simulate $\mathcal{T}$ on input $x$.
+To enable $U$ to unambiguously separate concatenations of strings, it proves useful to assume that the image of $\operatorname{enc}$ is a \textit{prefix-free} code.
+This means that for any two Turing Machines $\mathcal{T},\mathcal{T}'$, the string $\operatorname{enc}(\mathcal{T})$ is not a prefix of $\operatorname{enc}(\mathcal{T}'
+)$.
+
+To further allow the unambiguous separation of arbitrary strings $v,w\in\{0,1\}^{*}$, $[v,w]$ denotes the \textit{self-delimiting encoding} of strings $v$ and $w$ that precedes their concatenation with a string $1^{l(v)}0$ that encodes the length $l(v)$ of $v$ as
+\begin{equation}
+	\label{eq:self-delimiting-encoding}
+	[v,w]=1^{l(v)}0vw.
+\end{equation}
+
+%% RELATION OF THE ENCODING LENGTH TO THE ALGORITHMIC INFORMATION
+The aforementioned encodings of $\delta$ usually have in common that the length of the encoding scales with the number of internal states $q\in Q$.
+Consequentially, such encodings provide a natural viewpoint on the information or \textit{descriptive complexity} that is innate to a partial computable function \cite{li2008kolmogorov}.
+This notion associates the amount of information that is needed to unambiguously describe a partial computable function $f$ with the shortest encoding $\operatorname{enc}(\mathcal{T})$ of a Turing Machine $\mathcal{T}$ such that $f\equiv f_{\mathcal{T}}$, where equivalence $f \equiv g$ means that $f$ and $g$ are defined on the same definition range $D\subset\{0,1\}^{*}$ and satisfy $f(x)=g(x)$ for all $x\in D$.
+
+Commemorating one of the pioneers in this field, this quantity is referred to as \textit{Kolmogorov complexity}.
+\begin{definition}[Kolmogorov complexity]
+	\label{def:kolmogorov-complexity}
+	Let $f$ be an arbitrary partial computable function with definition range $D_f\subset\{0,1\}^{*}$.
+	The Kolmogorov complexity is defined as
+	\begin{align}
+		\label{eq:kolmogorov-complexity}
+		K_U(f):=\min_{p\in\{0,1\}^{*}}\{l(p)&\mid U(px)=f(x) \text{ for all } x\in D_f \\
+		&\text{ and } U(px) \text{ does not halt for any }x\in\{0,1\}^{*}\setminus D_f\}.
+	\end{align}
+\end{definition}
+In the simplest setting, $p$ is just the string that precedes $x$ with the prefix-free encoding of some Turing machine $\mathcal{T}$, $px=\operatorname{enc}(\mathcal{T})x$.
+But $p$ could also contain additional parameters $y$ for $\mathcal{T}$, for example $p=\operatorname{enc}(\mathcal{T})[y,x]$.
+%We choose to stick with this \textit{plain} Kolmogorov complexity and avoid the technical overhead to introduce the more sophisticated \textit{prefix-free} Kolmogorov complexity \cite{li2008kolmogorov}. Although the latter exhibits more mathematically desirable properties, the essential results of this work hold independently of it.
+
+%% BIJECTION CONVENTION BETWEEN NATURAL NUMBERS IN BINARY STRINGS
+The learning problems we consider in this work are functions over $\mathbb{N}$.
+Therefore, we adopt the following convention to unambiguously relate natural numbers to binary strings.
+\begin{definition}[Bijective binary encoding of natural numbers]
+	\label{def:natural-numbers-binary-strings-encoding}
+	For any natural number $n\in\mathbb{N}$, we define $x_n\in\{0,1\}^{*}$ as the binary string that encodes $n$ in the binary numeral system without leading zeros.
+	$0$ is encoded by the empty string $\varepsilon$, $2$ by $10$, $5$ by $101$, and so forth.
+	Conversely, if $x\in\{0,1\}^{*}$ encodes a natural number in this way, we denote this number by $n_x$. 
+\end{definition}
+
+%% CONDITIONAL KOLMOGOROV COMPLEXITY
+For cases where we want to separate pieces of information, it further renders useful to consider a \textit{conditional} Kolmogorov complexity.
+\begin{definition}[Conditional Kolmogorov complexity]
+	\label{def:conditional-kolmogorov-complexity}
+	Let $f$ be an arbitrary partial computable function with definition range $D_f\subset\{0,1\}^{*}$.
+	The conditional Kolmogorov complexity is defined as
+	\begin{align}
+		\label{eq:conditional-kolmogorov-complexity}
+		K_U(f\mid z):=\min_{p,p'\in\{0,1\}^{*}}\{l(p)&+l(p')\mid U(p[z,p
+		'x])=f(x) \text{ for all } x\in D_f \\
+		&\text{ and } U(p[z,p
+		'x]) \text{ does not halt for any }x\in\{0,1\}^{*}\setminus D_f\}.
+	\end{align}
+\end{definition} which we define as
+In the definition of the conditional Kolmogorov complexity of \textit{strings} in \cite{li2008kolmogorov} merely contains the prefix string $p$ and not the suffix string $p'$.
+This restriction was sufficient for their needs as they usually employed this quantity to study the Kolmogorov complexity of strings given their length.
+Our more general definition allows to condition on pieces of information in \textit{any} part of the string that is provided to $U$, not only its suffix.
+While easing the technical construction of Turing Machines, our definition remains equivalent to the restricted definition in \cite{li2008kolmogorov} up to an additive constant because the piece of information in question could just be moved to the back of the input string by another Turing Machine that parses the input.
+
+%% INDUCTIVE BIAS WITHIN KOLMOGOROV COMPLEXITY
+Admittedly, the Kolmogorov complexity of a function depends on the underlying universal Turing Machine $U$ and therefore also the encoding $\operatorname{enc}(\cdot)$.
+The choice of $\operatorname{enc}(\cdot)$ already entails an inductive bias about what objects are attributed a relatively low and high Kolmogorov complexity.
+% \cite{li2008kolmogorov}
+%% INVARIANCE THEOREM
+However, any universal Turing Machine $U'$ that corresponds to a different encoding $\operatorname{enc}'$ can be described by $U$ by its respective G\"odel number.
+Since invoking $U$ on $\operatorname{enc}(U')\operatorname{enc}'(\mathcal{T})x$ produces the same result as directly invoking $U'$ on $\operatorname{enc}'(\mathcal{T})x$, the Kolmogorov complexities $K_U$,$K_{U'}$ can only differ by an additive constant that is determined by the length of $\operatorname{enc}(U')$.
+This insight was stated in the Invariance Theorem \cite[Section 2.1]{li2008kolmogorov}.
+\begin{theorem}[Invariance Theorem]
+	For any universal Turing Machines $U,U'$, there is a constant $c_{U,U'}$ such that for any partial computable function $f$,
+	\begin{equation}
+		|K_U(f)-K_{U'}(f)|\leq c_{U,U'}.
+	\end{equation}
+\end{theorem}
+% This constant might become arbitrarily large. (Maybe this is important when we later deal with Information Thresholds).
+
+For that reason, we will in the following replace $K(\cdot)=K_U(\cdot)$ and $K(\cdot \mid y)=K_U(\cdot \mid y)$.
+
+%% RECURSION IS POWERFUL YET SIMPLE
+When characterizing algorithms with short descriptions that however maintain expressive power, recursion certainly constitutes an essential principle.
+On the one hand, the expressive power of recursion was precisely demonstrated by the class of \textit{general recursive functions}, whose inductive definition apart from concatenation and minimization also avails itself of recursion \cite{godel1931formal}.
+This class was one of the contemporaneous models of computability that were later proved to be equivalent to Turing Machines \cite{turing1937computability}.
+On the other hand, recursive operations comprise regularities with short description and therefore usually require little information to describe.
+
+%% TRANSITION TO OUR ACTUAL WORK IN THE NEXT SECTION
+Using the example of such simple recursive functions, the next chapter will demonstrate shortcomings within both the structure of models and the constraints of optimization objectives that impede learning simple functions.
+
+%For the part of the model structure, we argue that \textit{non-recursive} models such as multi-layer neural networks are incapable of expressing functions that are yet simple to describe given the underlying functions these models have access to, e.g. arithmetic operations, activation functions, or constants.
+
+%For the part of optimization objectives, we show that although for any finite dataset there are infinitely many non-recursive functions that achieve the same optimal score according to IRM, for sufficiently large datasets all of these non-recursive functions have a higher Kolmogorov complexity than the true hypothesis $h^{*}$. This exemplifies how optimization functions that integrated a simplicity bias like the Kolmogorov complexity into their evaluation of hypotheses could to filter out a huge fraction of erroneous hypothesis candidates.

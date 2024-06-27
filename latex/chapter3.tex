@@ -1,558 +1,705 @@
 % !TEX root = thesis_ruettgers_lukas.tex
 % From mitthesis package
-% Version: 1.04, 2023/10/19
+% Version: 1.01, 2023/07/04
 % Documentation: https://ctan.org/pkg/mitthesis
 
+\chapter{Models and Optimization that are Mindless of Simplicity}
+\label{chap:models-optimization-kolmogorov}
+In this chapter, we consider learning problems of the form $h:\mathbb{N}^k\to\mathbb{N}$ for some arbitrary $k\in\mathbb{N}$. 
 
-\chapter{Recursion and Simplicity}
-% TODO: Read Minimum Description Length Literature
-\section{Kolmogorov Complexity}
-% Tentative title: Simplicity of Strings
-% \cite{li2008kolmogorov}
-% TODO: Cite initial paper of Kolmogorov.
-%% CONTENT OVERVIEW
-% - Conditional Kolmogorov Complexity
-% - Invariance Theorem: Constant Factor for Changing Reference Machine
-% - - Turing Machine, Goedelnumber ordering
-% - - Criticism why this additive constant should matter in our case.
-% - - - Prove that for any constant c, there is a reference machine which biases against the function f such that its Kolmogorov complexity must be larger than c
-% - Explicit Description Upper Bound for Kolmogorov Complexity of Strings
-% - Plain vs. prefix Kolmogorov complexity
-% - Monotonic universal reference machine
+When we construct mathematical models to learn predictors for such functions $h$, there is an underlying finite set of operations or functions $\tau=\{f_1,\dots,f_j\}$ that serve as \textit{building blocks} of our model.
+For neural networks, typical building block functions include arithmetic operations like addition or multiplication, activation functions like the sigmoid function $\sigma(x)=\frac{1}{1+e^{-x}}$, $\operatorname{ELU}$ or $\tanh$, constants $c\in\mathbb{N}$, and logical expressions like the equality or inequality $=,<$, and logical conjunctions such as $\land$ and $\lor$.
 
+In the case of feed-forward neural networks $M_\theta$, our building block functions $f_i$ are merely concatenated in a way that does not depend on the input $x$.
+In particular, the number of layers and the values of the parameters are fixed and do not change according to the input $x$.
+More formally, the function $f_{\theta}$ that $M_\theta$ computes is equivalent to a finite concatenation of the building block functions $f_1,\dots,f_j$.
+Such feed-forward neural networks are well-known instances of a model class that we will later rigorously define as \textit{non-recursive models}.
 
-% TODO: State that we assume the following universal Turing Machine.
-% 1. It is the natural universal Turing Machine. The order of Turing Machines is determined by their Gödelnumber, which coincides with our inductive bias on computational simplicity.
-% 2. Invariance Theorem. It only differs only by an additive constant. 
-% TODO: Introduce Conditional Kolmogorov Complexity here, too.
+The demonstrations of this chapter are twofold.
+Firstly, this chapter puts forward that there are simple functions that these non-recursive models are not able to express.
+To that end, Theorem \ref{theorem:recursive-completion-not-non-recursive-expressible} states that models with a non-recursive structure always have a certain class of recursive functions $h_{\tau}$ they are incapable of even expressing, no matter what building block function set $\tau$ they were given access to, as long as the functions in $\tau$ satisfy conditions that frequently hold in practice. 
+At the same time, Theorem \ref{theorem:recursive-completion-kolmogorov-complexity} asserts the functions $h_{\tau}$ of this very class preserve a constantly low Kolmogorov complexity given $\tau$, which allows us to conclude the aforementioned statement.
 
+On the other hand, the ability of standard optimization objectives to learn the true function also relies on limitations of the model class.
+In the limit of expressive power where \textit{any} total computable function could be expressed by a model, any finite dataset would have infinitely many functions that remain consistent with it, hindering even optimization objectives that are dedicated to domain generalization like IRM from identifying the true function.
 
-%%%%%%%%%%% BASIC SETUP FOR KOLMOGOROV COMPLEXITY %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Irrespective of what a model can express, this section additionally exhibits that even dedicated domain generalization optimization objectives like IRM are indifferent about the simplicity of a hypothesis $h$, and therefore fail to identify the true hypothesis $h^{*}$ even if all other consistent hypotheses have a higher Kolmogorov complexity.
+Using the example of the aforementioned class of recursive functions $h_\tau$, Theorem \ref{theorem:surpass-kolmogorov-complexity-threshold} however illustrates how incorporating Kolmogorov complexity as a simplicity bias into the optimization objective would ensure that for sufficiently large datasets, every function that a corresponding non-recursive model could possibly express with $\tau$ obtains a higher Kolmogorov complexity than the true function $h_\tau$.
+% However, for sufficiently large datasets, Theorem \ref{theorem:surpass-kolmogorov-complexity-threshold} points up that all of these functions will obtain a higher Kolmogorov complexity than the true function $h$, which demonstrates how domain generalization could profit from extending optimization methods by a simplicity bias.
 
-% TODO: Introduce G\"odel number
-Denote by $\operatorname{enc}(\mathcal{T})$ the G\"odel number of a Turing Machine.
+By exemplifying the discriminative power of this simplicity bias, these results therefore encourage to study how Kolmogorov complexity paves the way to general, yet nearly optimal learnability conditions for hypothesis classes as large as the class of all partial computable functions, which we undertake later in Chapter \ref{chap:sufficient-information-learnability}.
 
-\begin{definition}[Kolmogorov Complexity]
+\section{Non-recursive models}
+\label{sec:non-recursive-models}
+On our way to provide a rigorous definition of non-recursive models, we first characterize what it means for a function to be non-recursive.
+
+%% ASSUMPTIONS OF OUR PROOFS
+% Besides the countable infinity of $\mathbb{N}$ and their finite number density in any bounded interval, the formal arguments only assume a smallest element and a notion of boundedness and monotonicity on the underlying operand set, and hence necessitate only little adjustments to extend them to the set of finite strings $\{0,1\}^{*}$.
+
+%% EXTENSIONS OF OUR PROOFS
+% What about changing the recursive completion to taking only the absolute magnitude of each function $\lvert f_i(n) \rVert$? 
+% - This value would still be bounded by $0$, but does it really preserve a meaningful notion of monotonicity?
+
+%% Under which conditions do our lemmas transfer to negative numbers?
+% - Convergence in both directions need to be considered.
+% The results therefore transfer directly to other countably infinite operand sets like the set of finite strings $\{0,1\}^{*}$ or the non-negative rational numbers $\mathbb{Q}^{\geq 0}$.
+
+%% Finite concatenations
+\begin{definition}[Non-recursive functions]
+	\label{def:non-recursive-functions}
+	Given a finite set of functions $\tau=\{f_1,\dots,f_j\}$ such that for each $1\leq i\leq j$, $f_i:\mathbb{N}^{k_{i}}\to\mathbb{N}$ is a $k_i$-ary function over $\mathbb{N}$ for some $k_i\in\mathbb{N}$.
 	
+	We inductively define the set of non-recursive functions over $\tau$, denoted $\mathcal{F}_{\tau}$.
+	
+	Beforehand, take $\operatorname{VAR}:=\{n_i\mid i\in\mathbb{N}\}$ as the set of variable symbols that functions in $\mathcal{F}_{\tau}$ can take as distinct input variables.
+	\begin{enumerate}
+		\item \textbf{Base case:} For any variable symbol $n_i$, the identity function $I\in \mathcal{F}_{\tau}$, where $I(n_i)=n_i$ for all $n_i\in\mathbb{N}$.
+		\item \textbf{Induction step:} Let $f\in\tau$ be a function of arity $K\in\mathbb{N}$. Let $g_1,\dots,g_K\in\mathcal{F}_{\tau}$ be arbitrary non-recursive functions, where $g_i$ has arity $k_i\in\mathbb{N}$. 
+		
+		Let $i_1,\dots,i_m\in\mathbb{N}$ be the distinct indices of the variable symbols $n_i$ that occur as an input variable symbol in at least one of the functions $g_1,\dots,g_k$. 
+		Abbreviate these $m$ variable symbols as a vector $\mathbf{n}:=(n_{i_1},\dots,n_{i_m})$. Accordingly, let $\mathbf{n}_i$ be the tuple of the variable symbols $n_{i_j}\in \mathbf{n}$ that occur in $g_i$, ordered by $j$. 
+		
+		Then, the function $h:=(f\circ(g_1,\dots,g_k))\in \mathcal{F}_{\tau}$, where $h(\mathbf{n}):=f(g_1(\mathbf{n}_1),\dots,g_K(\mathbf{n}_K))$ for all $\mathbf{n}\in\mathbb{N}^m$.
+	\end{enumerate}
+\end{definition}
+Non-recursive functions over $\tau$ are hence nothing but finite concatenations of functions in $\tau$.
+
+As we study the expressive power of models, it suffices to identify models with the representation class $\mathcal{M}$ of functions that they can realize.
+Therefore, we call a model non-recursive on $\tau$ if this representation class $\mathcal{M}\subset \mathcal{F}_{\tau}$.
+In other words, if a model is non-recursive on $\tau$, any function $g$ that this model can realize is equivalent to a certain finite concatenation of functions in $\tau$.
+
+%In the following, we abbreviate the arity of a function $f$ by $\operatorname{ar}(f)$.
+
+The inductive definition of $\mathcal{F}_{\tau}$ furnishes a fit occasion to prove statements over this function class in an analogously inductive manner.
+For that reason, we establish the notion of the \textit{depth} of a non-recursive function as its maximum concatenation depth.
+
+\begin{definition}[Depth of non-recursive functions]
+	\label{def:non-recursive-functions-depth}
+	We inductively define the depth of non-recursive functions $\operatorname{dep}:\mathcal{F}_{\tau}\to\mathbb{N}$ as follows:
+	\begin{enumerate}
+		\item \textbf{Base case:} The identity function $I$ has depth $\operatorname{dep}(I):=0$. 
+		\item \textbf{Induction step:} Let $f\in\tau$ be a function of arity $K\in\mathbb{N}$. Let $g_1,\dots,g_K\in\mathcal{F}_{\tau}$ be arbitrary non-recursive functions. Then, the function $h:=(f\circ(g_1,\dots,g_k))$ has depth $\operatorname{dep}(h):=1+\max_{1\leq i\leq k}\operatorname{dep}(g_i)$.
+	\end{enumerate}
 \end{definition}
 
-
-\subsection{The Implicit Bias within Kolmogorov Complexity}
-\begin{theorem}[Invariance Theorem]
-	There is only an additive constant between Kolmogorov Complexities of any pair of universal Turing Machines.
-\end{theorem}
-
-% TODO: Mention that this constant might become arbitrarily large. (At least later when we deal with Information Thresholds)
-% TODO: This should be put as early as possible in the chapter.
-In the following, we assume an arbitrary, fixed, finite alphabet $\Sigma$ of cardinality $|\Sigma|=:r$.
-Without loss of generality, we identify $\Sigma$ with the field $\mathbb{Z}_r$ to which it possesses a natural isomorphism $\pi$.
-When we speak of $0,1\in Sigma$, we refer to the elements $a,b\in\Sigma$ with $\pi(a)=0, \pi(b)=1$.
-Since $r\in\mathbb{N}$ is finite, $\mathfrak{C}\cong \mathbb{Z}_r$ is equivalent to $\mathfrak{C}\equiv \mathbb{Z}_r$ for any mathematical structure $\mathfrak{C}$.
-That is, $\mathfrak{C}$ will satisfy exactly those first-order logic formulas that $\mathbb{Z}_r$ satisfies.
-In our case, this also holds for second-order logic formulas formulated over $\mathbb{Z}_r$, as quantification over predicates and relations over finite objects is expressible in first-order logic, too.
-% TODO: Purely additive vector norms are only expressible in second-order logic.
-
-\begin{definition}[Universal Turing Machine]
-	\label{def:universaltm}
-	We define a universal Turing Machine $U$ that receives both program index and input in a self-delimiting encoding.
-	The construction is in the spirit of \cite[Section 2.1]{li2008kolmogorov} as follows. 
-	% TODO: Check whether it's truly Section 2.1
-	$U$ expects input in the form $1^n 0 xy$, where $x,y\in\{0,1\}^{*}$ and $l(x)=n$.
-	$U$ hence interprets the number of leading $1$s as the length of the first input.
-	It can uniquely identify the number of leading $1$s by the first appearance of $0$ on the input tape.
-	$U$ interprets $x$ as the encoding of the index of the Turing Machine it shall execute and retrieves the Gödel number of this Turing Machine in the natural way.
-	That is, $U$ incrementally iterates through all binary strings, checks whether they encode a Gödel number and subtracts $x$ by one each time it encounters a valid Gödel number.
-	When $x$ has been reduced to the empty string, the current binary string will encode the $n_x$th valid Gödel number of some Turing Machine $\mathcal{T}_x$. 
+Moving on, the monotonicity of non-recursive functions is defined in the standard way.
+\begin{definition}[Monotonous non-recursive functions]
+	\label{def:non-recursive-functions-monotonous}
+	Let $f\in \mathcal{F}_{\tau}$ be an arbitrary $k$-ary non-recursive function with $k\geq 1$.
 	
-	Then, $U$ simulates $\mathcal{T}_x$ on input $y$.
+	We call $f$ monotonously increasing if for any $1\leq i\leq k$, for any $n_1,\dots,n_k\in \mathbb{N}$, and any $a,b\in\mathbb{N}$ with $a<b$, it holds that
+	\begin{align*}
+		f(n_1,\dots,n_{i-1},a,n_{i+1},\dots,n_k) \leq f(n_1,\dots,n_{i-1},b,n_{i+1},\dots,n_k).
+	\end{align*}
+	
+	If the inequality holds strictly, we call $f$ strictly monotonously increasing.
+	
+	The definition of (strictly) monotonously decreasing terms is symmetric.
 \end{definition}
 
-\begin{definition}[Strings with Infinite Zero Padding]
-	\label{def:zero-pad-string}
-	For any $x\in\Sigma^{*}$, we define $x\overline{0}\in\Sigma^{\infty}$ as the infinite string with prefix $x$ and infinitely many subsequent $0$s.
+\section{Recursive completion}
+\label{sec:recursive-completion}
+Non-recursive functions as by Definition \ref{def:non-recursive-functions} have a concatenation structure that is uniform across all inputs. 
+Conversely, the concatenation structure of recursive functions might certainly depend on the input.
+
+% To show that recursive functions constitute an indispensable class of simple functions that cannot be expressed by non-recursive models, we construct functions that recursively apply certain operations --- first-order logical terms in our case --- for a number of times that is not fixed but depends on the input.
+
+To formally exemplify recursive functions and contrast them to non-recursive ones, we first introduce the \textit{recursive concatenation} of an arbitrary function, which is nothing but the concatenation of a function with itself.
+\begin{definition}[Recursive concatenation]
+	\label{def:recursive-concatenation}
+	Let $f:\mathbb{N}^k\to\mathbb{N}$ be an arbitrary function over $\mathbb{N}$ with arity $k\geq 1$.
+	First, denote by $f^{-}(n):=f(\underbrace{n,\dots,n}_{k \text{ times}}),n\in\mathbb{N}$ the reduction of $f$ to a unary function that copies the single input $n$ to all $k$ input variables.
+	
+	We inductively define the $m$-wise recursive concatenation of $f$ as
+	\begin{align}
+		f^{(0)}(n)&:=n, && n\in\mathbb{N}\\
+		f^{(m+1)}(n)&:=f^{-}(f^{(m)}(n)),&& n,m\in\mathbb{N}.
+	\end{align}
 \end{definition}
 
-\begin{lemma}[Additional Complexity of Infinite Zero Padding]
-	\label{lemma:additional-complexity-zero-pad}
-	There is a constant $c_{pad}$ such that for every string $x\in\Sigma^{*}$, $K(x\overline{0})\leq K(x)+c_{pad}$.
+If functions $f$ over $\mathbb{N}$ are strictly monotonously increasing and have an arity larger than $1$, the function values of their recursive concatenations $f^{(m)}(n)$ must grow exponentially fast in the number of concatenations $m$, as the following Lemma shows.
+
+\begin{lemma}[Self-Lower Bound for Strictly Monotonously Increasing Functions]
+	\label{lemma:self-lower-bound-strictly-monotonous-functions}
+	Let $f:\mathbb{N}^{k}\to\mathbb{N}$ be an arbitrary $k$-ary function that is strictly monotonously increasing with $k\geq 1$.
+	Let $f^{(m)}$ denote the $m$-wise recursive concatenation of $f$ as in Definition \ref{def:recursive-concatenation}. 
+	% NOTE: It must hold that $k\geq 1$ for strictly monotonously increasing functions.
+	
+	It holds that $f^{(m)}(n)\geq k^m\cdot n$ for all $n,m\in\mathbb{N}$.
 \end{lemma}
 \begin{proof}
-	We construct a Turing Machine $\mathcal{T}_{pad}$ in the following way.
-	$\mathcal{T}_{pad}$ always moves its tape head to the right. 
-	It leaves symbols $a\in\Sigma$ unchanged and replaces every blank symbol $B$ by $0$.
-	For any input $x$, $\mathcal{T}_{pad}(x)=x\overline{0}$.
-	% TODO: How do we define the output of a Turing Machine that never halts but computes infinite sequences? Check \cite{li2008kolmogorov}.
-	This Turing Machine is well-defined. In particular, it has a finite G\"odel number $\operatorname{enc}(\mathcal{T}_{pad})$ of length $c_{enc}\in\mathbb{N}$.
-	There is an $p\in\mathbb{N}$ such that $\operatorname{enc}(\mathcal{T}_{pad})$ is the $p$th G\"odel number in the natural enumeration of G\"odel numbers that is also computed by our universal Turing Machine $U$ from Definition \ref{def:universaltm}. 
-	Therefore, there exists a constant $c_0\leq\log_2(p)$ such that $K(\mathcal{T})=c_0$.
+	Fix an arbitrary, strictly monotonously increasing function $f$ of arity $k$.
+	First of all, we show that $f^{-}(n)\geq k\cdot n $ for all $n\in\mathbb{N}$.
 	
-	As providing $x_p$ and $x$ to the universal Turing Machine $U$ in the self-delimiting format $1^{c_{0}} 0 x_p x$ yields $x\overline{0}$, we finally obtain $K(x\overline{0})\leq \underbrace{2c_0+1}{=:c_{pad}}+K(x)$.
+	Exhaustive exploitation of strict monotonicity yields
+	\begin{align}
+		f^{-}(n)=f(\underbrace{n,\dots,n}_{k \text{ times}})&\geq f(n-1,n,\dots,n)+1\\
+		&\overset{\dots}{\geq} f(0,n,\dots,n)+n \\
+		&\overset{\dots}{\geq} \underbrace{f(0,0,\dots,0)}_{\geq 0}+k\cdot n \geq k\cdot n.
+		\label{eq:self-lower-bound-strictly-monotonous-functions-inequality-depth1}
+	\end{align} 
+	
+	Now, we prove the general lower bound for $f^{(m)}(n)$ by induction over the number of recursive concatenations $m\in\mathbb{N}$.
+	
+	The base case $m=0$ holds by definition since $f^{(0)}(n)=n=k^0\cdot n$.
+	
+	For the induction hypothesis (IH), assume that there is some $m\in\mathbb{N}$ such that $f^{(m)}(n)\geq k^m\cdot n$ holds for all $n\in\mathbb{N}$.
+	By the strict monotonicity of $f$ and Equation \ref{eq:self-lower-bound-strictly-monotonous-functions-inequality-depth1}, we obtain
+	\begin{align}
+		\label{eq:self-lower-bound-strictly-monotonous-functions-inequality-induction-step}
+		f^{(m+1)}(n)&=f^{-}(f^{(m)}(n)) \overset{\text{(IH)},(\ref{eq:self-lower-bound-strictly-monotonous-functions-inequality-depth1})}{\geq} k\cdot \left(k^m\cdot n \right) = k^{m+1} \cdot n. 
+	\end{align}
+	
+	Consequently, the overall result follows by the induction principle.
 \end{proof}
 
-%
-%
-%
-%
-%
-%
-%
-%
-%%%%%%%%%%% BASIC PROPERTIES OF KOLMOGOROV COMPLEXITY %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Compressibility}
-\begin{lemma}[Incompressible Strings]
-	\label{lemma:incompressible-strings}
-	For any $n\in\mathbb{N}$, there exists a string $v\in\Sigma^n$ with $K(v)\geq l(v)=n$.
+\section{Expressive limits of non-recursive models}
+\label{sec:expressive-limits-non-recursive-models}
+For the subsequent theorems, we zero in on the recursive concatenation of a specific function, namely the sum over the function set $\tau$, defined as $f_{\tau}:=\left(\sum_{i=1}^{j}f_j\right)$.
+% If the building block functions $f_i$ satisfy certain assumptions, taking the sum over $\tau$ will ensure that no non-recursive function in $\mathcal{F}_{\tau}$ can keep up with the growth of the recursive concatenation $f_{\tau}^{(n)}(n)$ for increasing $n\in\mathbb{N}$.
+
+To illustrate why it is necessary to take the sum over \textit{all} functions in $\tau$, consider the addition function $f_{+}:\mathbb{N}\times \mathbb{N}\to\mathbb{N}$ as an ubiquitous example.
+If the function set $\tau=\{f_{+},f\}$ fortuitously happened to include another function $f$ that is just precisely defined as the recursive concatenation of the addition function $f(m,n):=f_{+}^{(m)}(n)=2^{m}\cdot n$, the recursive concatenation of the addition function alone would be easily expressible by non-recursive models on $\tau$ by merely applying $f$ once to the input.
+But if we instead take the recursive concatenation of their sum $f_{\tau}(n)=2n+2^{n} n = (2^{n}+2)\cdot n$, we can prove that there is no non-recursive function $f\in\mathcal{F}_{\tau}$ that can keep up with its super-exponential growth, rendering this recursive concatenation inexpressible in $\mathcal{F}_\tau$.
+
+In general however, this inexpressivity statement is hard to prove if we do not make some assumptions on the building block functions $f_i\in\tau$.
+At the same time, we do not want to restrict $\tau$ too much to maintain the pertinence of this result for machine learning models in practice.
+It turns out that for any function sets $\tau$ where each function is either strictly monotonously increasing or bounded, we achieve a sound trade-off between these two conflicting objectives.
+On the one hand, the formal proofs render quite simple while on the other hand, the representation classes of many machine learning models still fall into this restricted category of function sets $\mathcal{F}_{\tau}$.
+Apart from the $ReLU$ activation function, most common activation functions such as $ELU$, $\sigma$, or $\tanh$ are strictly monotonously increasing. At the same time, ubiquitous arithmetic operations like addition or multiplication are strictly monotonously increasing, too.
+Over and above, learned parameters of a neural network can be represented by constants, which obviously constitute bounded functions.
+Finally, logical functions are by definition bounded by $1$, and in particular allow to indirectly realise the $ReLU$ activation function and other operations that require case distinctions.
+
+For that reason, we restrict the function sets $\tau$ to strictly monotonously increasing and bounded functions.
+As it renders useful in the later theorems, we now show that for any such $\tau$, the recursive concatenation of $f_{\tau}$ is lower bounded by the recursive concatenation of each strictly monotonously increasing function $f_k\in\tau$.
+
+\begin{lemma}[Maximum bound for Recursive Concatenation Sum]
+	\label{lemma:max-bound-recursive-concatenation-sum}
+	Given an arbitrary function set $\tau=\{f_1,\dots,f_j\}$.
 	
+	For any monotonously increasing function $f_k\in\tau$ and any $m,n\in\mathbb{N}$, it holds that
+	$f_{\tau}^{(m)}(n)\geq f_k^{(m)}(n)$.
 \end{lemma}
 \begin{proof}
-	Let $r:=|\Sigma|$, thus $|\Sigma^n|=|\Sigma|^n=r^n$.
-	All these strings are different objects and consequently must have different encodings.
-	For any $v,w\in\Sigma^n$, if we have $v\neq w$ and $U(p)=v$ and $U(q)=w$ for some universal reference machine $U$ and programs $p,q\in\Sigma^*$, then necessarily $p\neq q$.
-	But the geometric sum $\sum_{i=0}^{n-1}r^i=r^{n}-1$, hence there are only $r^n-1$ strings in $\Sigma^{*}$ with length at most $n-1$.
-	By the pigeonhole principle, there must be at least one $v\in\Sigma^n$ such that there exists no program $p$ of length $l(p)<n$ with $U(p)=v$.
-	For this $v$, we have $K(v)\geq n=l(v)$.
-\end{proof}
-We extend the above lemma to infinite strings with finite hamming weight.
-\begin{corollary}[Incompressible Strings with Infinite Paddings]
-	\label{cor:incompressible-zero-pad}
-	For any $n\in\mathbb{N}$, there exists a string $v_n=x_n\overline{0}\in\Sigma^{\infty}$ with $K(v_n)\geq l(x_n)=n$.
-\end{corollary}
-\begin{proof}
-	The argument is analogous to Lemma \ref{lemma:incompressible-strings}.
-	For any $n\in\mathbb{N}$, there are exactly $2^n$ strings $v\in\Sigma^{\infty}$ that satisfy $v=x\overline{0}$ for some $x\in\Sigma^{*}$. However, there are only $2^n-1$ strings of length shorter than $n$ that could serve as encodings for strings like $v$.
-	Therefore one of the $2^n$ strings is not compressible beyond length $n$.
-\end{proof}
-
-% Constructive Logarithmic Complexity Upper Bound
-\begin{lemma}[Logarithmically Compressible Strings]
-	\label{lemma:logcompress}
-	There exists a constant $c\in\mathbb{N}$ such that:
-	For every $n\in\mathbb{N}$, there exists a string $z_n\in\Sigma^{*}$ of length $l(z_n)=n$ with Kolmogorov complexity $K(z_n)\leq \log (n) + c$.
-\end{lemma}
-\begin{proof}
-	Without loss of generality, $0,1\in\Sigma$. Since $\Sigma$ is finite, it is isomorphic $\{0,1,\dots,r-1\}$, where $r=|\Sigma|$.
-	% TODO: State this somewhere in the beginning of this section. We will use it multiple times.
-	We construct a Turing Machine $\mathcal{T}$ as follows:
-	If the string $x$ on the input tape does not only consist of $0$s and $1$s, $\mathcal{T}$ immediately terminates and hence outputs $\varepsilon$.
-	In the following, we assume $x\in\{0,1\}^{*}$.
-	$\mathcal{T}$ interprets $x$ as the encoding of a natural number in the usual way. Leading zeros are ignored and immediately replaced by the blank symbol $B$.
-	We denote $n_x\in\mathbb{N}$ as the natural number encoded by $x$. 
-	Conversely, for any $n\in\mathbb{N}$, $x_n$ denotes the unique binary string encoding it without leading zeros. Accordingly, $0$ is encoded by the empty string $\varepsilon$.
-	$\mathcal{T}$ now repeats the following procedure until the input tape only holds the empty string $\varepsilon$.
-	\begin{itemize}
-		\item Write a $1$ on the next free box.
-		\item Subtract the input by $1$.
-	\end{itemize}
-	Finally, $\mathcal{T}$ returns a string of $n_x$ subsequent $1$s.
-	In particular, the partial computable function $f$ computed by $\mathcal{T}$ satisfies $f(n_x)=1^{n}$ for each $n\in\mathbb{N}$.
-	Analogously as in the proof of Lemma \ref{lemma:additional-complexity-zero-pad}, there exists a string $x_p$ and a constant $c_\mathcal{T}\leq\log_2(p),p\in\mathbb{N}$, such that $K(\mathcal{T})=c_\mathcal{T}$. 
+	Given all as above.
+	We show the statement by induction over $m\in\mathbb{N}$.
 	
-	For any $n\in\mathbb{N}$, providing $1^{c_\mathcal{T}} 0 x_p x_n$ to the universal Turing Machine $U$ from Definition \ref{def:universaltm} as input yields $z_n:=1^n$ as output.
-	For that reason, $K(z_n)\leq 2c_\mathcal{T} + 1 + l(x_n) \leq \underbrace{2c_\mathcal{T}+2}_{=:c}+\log(n)$.
+	For $m=0$, the result follows from the definition
+	\begin{align*}
+		f_{\tau}^{(0)}(n)=\sum_{i=1}^{j} f_{i}^{(0)}(n)=\sum_{i=1}^{j}n\geq n=f_{k}^{(0)}(n).
+	\end{align*}
+	for all $1\leq k\leq j$ and $n\in\mathbb{N}$.
+	
+	Now, assume that for some $m\in\mathbb{N}$, the statement $f_{\tau}^{(m)}(n)\geq f_i^{(m)}(n)$ holds for all strictly monotonously increasing functions $f_i\in\tau$ and all $n\in\mathbb{N}$.
+	
+	For $m+1$, any monotonously increasing $f_k \in \tau$ satisfies
+	\begin{align}
+		f_{\tau}^{(m+1)}(n) = f_{\tau}^{-}(f_{\tau}^{(m)}(n)) = \sum_{i=1}^{j}f_i^{-}(f_{\tau}^{(m)}(n))
+		&\geq f_k^{-}(f_{\tau}^{(m)}(n))\\
+		&\overset{\text{(IH)}}{\geq} f_k^{-}( f_k^{(m)}(n)) = f_k^{(m+1)}(n),
+	\end{align}
+	where the first inequality draws upon the non-negativity of $\mathbb{N}$.
+	Therefore, the overall statement for all $m\in\mathbb{N}$ follows by induction.	
 	
 \end{proof}
 
-\begin{corollary}[Log-Compressible Strings with Infinite Zero Padding]
-	\label{cor:log-compressible-zero-pad}
-	There exists a constant $c\in\mathbb{N}$ such that:
-	For every $n\in\mathbb{N}$, there exists a string $p_n\in\Sigma^{\infty}$ such that $p_n=z_n\overline{0}$ for a string $z_n$ of length $l(z_n)=n$ and that has Kolmogorov complexity $K(p_n)\leq \log (n) + c$.
-\end{corollary}
-\begin{proof}
-	By virtue of Lemma \ref{lemma:additional-complexity-zero-pad}, padding the strings of the form $1^{n}$ with infinite $0$s required only a constant additional amount $c_{pad}$ of descriptive information.
-	Combined with the constant $c$ from the proof of Lemma \ref{lemma:logcompress}, we obtain $K(p_n)\leq \log(n) + c + c_{pad}$ for $p_n=1^n\overline{0}$.
-\end{proof}
+In the same spirit as in Definition \ref{def:recursive-concatenation}, we merge the two variables $m,n$ of the recursive concatenation into one single input $n$ for convenience, and refer to the resulting function as the \textit{recursive completion} of $f$.
 
-% Constructive Arbitary Complexity Upper Bound
-\begin{lemma}[Arbitrarily Compressible Strings]
-	\label{lemma:arbitrarycompress}
-	There exists a constant $c\in\mathbb{N}$ such that:
-	For every $n\in\mathbb{N}$, there exists a string $z_n\in\Sigma$ of length $l(z_n)=\left(\bigcirc_{i=1}^n \exp_2\right)(1)$ with Kolmogorov complexity $K(z_n)\leq \log (n) + c$.
-\end{lemma}
-\begin{proof}
-	This time, we construct a Turing Machine $\mathcal{T}$ that computes an exponential tower function. 
-	The function $f$ computed by $\mathcal{T}$ will satisfy $f(x_n)=\begin{cases}
-		1^{\left(\bigcirc_{i=1}^n \exp_2\right)(1)}, & n\in\mathbb{N},n\geq 1\\
-		1, & n=0\in\mathbb{N}.\\
-	\end{cases}$
+\begin{definition}[Recursive completion]
+	\label{def:recursive-completion}
+	Let $f:\mathbb{N}^k\to\mathbb{N}$ be an arbitrary function with arity $k\geq 1$. 
 	
-	This is done in the following way:
-	Just as in the proof of Lemma \ref{lemma:logcompress}, $\mathcal{T}$ interprets the input $x$ as the encoding of a natural number $n_x$.
-	Besides the input tape and the output tape, $\mathcal{T}$ uses one auxiliary tape. 
-	If $x$ does not satisfy the expected format, $\mathcal{T}$ immediately terminates.
-	Otherwise, $\mathcal{T}$ first writes a $1$ on its output tape.
-	Now, it repeats the following procedure while the string on the input tape is not eradicated blank.
-	% TODO: Find a better wording than "eradicating blank".
-	\begin{itemize}
-		\item Remove all non-blank symbols on the auxiliary tape.
-		\item Copy the non-blank symbol sequence $x$ on the output tape to the auxiliary tape.
-		\item Interpret $x$ as the natural number $n_x\in\mathbb{N}$. Compute $x_{2^{n_x}}$ just as in the proof for Lemma \ref{lemma:logcompress} and write it on the output tape.
-		\item Subtract the number on the input tape by $1$.
-	\end{itemize}
-	
-	The string $x$ on the output tape now represents $n_x=\left(\bigcirc_{i=1}^n \exp_2\right)(1)$.
-	Finally, copy $x$ once more to the auxiliary tape and clean the output tape. 
-	Now, repeat the following procedure as long as the string on the auxiliary tape is not eradicated blank.
-	\begin{itemize}
-		\item Write a $1$ on the output tape.
-		\item Subtract the string on the auxiliary tape by $1$.
-	\end{itemize}
-	
-	With $1^{\left(\bigcirc_{i=1}^n \exp_2\right)(1)}$ written to the output tape, $\mathcal{T}$ terminates.
-	
-	By the same argument as in the proof of Lemma \ref{lemma:logcompress}, there is a program string $p$ that identifies $\mathcal{T}$ with a length of $c_{\mathcal{T}}\in\mathbb{N}$.
-	For any $n$, providing $1^{c_\mathcal{T}} 0 p x_n$ to the universal Turing Machine $U$ yields the output $z_n:=1^{\left(\bigcirc_{i=1}^n \exp_2\right)(1)}$ of length $\left(\bigcirc_{i=1}^n \exp_2\right)(1)$.
-	Henceforth, $K(z_n)\leq \log(n) + c$ for $c:=2c_\mathcal{T}+2$.
-	
-\end{proof}
-\begin{corollary}[Arbitrarily Compressible Strings with Infinite Zero Padding]
-	\label{cor:arbitrarycompress-zero-pad}
-	There exists a constant $c\in\mathbb{N}$ such that:
-	For every $n\in\mathbb{N}$, there exists a string $p_n\in\Sigma^{\infty}$ such that $p_n=z_n\overline{0}$ for a string $z_n$ of length $l(z_n)=\left(\bigcirc_{i=1}^n \exp_2\right)(1)$ and that has Kolmogorov complexity $K(p_n)\leq \log (n) + c$.
-\end{corollary}
-\begin{proof}
-	The proof works just as in Corollary \ref{cor:log-compressible-zero-pad} and merely requires replacing $c$ and $p_n$ by the respective values in the proof of Lemma \ref{lemma:arbitrarycompress}.
-\end{proof}
-
-\section{Regularization and Kolmogorov Complexity}
-
-% TODO: Somewhere, we need to introduce the big concatenation operator.
-% TODO: We need to introduce that we mean \exp_2(\cdot)\equiv 2^{I(\cdot)}, where $I$ is the identity function.
-%
-%
-%
-%
-%
-%
-%
-%
-%%%%%%%%%%% INVARIANCE KOLMOGOROV COMPLEXITY UNDER PERMUTATION, WHILE REGULARIZATION IS NOT %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Is a sequence 90909090909090... more complex than 101001000010000000010000....?
-% By the homogeneity of vector norms, regularization biases towards symbols with a smaller ordinal position.
-% But Kolmogorov Complexity is invariant under permutation.
-
-\begin{definition}[Turing Machine for Permutation]
-	\label{def:permutationtm}
-	Let $\pi$ be an arbitrary permutation over $\Sigma$.
-	We define $\mathcal{T}_\pi$ in the straightforward way.
-	$\mathcal{T}$ goes over the input and replaces every symbol $a\in\Sigma$ by $\pi(a)$. 
-	After having arrived on the right end, it moves back to the first symbol and terminates.
+	We define the recursive completion of $f$, denoted by $f^{\lozenge}:\mathbb{N}\to\mathbb{N}$, as
+	\begin{align}
+		f^{\lozenge}(n) &= f^{(n)}(n), \quad n\in\mathbb{N},
+	\end{align}
+	where $f^{(n)}$ denotes the $n$-wise recursive concatenation of $f$ as in Definition \ref{def:recursive-concatenation}.
 \end{definition}
-\begin{table}[h]
-\begin{center}
-\begin{tabular}{| c | c | c c c |c |}
-\toprule
-$\delta$ & $0$ & $1$ & \dots & $r-1$ & $B$ \\\hline
-$q_0$ & $(q_0,\pi(0),R)$ & $(q_0,\pi(1),R)$ & \dots & $(q_0,\pi(r-1),R)$ & $(q_2,B,L)$ \\\hline
-$q_2$ & $(q_2,0,L)$ & $(q_2,1,L)$ & \dots & $(q_2,r-1,L)$ & $(q_1,B,R)$ \\\bottomrule
-\end{tabular}
-\end{center}
-\caption[Transition function of permutation Turing Machine]{The schematic transition function $\delta$ of $\mathcal{T}_\pi$. By convention, $q_1$ represents the final state and is hence omitted.}
-\label{tab:tmpermutation}
-\end{table}
+The following theorems will be proved for this special case of recursive concatenations.
+For an arbitrary function set $\tau$ that only comprises strictly monotonously increasing and bounded functions, we are going to show that $f_\tau^{\lozenge}$ --- referred to as the \textit{recursive completion over $\tau$} --- is not expressible by non-recursive functions over $\tau$, briefly $f_\tau^{\lozenge} \notin \mathcal{F}_{\tau}$.
+This implies that any non-recursive model on $\tau$ is not able to express this function.
 
-% First put forward a weak argument (Permutation, Binary Inverse) that illustrates the disparity between Kolmogorov complexity and vector norms
-It is trivial to show that the length of the G\"odel number of $\mathcal{T}_\pi$ is the same for all permutations $\pi$ over $\Sigma$, namely $c:=l(\mathcal{T}_\pi)=a\cdot |\Sigma|+b$ for small constants $a,b\in\mathbb{N}$. 
-The interested reader is referred to Lemma \ref{lemma:permutation-complexity-bound} in the Appendix.
-
-As is rigorously proved thereafter in Lemma \ref{lemma:optimality-permutation-tm}, the Turing Machine $\mathcal{T}_\pi$ from Definition \ref{def:permutationtm} is optimal in terms of its G\"odel number length and therefore also in terms of the Kolmogorov complexity of $\pi$.
-For any permutation $\pi$ except the identity function, there is no Turing Machine $\mathcal{T}$ that computes $\pi$ and achieves G\"odel number of shorter length than $\mathcal{T}_\pi$.
-Moreover, this optimal length is invariant across all permutations over $\Sigma$ - except the identity function.
-With Lemma \ref{lemma:permutation-complexity-bound}, the interested reader will also find a tight bound for the length of $\operatorname{enc}(\mathcal{T})_\pi$.
-
-\begin{theorem}[Kolmogorov Complexity Invariance under Permutation]
-	There exists a small constant $c_{\Sigma}$ that scales only quadratically with $|\Sigma|$ such that the following holds:
-	Let $\pi$ be an arbitrary permutation over $\Sigma$ that is not equivalent to the identity function. 
-	Let $x\in\Sigma^{*}$ be an arbitrary string over $\Sigma$.
-	Then $|K(x)-K(\pi(x))|\leq c_{\Sigma}$.
+\begin{theorem}[Recursive sum completion is not non-recursively expressible]
+	\label{theorem:recursive-completion-not-non-recursive-expressible}
+	Fix an arbitrary function set $\tau=\{f_1,\dots,f_j\}$, where each $f_i$ is strictly monotonously increasing or bounded. 
+	Assume that there is at least one $f_i\in\tau$ that is strictly monotonously increasing and has arity $\operatorname{ar}(f_i)>1$, e.g. the addition function.
+	For any non-recursive function $f\in\mathcal{F}_{\tau}$, there is an $n_0\in\mathbb{N}$ such that for all $n\geq n_0$, $f(n)\neq f_{\tau}^{\lozenge}(n)$.
 \end{theorem}
 \begin{proof}
-	Since $\pi$ is a permutation, it has an inverse function $\pi^{-1}$.
-	Since $\pi$ is not equivalent to the identity function, $\pi^{-1}$ is neither.
-	By Lemma \ref{lemma:permutation-complexity-bound}, $K(\pi),K(\pi^{-1})\leq c_{0}:=2|\Sigma|^2+31|\Sigma|+34$.
+	Fix an arbitrary function set $\tau=\{f_1,\dots,f_j\}$, where each $f_i$ is strictly monotonously increasing or bounded and at least one $f_i\in\tau$ is strictly monotonously increasing with arity $\operatorname{ar}(f_i)>1$. 
+	Define $f_\tau(n):=\sum_{i=1}^{j}f_i(n)$.
 	
-	Let $x\in\Sigma^{*}$ be arbitrary. Denote by $\pi(x)\in\Sigma^{*}$ the string that is obtained by applying $\pi$ to every symbol in $x$.
+	As it facilitates the induction step, we prove a stronger statement by induction over the depth of non-recursive functions $\operatorname{dep}(f)\in\mathbb{N}$.
+	Namely, we are going to prove that for all non-recursive functions $f\in\mathcal{F}_{\tau}$, there is an $n_0\in\mathbb{N}$ such that $f(n+a)<f_{\tau}^{(n)}(n+a)$ for all $n\geq n_0$ and all offsets $a\in\mathbb{N}$.
 	
-	Then, providing $z=1^{c_{0}}0 \operatorname{enc}(\mathcal{T}_\pi) x$ to the universal Turing Machine $U$ from Definition \ref{def:universaltm} yields $U(z)=\pi(x)$.
-	Consequently, $K(\pi(x))\leq 2\cdot c_0+1+K(x)$.
+	Beginning with the base case, let $f\in\mathcal{F}_{\tau}$ be arbitrary with $\operatorname{dep}(f)=0$.
+	Therefore, $f$ must be equivalent to the identify function, thus $f(n)=n$ for all $n\in\mathbb{N}$.
 	
-	Since the above argument holds for any string $x\in\Sigma^{*}$, it also holds for $\pi^{-1}(x)$ for any $x\in\Sigma^{*}$.
-	Therefore, we symmetrically have $K(x)\leq 2\cdot c_0+1 K(\pi^{-1}(x))$ and hence $K(x)\leq 2\cdot c_0+1 K(\pi(x))$.
-	Stitching these two bounds together and choosing $c_\Sigma:=2c_0+1$, we finally obtain the desired result.
-\end{proof}
-
-%
-%
-%
-%
-%
-%
-%
-%
-%%%%%%%%%%% UNBOUNDED INCONSISTENCIES BETWEEN KOLMOGOROV COMPLEXITY AND VECTOR NORMS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% People might wonder whether there are at least some additive and multiplicative constants under which the order is preserved.
-% We prove that this is not the case.
-
-
-By elementary calculus, the following result is established. The proof is omitted here and laid out in Appendix \ref{sec:elementary-math} instead.
-\begin{lemma}[Log-Linear Inequality with Additive Constant]
-	\label{lemma:log-lin-add-inequality-placeholder}
-	Let $a\geq 1,b\geq 0$ be arbitrary real numbers.
-	For any real number $x > 2^{4(a+b)}$, it holds that $a\log_2(x)+b < x$.
-\end{lemma}
-
-\begin{definition}[Properly additive vector norms]
-	\label{def:properly-additive-vector-norms}
-	Let $\lVert \cdot \rVert:\Sigma^{\infty}\to\mathbb{R}_{\geq 0}$ be an arbitrary norm over $\Sigma^{\infty}$.
-	% TODO: Replace $\Sigma$ by $\mathbb{Z}_r$?
-	Denote by $e_1,e_2,\dots$ the unit vectors that form an orthogonal basis of $\Sigma^{\infty}$. That is, $e_i$ consists only out of $0s$ except for index $i$, where it carries a $1$.
-
-	We say that $\lVert \cdot \rVert$ is \textit{properly additive} if for any proper subset $A\subset \mathbb{N}$ and $v_A:=\sum_{i\in A}e_i$, and any $j\notin A$, it holds that
+	Choose $n_0=1$ and let $n\geq n_0$ and $a\in\mathbb{N}$ be arbitrary.
+	
+	Since $k=\operatorname{ar}(f_m)>1$ for at least one strictly monotonously increasing $f_m\in\tau$, Lemma \ref{lemma:self-lower-bound-strictly-monotonous-functions} guarantees
+	\begin{align}
+		\label{eq:theorem:recursive-completion-not-non-recursive-expressible-self-lower-bound}
+		f_m^{(n)}(n+a) \geq k^n\cdot (n+a) \overset{k>1}{>} n+a.
+	\end{align}
+	
+	% NOTE: if we had negative numbers, this overall statement does not hold.
+	% - The sum could be smaller than some monotonously increasing function.
+	% - -> Adjust Lemma \ref{lemma:self-lower-bound-strictly-monotonous-functions} to still include the bounded functions as additive terms. We can only eradicate the other strictly monotonously terms.
+	
+	% To let this proof transfer more directly to countably infinite sets with negative numbers like $\mathbb{Q}$, we do not avail of the fortuitous fact $f_m^{-}(0)\geq 0$ for having chosen $\mathbb{N}$ but conduct a more general argument that is agnostic of $f_m^{-}(0)$.
+	
+	Since all functions $f_i\in\tau$ are strictly monotonously increasing or bounded, we thereby conclude by means of Lemma \ref{lemma:max-bound-recursive-concatenation-sum} that
 	\begin{equation}
-		\lVert v_A + e_j \rVert > \lVert v_A \rVert.
+		\label{eq:theorem:recursive-completion-not-non-recursive-expressible-inequality}
+		f_{\tau}^{(n)}(n+a)\geq f_m^{(n)}(n+a) > n+a = f(n+a).
 	\end{equation}
 	
-	Vector norms that do not satisfy this condition are called \textit{improperly additive}.
-\end{definition}
-% TODO: What about the properties of improperly additive vector norms?
+	Proceeding with the induction hypothesis (IH), assume that there is some $p\in\mathbb{N}$ such that for every non-recursive function $f\in\mathcal{F}_{\tau}$ with $\operatorname{dep}(f)\leq p$, there exists an $n_0\in\mathbb{N}$ such that $f_\tau^{(n)}(n+a)>f(n+a)$ for all $n\geq n_0$ and $a\in\mathbb{N}$.
+	
+	Let $a\in\mathbb{N}$ be arbitrary in the following.
+	Consider an arbitrary non-recursive function $f\in\mathcal{F}_{\tau}$ with $\operatorname{dep}(f)=p+1$.
+	
+	As by Definition \ref{def:non-recursive-functions}, we have $f(n)=f_m(g_1(n),\dots,g_k(n))$ for some $f_m\in\tau$ with arity $k\in\mathbb{N}$ and non-recursive functions $g_i\in \mathcal{F}_{\tau}$ with depth $\operatorname{dep}(g_i)\leq p$.
+	
+	To begin with, we consider the case where $f_m$ is a bounded function. Denote by $c_m$ the bound of $f_m$.
+	By Equation \ref{eq:theorem:recursive-completion-not-non-recursive-expressible-inequality}, we have  
+	\begin{equation}
+		\label{eq:theorem:recursive-completion-not-non-recursive-expressible-induction-step-bounded}
+		f_\tau^{(n)}(n+a)>n+a\geq c_m\geq f_m(g_1(n+a),\dots,g_k(n+a))=f(n+a)
+	\end{equation}
+	for any $n\geq c_m$.
+	
+	Otherwise, consider the case where $f_m$ is strictly monotonously increasing.
+	By the induction hypothesis, for every non-recursive function $g_i$, there is an $n_0(g_i)$ such that $f_\tau^{(n)}(n+a)>g_i(n+a)$ for all $n\geq n_0(g_i)$.
+	Since there are only $k$ non-recursive functions $g_i$, we directly take $n_0$ as the maximum $n_0 = \max_{1\leq i\leq k}n_0(g_i)$.
+	
+	Now, let $n\geq n_0$ be arbitrary. 
+	Subsequently, we assume that $a\geq 1$, and substitute $b=a-1$ and $n'=n+1$.
+	By the monotonicity of $f_m$, we conclude
+	\begin{align}
+		\label{eq:theorem:recursive-completion-not-non-recursive-expressible-induction-step}
+		f(n'+b)=f(n+a)&=f_m(g_1(n+a),\dots,g_k(n+a))\\
+		&\overset{(IH)}{<}f_m(f_\tau^{(n)}(n+a),\dots,f_\tau^{(n)}(n+a))=f_m^{-}(f_\tau^{(n)}(n+a))\\
+		&\leq f_\tau^{-}(f_\tau^{(n)}(n+a))=f_{\tau}^{(n+1)}(n+a)=f_{\tau}^{(n')}(n'+b).
+	\end{align}
+	
+	Since $a\in\mathbb{N}_{\geq 1}$ was chosen arbitrarily, the above argument holds for all $b\in\mathbb{N}$ and all $n'\geq n_0+1=:n_0(f)$. 
+	To conclude with, we have shown that for any non-recursive function $f\in \mathcal{F}_{\tau}$ with $\operatorname{dep}(f)=p+1$, there exists an $n_0(f)\in\mathbb{N}$ such that $f(n+a)<f_\tau^{(n)}(n+a)$ for all $n\geq n_0(f),a\in\mathbb{N}$.
+	
+	Consequently, the overall result for non-recursive functions of arbitrary depth draws upon the induction principle.
+	
+	As a special case of the above result, we obtain that for any non-recursive function $f\in \mathcal{F}_{\tau}$, there is an $n_0\in\mathbb{N}$ such that for all $n\geq n_0$, $f(n)<f_{\tau}^{\lozenge}(n)$.
+	
+\end{proof}
 
-With this lemma an definition at hand, we now show the following.
-\begin{theorem}[Unbounded Order Inconsistencies to any Vector Norm]
-	Let $\lVert\cdot\rVert$ denote an arbitrary properly additive norm over $\Sigma^{\infty}$ as by Definition \ref{def:properly-additive-vector-norms}.
-	% TODO: We need to formally define why $\Sigma^{\infty}$ identifies a vector space.
-	For any pair of real numbers $a\geq 1, b\geq 0$, there are $v,w\in\Sigma^{\infty}$ such that $K(v)\geq a\cdot K(w)+b$, but $\lVert v \rVert < \lVert w \rVert $. 
+Before we continue, let us make a few comments on the proof of the theorem.
+In the induction step for non-recursive functions $f$ of depth $p+1$, the threshold $n_0$ only increased by $1$ when the outermost function $f_m$ was strictly monotonously increasing. 
+Otherwise, if $f_m$ was a bounded function, the threshold $n_0$ could just be taken as the bound $c_m$ of $f_m$, irrespective of the depth of $f$.
+Therefore, for non-recursive functions $f$ of sufficiently large depth $p$, the threshold $n_0$ can be upper bounded by a term $a\cdot p$, where $a\to 1$ for $p\to\infty$.  
+
+Figure \ref{fig:composition-tree-recursive-completion-vs-fixed-term} visualizes the eventual dominance of $f_{\tau}^{\lozenge}$ over non-recursive functions $f$.
+$f_{\tau}$ covers every possible \textit{composition path} that the functions in $\tau$ could construct and will hence eventually excel $f$ by the strict monotonicity of involved functions.
+Wrapping each function $f_i$ by the magnitude function $|\cdot|$ would allow to extend this proof to functions over $\mathbb{Z}$.
+But this extension is not essential to the actual result and was hence left out for the ease of exposition.
+\begin{figure}[h]
+	\begin{center}
+		\begin{tikzpicture}[every text node part/.style={align=center}, font=\normalsize]
+			%% UPPER LAYER
+			\node[] (ftau0) at (0,0) {$f_{\tau}^{(n)}=\Sigma_{i=1}^{2}f_i^{(n)}$};
+			\node[below = 20pt of ftau0, xshift=-50pt] (f10){$f_1$};
+			\node[below = 20pt of ftau0, xshift=50pt] (f20){$f_2(\;\cdot\;,\;\cdot\;,\;\cdot\;)$};
+			\node[below = 0pt of ftau0, xshift=5pt] (+0){$+$};
+			
+			\draw[-] ([xshift=0pt]ftau0.south) -- (f10.north);
+			\draw[-,color=olive] ([xshift=10pt]ftau0.south) -- (f20.north);
+			
+			%%% MIDDLE LAYER
+			\node[below = 20pt of f20,xshift=-45pt] (ftau10){$f_{\tau}^{(n-1)}$};
+			\node[below = 20pt of f20,xshift=5pt] (ftau11){$f_{\tau}^{(n-1)}$};
+			\node[below = 20pt of f20,xshift=55pt] (ftau12){$f_{\tau}^{(n-1)}$};
+			
+			\draw[-,color=olive] ([xshift=-10pt]f20.south) -- (ftau10.north);
+			\draw[-,color=olive] ([xshift=5pt]f20.south) -- (ftau11.north);
+			\draw[-,color=olive] ([xshift=20pt]f20.south) -- (ftau12.north);
+			
+			%% LOWER LAYER
+			\node[below=20pt of ftau10,xshift=-20pt] (f1-ul) {$f_1$};
+			\node[below=20pt of ftau10,xshift=5pt] (f2-ul) {$f_2$};
+			\draw[-,color=olive] ([xshift=-10pt]ftau10.south) -- (f1-ul.north);
+			\draw[-] ([xshift=-5pt]ftau10.south) -- (f2-ul.north);
+			
+			\node[below=20pt of ftau11,xshift=-20pt] (f1-um) {$f_1$};
+			\node[below=20pt of ftau11,xshift=5pt] (f2-um) {$f_2$};
+			\draw[-] ([xshift=-10pt]ftau11.south) -- (f1-um.north);
+			\draw[-,color=olive] ([xshift=-5pt]ftau11.south) -- (f2-um.north);
+			
+			\node[below=20pt of ftau12,xshift=-20pt] (f1-ur) {$f_1$};
+			\node[below=20pt of ftau12,xshift=5pt] (f2-ur) {$f_2$};
+			\draw[-] ([xshift=-10pt]ftau12.south) -- (f1-ur.north);
+			\draw[-,color=olive] ([xshift=-5pt]ftau12.south) -- (f2-ur.north);
+			
+			%% BOTTOM LAYER
+			\node[below=20pt of f2-ul] (nl) {$n$};
+			\draw[loosely dotted] ([xshift=0pt]f2-ul.south) -- (nl.north);
+			\node[below=20pt of f2-um] (nm) {$n$};
+			\draw[loosely dotted] ([xshift=0pt]f2-um.south) -- (nm.north);
+			\node[below=20pt of f2-ur] (nr) {$n$};
+			\draw[loosely dotted] ([xshift=0pt]f2-ur.south) -- (nr.north);
+		
+			%%%%%% RIGHT SIDE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+			\node[right=150pt of ftau0] (rftau0) {$f=f_2(f_1,f_2(\dots),f_2(\dots))$};
+			\node[below = 20pt of rftau0, xshift=-100pt, color=lightgray,opacity=0.5] (rf10){$f_1$};
+			\node[below = 20pt of rftau0, xshift=0pt] (rf20){$f_2(\;\cdot\;,\;\cdot\;,\;\cdot\;)$};
+			
+			\draw[-, color=lightgray,opacity=0.5] ([xshift=-55pt]rftau0.south) -- (rf10.north);
+			\draw[-, color=olive] ([xshift=-45pt]rftau0.south) -- (rf20.north);
+			
+			%%% MIDDLE LAYER
+			\node[below = 33pt of rf20,xshift=-50pt] (rftau10){};
+			\node[below = 33pt of rf20,xshift=0pt] (rftau11){};
+			\node[below = 33pt of rf20,xshift=50pt] (rftau12){};
+			
+			%% LOWER LAYER
+			\node[below=20pt of rftau10,xshift=-10pt] (rf1-ul) {$f_1$};
+			\node[below=20pt of rftau10,xshift=10pt, color=lightgray,opacity=0.5] (rf2-ul) {$f_2$};
+			\draw[-, color=olive] ([xshift=-15pt]rf20.south) -- (rf1-ul.north);
+			\draw[-, color=lightgray,opacity=0.5] ([xshift=-10pt]rf20.south) -- (rf2-ul.north);
+			\node[below=20pt of rf2-ul, color=lightgray,opacity=0.5] (rnl) {$f_1/n$};
+			\draw[loosely dotted, color=lightgray,opacity=0.5] ([xshift=0pt]rf2-ul.south) -- (rnl.north);
+			
+			\node[below=20pt of rftau11,xshift=-5pt, color=lightgray,opacity=0.5] (rf1-um) {$f_1$};
+			\node[below=20pt of rftau11,xshift=15pt] (rf2-um) {$f_2$};
+			\draw[-, color=lightgray,opacity=0.5] ([xshift=2pt]rf20.south) -- (rf1-um.north);
+			\draw[-, color=olive] ([xshift=7pt]rf20.south) -- (rf2-um.north);
+			\node[below=20pt of rf2-um] (rnm) {$f_1/n$};
+			\draw[loosely dotted] ([xshift=0pt]rf2-um.south) -- (rnm.north);
+			
+			\node[below=20pt of rftau12,xshift=0pt, color=lightgray,opacity=0.5] (rf1-ur) {$f_1$};
+			\node[below=20pt of rftau12,xshift=20pt] (rf2-ur) {$f_2$};
+			\draw[-, color=lightgray,opacity=0.5] ([xshift=20pt]rf20.south) -- (rf1-ur.north);
+			\draw[-, color=olive] ([xshift=25pt]rf20.south) -- (rf2-ur.north);
+			\node[below=20pt of rf2-ur] (rnr) {$f_1/n$};
+			\draw[loosely dotted] ([xshift=0pt]rf2-ur.south) -- (rnr.north);
+			
+			%%%%%%%%%%% DOMINANCE ARROW %%%%%%%%%%%%%
+			\draw[dashed, color=olive] (nr.east) --++(90pt,0pt) node[midway,above]{\small $f_1\in o(n)$};
+			\end{tikzpicture}
+	\end{center}
+	\caption[Recursive Completion Composition Tree]{Composition tree juxtaposing the recursive completion $f_{\tau}^{\lozenge}$ and an exemplary non-recursive function $f\in\mathcal{F}_{\tau}$ of fixed depth.}
+	\label{fig:composition-tree-recursive-completion-vs-fixed-term}
+\end{figure}
+
+This inexpressivity result is preserved if we scale the input $n$ of $f_\tau^{\lozenge}$ by an arbitrary positive parameter $a\in\mathbb{N}$. 
+The proof is analogous to Theorem \ref{theorem:recursive-completion-not-non-recursive-expressible} and therefore deferred to Appendix \ref{app:scaled-recursive-completion-inexpressible}.
+\begin{corollary}[Scaled Recursive Completion is not non-recursively expressible]
+	\label{cor:scaled-recursive-completion-not-non-recursive-expressible-placeholder}
+	Let $\tau$ be as in Theorem \ref{theorem:recursive-completion-not-non-recursive-expressible}.
+	
+	For any $a\in\mathbb{N}$, define the scaled recursive completion over $\tau$ as
+	$\left(f_{\tau}\right)_{a}^{\lozenge}(n):=f_{\tau}^{(n)}(a\cdot n)$.
+	
+	Then, $\left(f_{\tau}\right)_{a}^{\lozenge}\notin \mathcal{F}_{\tau}$ for any $a \geq 1$.
+	In particular, let $f\in\mathcal{F}_{\tau}$ be an arbitrary non-recursive function over $\tau$.
+	Then, for the same $n_0(f)$ as in Theorem \ref{theorem:recursive-completion-not-non-recursive-expressible}, we have that for all $a\in\mathbb{N}$ with $a\geq 1$ and $n\geq n_0$, $f(n)\neq \left(f_{\tau}\right)_{a}^{\lozenge}(n)$ for all $n\geq n_0(f)$.
+\end{corollary}
+
+On the one hand, we proved that the recursive completion over $\tau$ is inexpressible by $\mathcal{F}_{\tau}$ under feasible assumptions.
+On the other hand, it remains to argue that $f_\tau^{\lozenge}$ maintains a low Kolmogorov complexity when the description of the underlying function set $\tau$ is already given.
+In other words, a program to compute $f_{\tau}^{\lozenge}$ is simple to express with the functions $f_i\in\tau$.
+It turns out that there is a constant $c\in\mathbb{N}$ across all finite sets of partial computable functions $\tau$ that bounds the description length of such a program given a description of $\tau$.
+
+\section{The uniform simplicity of recursive completion}
+\label{sec:uniform-simplicity-recursive-completion}
+We cannot demand from our models to be able to learn functions that are arbitrarily complex to describe with the underlying function set $\tau$.
+
+For the recursive completion $f_{\tau}^{\lozenge}$ however, we will show that given a description of $\tau$, the Kolmogorov complexity of $f_{\tau}^{\lozenge}$ is upper bounded by a constant that is independent of the function set $\tau$.
+
+To establish this statement, we will construct a Turing Machine $\mathcal{T}_{\lozenge}$ that first receives a description of the functions $f_i\in\tau$ and the scale $a\in\mathbb{N}$ as parameters, and then computes $\left(f_{\tau}\right)_a^{\lozenge}(n)$ for any $n\in\mathbb{N}$ that is appended as input. 
+
+If $f_i \in\tau$ is partial computable, there exists a Turing Machine $\mathcal{T}_i$ that computes $f_i$.
+Providing the encoding $\operatorname{enc}(\mathcal{T}_i)$ of such a Turing Machine and the arity of $f_i$ will constitute a sufficient description of $f_i$.
+The encoding $\operatorname{enc}(\tau)$ can therefore be thought of as a self-delimiting encoding of the \textit{sequence} $\bigl[\operatorname{enc}(\mathcal{T}_1),\operatorname{ar}(f_1),\dots,\operatorname{enc}(\mathcal{T}_j),\operatorname{ar}(f_j)\bigr]$.
+In the spirit of Equation \ref{eq:self-delimiting-encoding}, the self-delimiting encoding of a sequence $[z_1,\dots,z_n]$ of binary strings $z_i$ is defined as
+\begin{equation}
+	\label{eq:self-delimiting-enc-sequence}
+	[z_1,\dots,z_n]:=[z_1,\varepsilon][z_2,\varepsilon]\dots[z_{n-1},\varepsilon]z_n\in\{0,1\}^{*},
+\end{equation}
+where $\varepsilon\in\{0,1\}^{*}$ again is the empty string as introduced in Definition \ref{def:natural-numbers-binary-strings-encoding}.
+
+Given such an encoding, $\mathcal{T}_{\lozenge}$ can then simulate the Turing Machines $\mathcal{T}_i$ just as the universal Turing Machine $U$, and sum up their outputs to obtain $f_{\tau}$.
+
+Of course, we have to make the assumption that every function $f_i\in\tau$ is partial computable.
+But any function that can be computed by a machine must necessarily be partial computable according to the Church-Turing thesis.
+% Explain the Church-Turing thesis?
+Therefore, this assumption is perfectly feasible in practice.  
+
+%% CONDITIONAL KOLMOGOROV COMPLEXITY INSTEAD OF UNCONDITIONAL
+Using the \textit{unconditional} Kolmogorov complexity $K(\cdot)$ to quantify how the descriptive complexity $K\left(f_{\tau}^{\lozenge}\right)$ evolves across different $\tau$ would however be deceptive for our argument, since it interfuses the expressive power of the \textit{model structure} with the expressive power of the underlying building block function set $\tau$.
+The non-recursivity of models is however only property of the former, while the latter can be thought of as the prior knowledge the model can assume to express patterns.
+Therefore, we are instead going to use the \textit{conditional} Kolmogorov complexity $K\bigl(\left(f_{\tau}\right)_{a}^{\lozenge}\mid \operatorname{enc}(\tau)\bigr)$.
+In this way, our argument substantiates that such non-recursive \textit{structure} hinders models from expressing functions that yet would have been simple to describe with the underlying function set $\tau$.
+
+% Accordingly, the following theorem yields a complexity upper bound in terms of $K\bigl(\left(f_{\tau}\right)_{a}^{\lozenge}\mid \operatorname{enc}(\tau)\bigr)$ and not merely in terms of $K\bigl(\left(f_{\tau}\right)_{a}^{\lozenge}\bigr)$.
+
+\begin{theorem}[Uniform Kolmogorov Complexity Bound for Recursive Completion]
+	\label{theorem:recursive-completion-kolmogorov-complexity}
+	There exists a constant $c\in\mathbb{N}$ such that the following holds:
+	
+	Given an arbitrary finite set of partial computable functions $\tau=\{f_1,\dots,f_j\}$. 
+	Let $\mathcal{T}_{i}$ be a Turing Machine that computes $f_i$.
+	Denote by $\operatorname{enc}(\tau)$ the self-delimiting encoding of the sequence $\bigl[\operatorname{enc}(\mathcal{T}_1),\operatorname{ar}(f_1),\dots,\operatorname{enc}(\mathcal{T}_j),\operatorname{ar}(f_j)\bigr]$ as in Equation \ref{eq:self-delimiting-enc-sequence}.
+	
+	Then, $K(\left(f_{\tau}\right)_{a}^{\lozenge}\mid \operatorname{enc}(\tau))\leq c+2\cdot \log_2(a)$.
+	
 \end{theorem}
 \begin{proof}
-	Let $a\geq 1, b\geq 0$ be arbitrary real numbers.
-	Let $c\in\mathbb{N}$ be the constant from the proof of Corollary \ref{cor:log-compressible-zero-pad}.
-	For any $n\geq ac+b$, define $f_{a,b}$ as $f_{a,b}(n):=2^{\lfloor \frac{n}{a}-c-\frac{b}{a}\rfloor}$.
-	Fix an arbitrary $n> \max(ac+b,2^{a(c+2)+b})$.
+	Given $\tau$ and $\operatorname{enc}(\tau)$ as above.
 	
-	By Corollary \ref{cor:incompressible-zero-pad}, there must exists a string $q_n\in\Sigma^{\infty}$ with $q_n=r_n\overline{0}$ for some string $r_n\in\Sigma^n$ such that $K(q_n)\geq n$. 
+	We define a Turing Machine $\mathcal{T}_{\lozenge}$ that computes the scaled recursive completion in the following way:
+	$\mathcal{T}_{\lozenge}$ expects its input in the self-delimiting format $\bigl[\operatorname{enc}(\tau),[x_a,x_n]\bigr]$, where $x_a$ and $x_n$ are the binary encodings of the parameter $a$ and the argument $n$.
 	
-	Now, consider the string $p_{n}=z_{f_{a,b}(n)}\overline{0}$ from the proof of Corollary \ref{cor:log-compressible-zero-pad}.
-	By definition, $z_{f_{a,b}(n)}=1^{f_{a,b}(n)}$.
-	Moreover, it holds that $K(p_{n})\leq \log_2(f_{a,b}(n))+c$.
-	But by definition, $f_{a,b}(n)= 2^{\lfloor \frac{n}{a}-c-\frac{b}{a}\rfloor}\leq 2^{\frac{n}{a}-c-\frac{b}{a}}$.
+	Initially, $\mathcal{T}_{\lozenge}$ verifies the syntactical correctness of its input.
+	In particular, it segments the input string according to the delimiters and checks whether the string segments for $n$,$a$, or the arities $\operatorname{ar}(f_i)$ truly encode an integer in the correct format.
+	Moreover, it checks whether the string segments for $\mathcal{T}_i$ actually encode valid G\"odel numbers.
+	If any of the above checks fail, $\mathcal{T}_{\lozenge}$ halts.
 	
-	Therefore, $K(p_n)\leq \frac{n}{a}-c-\frac{b}{a}+c=\frac{n}{a}-\frac{b}{a}$.
-	In total, we have 
-	\begin{equation}
-		K(q_n)\geq n = a\left(\frac{n}{a}-\frac{b}{a}\right)+b\geq a\cdot K(p_n)+b.
-	\end{equation}
+	Besides the input tape and the output tape, $\mathcal{T}_{\lozenge}$ also uses three auxiliary tapes, the \textit{counting tape}, the \textit{computation tape}, and the \textit{accumulation tape}.
+	First, $\mathcal{T}_{\lozenge}$ writes the integer input $n$ both on the counting tape and the output tape.
+	On the output tape, it further multiplies this integer by $a$.
 	
-	At the same time, the non-zero prefix $z_{f_{a,b}(n)}$ of $p_n$ is longer than the non-zero prefix $r_n$ of $q_n$.
-	By definition, $z_{f_{a,b}(n)}$ has length $2^{\lfloor \frac{n}{a}-\frac{b}{a}-c\rfloor}\geq 2^{ \frac{n}{a}-\frac{b}{a}-c-1}$.
-	But as $n>\max(2^{a(c+2)+b},2)$, Lemma $\ref{lemma:log-lin-add-inequality-placeholder}$ yields
-	$n\geq a\log_2(n)+a(c+1)+b$. By the monotonicity of the exponential function $\exp$, this implies
-	\begin{equation}
-		2^{n}\geq 2^{a\log_2(n)+a(c+1)+b}=n^a \cdot 2^{a(c+1)+b}.
-	\end{equation}
+	Now, $\mathcal{T}_{\lozenge}$ repeats the ensuing procedure until the counting tape is eradicated blank. 
+	\begin{enumerate}
+		\item Clean the computation tape and the accumulation tape from any non-blank symbols. Write a $0$ on the accumulation tape.
+		\item Interpret the binary sequence $x$ on the output tape as a natural number $x_\ell,\ell\in\mathbb{N}$.
+		\item From $i=1$ to $i=j$, fetch the G\"odel number of $\mathcal{T}_i$ and its input arity $k:=\operatorname{ar}(f_i)$ from the input tape. Invoke $\mathcal{T}_i$ on the $k$-wise self-delimited concatenation of $x_\ell$ and add its output to the encoded integer on the accumulation tape.
+		\item After having added the output of all $j$ Turing Machines, copy the encoded string from the accumulation tape to the output tape.
+		\item Subtract the integer encoded on the counting tape by $1$.
+	\end{enumerate}
+	After this iterative procedure terminates, $\mathcal{T}_{\lozenge}$ halts immediately.
 	
-	Latching onto this line of reasoning, the monotonicity of the square root function $\sqrt[a]{\cdot}$ now yields
-	\begin{equation}
-	2^{\frac{n}{a}}=\sqrt[a]{2^{n}}\geq \sqrt[a]{ n^a \cdot 2^{a(c+1)+b}} =n \cdot 2^{c+1+\frac{b}{a}}.
-	\end{equation}
+	In each iteration, if $\ell$ is the integer encoded on the output tape by $x_\ell$, the accumulation tape with contain the value $f_{\tau}^{-}(\ell)$.
+	Since $\ell=a\cdot n$ at the very beginning, the string $x$ written to the output tape after the $m$th iteration will encode $f_{\tau}^{(m)}(a\cdot n)$.
+	As the initial argument $n$ is written on the counting tape too, exactly $n$ iterations will be performed.
+	Therefore, the final output $x$ encodes $f_{\tau}^{(n)}(a\cdot n)=\left(f_{\tau}\right)_a^{\lozenge}(n)$. 
+	Denote by $f_{\lozenge}=f_{\mathcal{T}_{\lozenge}}$ the partial computable function that $\mathcal{T}_{\lozenge}$ computes. Then, $f_{\lozenge}\bigl(\bigl[\operatorname{enc}(\tau),[x_a,x_n]\bigr]\bigr)=\left(f_{\tau}\right)_a^{\lozenge}(n)$ for all $a,n\in\mathbb{N}$.
 	
-	Finally, dividing by the fixed factor $2^{c+1+\frac{b}{a}}$ culminates in
-	\begin{equation}
-		\label{eq:order-inconsistency-to-norm-length-inequality}
-		l\left(z_{f_{a,b}(n)}\right)=l\left(1^{f_{a,b}(n)}\right)=f_{a,b}(n)\geq 2^{ \frac{n}{a}- \left(\frac{b}{a}+c+1\right)}\geq n = l(r_n).
-	\end{equation}
+	To execute $\mathcal{T}_{\lozenge}$ on the universal Turing Machine $U$,
+	we need to provide $\operatorname{enc}(\mathcal{T}_{\lozenge})\bigl[\operatorname{enc}(\tau),[x_a,x_n]\bigr]$
+	Let $c_0$ denote the length of the G\"odel number $\operatorname{enc}(\mathcal{T}_{\lozenge})$.
+	Comparing the self-delimiting encoding $[x_a,x_n]=[x_a,\varepsilon]x_n=yx_n$, we find that $y=[x_a,\varepsilon]$ comprises $2\cdot l(x_a)+1 = 2\cdot \lceil \log_2(a)\rceil +1 \leq 3 + 2\cdot \log_2(a)$ bits.
 	
-	Since $z_{f_{a,b}(n)}$ consists entirely out of $1$s and is longer than $r_n$, there must exist a $w\in\{0,1\}^{*}$ such that $z_{f_{a,b}(n)}=r(n)+w$, and hence $p_n=q_n+w\overline{0}$, where addition is element-wisely identified as over the field $\mathbb{Z}_{r}, r:=|\Sigma|$.
-	% TODO: Maybe define addition already a bit earlier.
-	
-	By Equation \ref{eq:order-inconsistency-to-norm-length-inequality} and the definition of $w$, there exist proper subsets $A,B,C\subset \mathbb{N}$ such that $q_n = \sum_{i\in A}e_i, w\overline{0}=\sum_{i\in B}e_i,$ and $p_n = \sum_{i\in C}e_i$.
-	These sets satisfy $A\cap B = \emptyset, A\cup B = C$.
-	Since $q_n\neq p_n$, we further have $B\neq \emptyset$.
-	
-	Since $\lVert\cdot\rVert$ is properly additive, repeated application of Definition \ref{def:properly-additive-vector-norms} yields
-	\begin{equation}
-		\lVert p_n \rVert = \left\lVert \sum_{i\in C}e_i \right\rVert \overset{A\subset C}{>} \left\lVert \sum_{i\in A}e_i \right\rVert = \lVert q_n \rVert,
-		% TODO: This does not hold in general.
-	\end{equation}
-	which concludes our proof.
-	
+	With $c:=c_0+3$, we therefore finally obtain
+	\begin{align}
+		K(\left(f_{\tau}\right)_{a}^{\lozenge}\mid \operatorname{enc}(\tau))
+		&= \min_{p,p'\in\{0,1\}^{*}}\{l(p)+l(p')\mid U\bigl(p[\operatorname{enc}(\tau),p'x_n]\bigr)=\left(f_{\tau}\right)_{a}^{\lozenge}(x_n) \text{ for all } n\in\mathbb{N}\}\\
+		& \leq l(\operatorname{enc}(\mathcal{T}_{\lozenge})) + l([x_a,\varepsilon])\\
+		& = c + 2\cdot \log_2(a).
+	\end{align}
 \end{proof}
 
-% TODO: Argue that improperly additive norms make little sense of regularization
-% - Maximum norm as an edge case example.
+Because the Turing Machine $\mathcal{T}_{\lozenge}$ regards $\tau$ merely as one of its inputs, it has a constant description length across all possible function sets $\tau$.
+Together with Corollary \ref{cor:scaled-recursive-completion-not-non-recursive-expressible-placeholder}, this theorem demonstrates that the structural limitation of non-recursive models can not be arbitrarily mended by appropriate choices of the underlying function set, including activation functions.
+No matter how expressive the underlying function set is, the conditional Kolmogorov complexity of functions that cannot even be expressed by such models is upper bounded by a constant.
 
-% TODO: There is no need for the following result, possibly remove it:
-% - Padding Incompressible Strings
+The corollary below joins these two results together.
+% for the class of multi-layer neural networks, which constitute a subclass of non-recursive models.
 
-% But what can we derive if the norm of some vector v is m times smaller than the norm of another vector w?
-\begin{lemma}[Padding Incompressible Strings]
+
+
+% Specify what models are affected by this theorem.
+\begin{corollary}[Simple Functions that non-recursive Models cannot Express]
+	\label{cor:recursive-completion-models-cannot-express}
+	There exists a constant $c\in\mathbb{N}$ such that the following holds:
 	
+	Given an arbitrary function set $\tau=\{f_1,\dots,f_j\}$, such that each $f_i$ is firstly partial computable and secondly strictly monotonously increasing or bounded. Assume that there is at least one $f_i\in\tau$ that is strictly monotonously increasing and has arity $\operatorname{ar}(f_i)>1$, e.g. the addition function.
+	Denote the encoding $\operatorname{enc}(\tau)$ just as in Theorem \ref{theorem:recursive-completion-kolmogorov-complexity}.
+	
+	For any $m\in\mathbb{N}$, there are $\sqrt{2}^{m-c}-1$ functions $h:\mathbb{N}\to\mathbb{N}$ with a conditional Kolmogorov complexity 
+	\begin{equation*}
+		K(h\mid \operatorname{enc}(\tau))\leq m
+	\end{equation*}
+	that cannot be expressed by any non-recursive model over $\tau$.
+	% and therefore constructs a term $t_M\in T(\tau,\{x_1,\dots,x_k\})$ with $M^{-}(n)=t_M^{-}(n)$ for all $n\in\mathbb{N}$.
+	
+	% More precisely, for any such model $M$, there is a threshold $n_0(M)$ that is independent of $m$, such that for any of these functions $h$ and any $n\geq n_0$, $M(n)\neq h(n)$.
+	% This threshold $n_0(M)$ solely depends linearly on the depth $\operatorname{dep}(t_M)$ of the term $t_M$ that $M$ coincides with. 
+	% That's wrong, it also depends on the constants in our proof!
+\end{corollary}
+\begin{proof}
+	By Corollary \ref{cor:scaled-recursive-completion-not-non-recursive-expressible-placeholder}, the function $\left(f_\tau\right)_a^{\lozenge}\notin\mathcal{F}_{\tau}$ for any $a\geq 1$.
+	At the same time, Theorem \ref{theorem:recursive-completion-kolmogorov-complexity} ensures that there is a constant $c$ such that $K(\left(f_{\tau}\right)_{a}^{\lozenge}\mid \operatorname{enc}(\tau))\leq c+2\cdot\log_2(a)$ for any $a\in \mathbb{N}$.
+	
+	Let $m\in\mathbb{N}$ be arbitrary.
+	For any $a\in\mathbb{N}$ with $a\leq \sqrt{2}^{m-c}$, $c+2\cdot\log_2(a)\leq  c + 2 \cdot \frac{1}{2}(m-c)\leq m$.
+	Excluding $a=0$ yields our result.
+\end{proof}
+
+If we want to enable our models to express functions up to a certain simplicity, we must extend the structure of our model classes by recursive elements.
+But even if our models were expressive enough to capture recursive functions like the recursive completion $\left(f_{\tau}\right)_a^{\lozenge}$, they are yet provided no incentive to favour them over other, possibly non-recursive hypotheses $h$.
+
+In the next subsection, we will see that for any finite dataset, there are infinitely many non-recursive functions $f\in\mathcal{F}_{\tau}$ that remain perfectly consistent with $\left(f_{\tau}\right)_a^{\lozenge}$ and therefore achieve the optimal score in the IRM objective when the expected risks $R$ are accordingly replaced by the empirical risks $\hat{R}$ as is usually done in practice.
+Consequently, non-recursive models over $\tau$ can indeed receive an optimal score although
+
+Although no finite dataset can eliminate these optimal yet non-recursive functions, it will be shown that beyond some size threshold $n_0$, any function $f\in\mathcal{F}_{\tau}$ that still remains consistent with a finite dataset $S$ of size $|S|\geq n_0$ must have a higher conditional Kolmogorov complexity than the true function $\left(f_{\tau}\right)_a^{\lozenge}$.
+For that reason, when optimization objectives additionally evaluated functions by their Kolmogorov complexity, sufficiently large finite datasets would in fact distinguish the true function $\left(f_{\tau}\right)_a^{\lozenge}$ from non-recursive functions.
+
+\section{Optimization objectives lack a simplicity bias}
+\label{sec:optimization-objectives-lack-simplicity-bias}
+With full access to the underlying distribution $P$ by which problem instances $n\in\mathbb{N}$ occur, the expected risk $R$ can certainly identify the true function $\left(f_{\tau}\right)_a^{\lozenge}$ as its unique minimizer.
+If any $n\in\mathbb{N}$ had a non-zero probability according to $P$, then any function that disagrees on at least one instance with $\left(f_{\tau}\right)_a^{\lozenge}$ would obtain a non-zero risk $R$. 
+In such a case of perfect knowledge of $P$, even the standard ERM principle would suffice to identify the true function.
+In practice however, datasets are bound to finiteness and the empirical risk $\hat{R}$ hence leaves functions infinitely many degrees of freedom as it merely comes to fitting the samples.
+These degrees of freedom are either effaced by restrictions on the model class or further inductive biases in the optimization formulation.
+
+After the last subsections addressed the former, this subsection demonstrates that inductive biases such as the simplicity bias towards minimal Kolmogorov complexity can further filter out a huge fraction of alternative hypotheses that would otherwise receive the same optimal optimization function value.
+
+Firstly, for realistic assumptions on what functions the function set $\tau$ comprises, any finite dataset $S$ leaves infinitely many functions that non-recursive models could express to basically memorize the samples in $S$ and hence achieve optimal risk.
+Even domain generalization optimization objectives like IRM can by itself not distinguish the recursive completion $\left(f_{\tau}\right)_a^{\lozenge}$ from these non-recursive functions $f\in \mathcal{F}_{\tau}$.
+% Therefore, they all achieve the same optimal value in the IRM objective where the expected risks $R$ are approximated with empirical risks $\hat{R}$.
+
+Complementing this result, we prove that all non-recursive functions eventually render suboptimal when we further take into account their Kolmogorov complexity.
+Particularly, there exists a threshold $n_0$ such that for \textit{any} dataset $S$ of size $|S|\geq n_0$, any non-recursive function $f\in\mathcal{F}_{\tau}$ that still remains consistent with $S$ must have a higher conditional Kolmogorov complexity $K\bigl(f\mid \operatorname{enc}(\tau)\bigr)$ than the true function $\left(f_{\tau}\right)_a^{\lozenge}$.
+
+\begin{lemma}[IRM does not Identify Recursive Completion]
+	\label{lemma:recursive-completion-irm-cannot-identify}
+	Let $\tau:=\{f_1,\dots,f_j\}$ be an arbitrary function set.
+	Let $a\in\mathbb{N}$ with $a\geq 1$ be arbitrary.
+	Assume that the functions below are included in $\tau$:
+	\begin{enumerate}
+		\item The addition function $f_{+}(x,y)=x+y$,
+		\item The multiplication function $f_{\times}(x,y)=x\cdot y$,
+		\item The equality function $f_{=}(x,y)=\begin{cases}
+			1, & x=y\\
+			0, & x\neq y
+		\end{cases}$,
+		\item The constants $c_1=1$, and $c_0=0$.
+	\end{enumerate}
+	
+	For every finite dataset $S=\bigl\{\bigl(x_1,\left(f_{\tau}\right)_a^{\lozenge}(x_1)\bigr),\dots,\bigl(x_k,\left(f_{\tau}\right)_a^{\lozenge}(x_k)\bigr)\bigr\}$, there is an infinite subset $F_S\subset \mathcal{F}_{\tau}$ of functions $f\in F_S$ that achieve the optimal score according to the IRM objective from Equation \ref{eq:irm-objective} with the 0-1-loss and empirical risks $\hat{R}$, but are not equivalent to $\left(f_{\tau}\right)_a^{\lozenge}$.
 \end{lemma}
 \begin{proof}
-	% Take a sufficiently long incompressible string.
-	% Define a program that computes a bijection between strings and strings with hamming weight ratio at most p, for some rational 0<p<1/2.
-	% The Kolmogorov complexity of these strings are bounded by the incompressible input and some constant. 
-	% Otherwise they could be used to retrieve the incompressible input, because the Turing Machine computes a (computable) bijection.
-	% But then the Kolmogorov Complexity of the original incompressible input string would be smaller, and this leads to a contradiction.
+	Let $\tau$ be as above.
+	Fix an arbitrary $a\in\mathbb{N}$ with $a\geq 1$.
+	
+	We show that we can construct functions that memorize arbitrarily many samples.
+	
+	To begin with, any $n\in\mathbb{N}$ can be expressed by a constant function $c_n\in\mathcal{F}_{\tau}$. This is proved in a straightforward inductive manner.
+	For the base case, we already have $c_0=0\in\tau$.
+	Now, assume that there is an $n\in\mathbb{N}$ such that there exists a function $c_n\in\mathcal{F}_{\tau}$ with $c_n=n$.
+	Then, we construct $c_{n+1}=f_{+}(c_n,c_1)=n+1$.
+	By the inductive definition of non-recursive functions in \ref{def:non-recursive-functions}, it holds that $c_{n+1}\in \mathcal{F}_{\tau}$, and the overall statement draws on the induction principle.
+	In the following, we will therefore directly write $n$ instead of $c_n$ for notational simplicity.
+	
+	Thereby, for any $m\in\mathbb{N}$, we can construct a function $f_m\in\mathcal{F}_{\tau}$ that memorizes the values of $\left(f_{\tau}\right)_a^{\lozenge}$ on $\{0,\dots,m\}$.
+	This statement is analogously proved by induction over $m\in\mathbb{N}$.
+	For the base case $m=0$, we define $f_0(n):=f_{\times}\bigl(f_{=}(0,n),\left(f_{\tau}\right)_a^{\lozenge}(0)\bigr)=\begin{cases}
+		\left(f_{\tau}\right)_a^{\lozenge}(0), & n=0\\
+		0, & n\neq 0
+	\end{cases}$.
+	
+	As $f_0$ is composed of building block functions in $\tau$, it holds that $f_0\in\mathcal{F}_{\tau}$.
+	
+	But since $f_{+}\in\tau$ is strictly monotonously increasing with arity $\operatorname{ar}(f_{+})>1$, Lemmas \ref{lemma:self-lower-bound-strictly-monotonous-functions} and \ref{lemma:max-bound-recursive-concatenation-sum} ensure that
+	\begin{align}
+		\label{eq:lemma-irm-cannot-identify-self-bound-recursive-completion}
+		\left(f_{\tau}\right)_a^{\lozenge}(n)&\overset{\ref{lemma:max-bound-recursive-concatenation-sum}}{\geq} f_{+}^{(n)}(n) \overset{\ref{lemma:self-lower-bound-strictly-monotonous-functions}}{\geq} n > 0 && \text{ for all } n\geq 1.
+	\end{align}
+	For that reason, $f_0(n)=\left(f_{\tau}\right)_a^{\lozenge}(n)$ only holds for $n=0$.
+	
+	Moving on with the induction hypothesis (IH), assume that there is an $m\in\mathbb{N}$ and a function $f_m\in\mathcal{F}_{\tau}$ such that $f_m(n)=\left(f_{\tau}\right)_a^{\lozenge}(n)$ holds for all $n\leq m$, but $f_m(n)=0$ for $n>m$.
+	
+	Then, we define
+	\begin{align}
+		f_{m+1}(n):=f_{+}\biggl(&\\
+		& f_{\times}\left(f_{=}(m+1,n),\left(f_{\tau}\right)_a^{\lozenge}(m+1)\right), \\
+		& f_m(n)\biggr).
+	\end{align}
+	Again, $f_{m+1}$ is a valid composition of functions in $\mathcal{F}_{\tau}$, thus $f_{m+1}\in\mathcal{F}_{\tau}$.
+	
+	By the induction hypothesis, it holds that
+	\begin{align}
+		f_{m+1}(n)=\begin{cases}
+			\left(f_{\tau}\right)_a^{\lozenge}(m+1), & n=m+1\\
+			f_m(n), & n\neq m+1
+		\end{cases}\overset{\text{(IH)}}{=} \begin{cases}
+			\left(f_{\tau}\right)_a^{\lozenge}(m+1), & n=m+1 \\
+			\left(f_{\tau}\right)_a^{\lozenge}(n), & n\leq m\\
+			0, & n > m+1
+		\end{cases}.
+	\end{align}
+	
+	Together with Equation \ref{eq:lemma-irm-cannot-identify-self-bound-recursive-completion}, we have $f_{m+1}(n)\neq \left(f_{\tau}\right)_a^{\lozenge}(n)$ for all $n>m+1$.
+	
+	By the induction principle, we therefore conclude that for any $m\in\mathbb{N}$ a function $f_m\in\mathcal{F}_{\tau}$ such that $f_m(n)=\left(f_{\tau}\right)_a^{\lozenge}(n)$ if and only if $n\leq m$.
+	Collect these functions into $F:=\{f_m\mid m\in\mathbb{N}\}$.
+	Because $f_m(m)=\left(f_{\tau}\right)_a^{\lozenge}(m)\overset{(\ref{eq:lemma-irm-cannot-identify-self-bound-recursive-completion})}{\neq}0=f_k(m)$ for all $k<m$, all these functions are pairwise different, and $|F|=\infty$.
+	
+	Now, let $\mathcal{P}_{tr}:=\{P_\varepsilon \mid  \varepsilon\in\mathcal{E}_{tr}\}$ be an arbitrary set of training distributions, $\mathcal{E}_{tr}\subset \mathcal{E}$.
+	Let $S=\bigl\{\bigl(x_1,\left(f_{\tau}\right)_a^{\lozenge}(x_1)\bigr),\dots,\bigl(x_k,\left(f_{\tau}\right)_a^{\lozenge}(x_k)\bigr)\bigr\}$ be an arbitrary dataset of some size $k\in\mathbb{N}$ that summarizes all observed samples from $\mathcal{P}_{tr}$.
+	The 0-1-loss is defined as 
+	\begin{equation}
+		\label{eq:0-1-loss}
+		\ell(x,y)=\begin{cases}
+			1, & x=y\\
+			0, & x\neq y.
+		\end{cases}
+	\end{equation}
+	
+	Let $m_0:=\max_{1\leq i\leq k}x_i \in\mathbb{N}$ be the largest instance in $S$.
+	For any $m\geq m_0$, it holds that $f_m(x_i)=\left(f_{\tau}\right)_a^{\lozenge}(x_i)$ for all $x_i$ in $S$.
+	Therefore, the risks $\hat{R}_\varepsilon(f_m)=0$ are optimal for any training distribution $P_\varepsilon\in\mathcal{P}_{tr}$.
+	There can be no function $f$ with $\hat{R}_{\varepsilon}(f)<\hat{R}_{\varepsilon}(f_m)$ for any $P_\varepsilon\in\mathcal{P}_{tr}$. 
+	For that reason, $f_m$ is an optimal solution to Equation \ref{eq:irm-objective}.
+	
+	Choosing $F_S:=\{f_m\in F\mid m\geq m_0\}$ concludes our proof.
 \end{proof}
 
-\begin{definition}[Super-logarithmic vector norms]
-	\label{def:super-log-norm}
-	Let $\lVert \cdot \rVert:\Sigma^{\infty}\to\mathbb{R}_{\geq 0}$ be an arbitrary norm over $\Sigma^{\infty}$.
-	Denote by $e_1,e_2,\dots$ the unit vectors that form an orthogonal basis of $\Sigma^{\infty}$. That is, $e_i$ consists only out of $0s$ except for index $i$, where it carries a $1$.
-	
-	
-	We say that $\lVert \cdot \rVert$ is \textit{super-logarithmic} if there exist constants $c_{\lVert\cdot\rVert},k_{\lVert\cdot\rVert}\in\mathbb{N}$ and $m_0\in\mathbb{N}$ such that 
-	\begin{equation}
-		\left\lVert \sum_{i=1}^{m}e_i \right\rVert\geq c_{\lVert\cdot\rVert}\left(\bigcirc_{i=1}^{k_{\lVert\cdot\rVert}}\log_2\right)(m) \quad \text{ for all } m\geq m_0.  
-	\end{equation}
-\end{definition}
+Note that the function set $\tau':=\{f_{+},f_{\times},c_1,c_0,f_{=}\}$ that was assumed in Lemma \ref{lemma:recursive-completion-irm-cannot-identify} already satisfies the conditions of Theorem \ref{theorem:recursive-completion-not-non-recursive-expressible} for itself, since each function is either bounded or strictly monotonously increasing, and the addition function $f_{+}$ has arity $\operatorname{ar}(f_{+})>1$.
+%This result can therefore be combined with the inexpressivity result of Theorem \ref{theorem:recursive-completion-not-non-recursive-expressible}.
+Although any non-recursive model can therefore not express $\left(f_{\tau}\right)_a^{\lozenge}$, there are arbitrarily many non-recursive functions such models could draw upon to achieve an optimal risk by merely memorizing information.
 
-\begin{lemma}[Basis Cascade Exponential Equality]
-	\label{lemma:cascade-exp-inequality-basis-placeholder}
-	Let $a\geq 1,b\geq 0$ be arbitrary real numbers.
-	For any $k\in\mathbb{N}$ and $n\in\mathbb{N}$ with $n>4\cdot 2^k\cdot (a+b)$, it holds that
+Theorem \ref{theorem:recursive-completion-not-non-recursive-expressible} even paves the way to a stronger result that assures that \textit{any} non-recursive functions $f\in\mathcal{F}_{\tau}$ --- not only the ones explicitly constructed in the proof of Lemma \ref{lemma:recursive-completion-irm-cannot-identify} --- that agree with $\left(f_{\tau}\right)_a^{\lozenge}$ on sufficiently many points must obtain a higher Kolmogorov complexity than $\left(f_{\tau}\right)_a^{\lozenge}$.
+If optimization objectives were to take into account this kind of simplicity bias, they could hence already filter out a huge amount of hypotheses despite the quantitative incompleteness of the training dataset.
+
+\begin{theorem}[Surpassing the Kolmogorov Complexity Threshold]
+	\label{theorem:surpass-kolmogorov-complexity-threshold}
+	
+	Let the function set $\tau$ be as in Theorem \ref{theorem:recursive-completion-not-non-recursive-expressible}.
+	There is an $n_0\in\mathbb{N}$ such that for every dataset $S$ with size $|S|> n_0$, all functions $f\in \mathcal{F}_{\tau}$ that remain consistent with $S$ have a higher conditional Kolmogorov complexity than $\left(f_{\tau}\right)_a^{\lozenge}$,
 	\begin{equation}
-		\left(\bigcirc_{i=1}^{n-k}\exp_2\right)(1) > a\cdot n + b.
+		K\bigl(f\mid \operatorname{enc}(\tau)\bigr) > K\bigl(\left(f_{\tau}\right)_a^{\lozenge} \mid \operatorname{enc}(\tau)\bigr).
 	\end{equation}
-\end{lemma}
-\begin{theorem}[Unbounded Order Inconsistencies from any Super-Logarithmic Vector Norm]
-	Let $\lVert \cdot \rVert$ denote an arbitrary norm that is super-logarithmic as by Definition \ref{def:super-log-norm}.
-	For any real numbers $a\geq 1, b\geq 0$, there are $v,w\in\Sigma^{\infty}$ such that $\lVert v \rVert\geq a\cdot \lVert w \rVert+b$, but $K(v) < K(w)$. 
 \end{theorem}
 \begin{proof}
-	Let $\lVert \cdot \rVert$ be an arbitrary norm that is super-logarithmic with some constants $c_{\lVert\cdot\rVert},k_{\lVert\cdot\rVert}$.
-	Let $a\geq 1, b\geq 0$ be arbitrary real numbers.
+	Let $a\in\mathbb{N}$ with $a\geq 1$ be arbitrary.
+	By Theorem \ref{theorem:recursive-completion-kolmogorov-complexity}, the conditional Kolmogorov complexity $K\bigl(\left(f_{\tau}\right)_a^{\lozenge} \mid \operatorname{enc}(\tau)\bigr)\leq c+\log_2(a)$ for some $c\in\mathbb{N}$.
 	
-	Denote by $c_{\mathcal{T}}\in\mathbb{N}$ the constant from the proof of Corollary \ref{cor:arbitrarycompress-zero-pad}.
+	Denote $c_0:=c+\log_2(a)$ in the following.
+	By the geometric sum, there are only $2^{c_0+1}-1$ binary strings with a length shorter than or equal to $c_0$.
 	
-	For any $n\in\mathbb{N}$, Corollary \ref{cor:incompressible-zero-pad} guarantees the existence of a string $q_n\in\Sigma^{\infty}$ with $q_n=r_n\overline{0}$ for some string $r_n\in\Sigma^n$ such that $K(q_n)\geq n$. 
-	Let $g:\mathbb{N} \to \Sigma^{\infty}$ be any selection function that maps $n\in\mathbb{N}$ to such a string $q_n$. In the following, we therefore denote $q_n=g(n)$.
-	
-	On the other hand, define $p_n:=1^{\left(\bigcirc_{i=1}^n \exp_2\right)(1)}\overline{0}$ for $n\in\mathbb{N}$.
-	
-	Finally, we define $f_{a,b}(n):=\left(\bigcirc_{i=1}^{k_{\lVert\cdot\rVert}} \exp_2\right)\left(\frac{a\cdot \lVert q_n \rVert+b}{c_{\lVert\cdot\rVert}}\right)$ for any $n\in\mathbb{N}$.
-	
-	Now, assume that $n>\max \left(4\cdot 2^{k_{\lVert\cdot\rVert}}\cdot \frac{a+b}{c_{\lVert\cdot\rVert}}, 2^{4\cdot (1+c_{\mathcal{T}})}\right)$.
-	
-	For the first part, we use $n>4\cdot 2^{k_{\lVert\cdot\rVert}}\cdot \frac{a+b}{c_{\lVert\cdot\rVert}}$ and combine Lemma \ref{lemma:cascade-exp-inequality-basis-placeholder} with the monotonicity of the exponential function $\exp_2$ to obtain
-	\begin{align}
-		\label{eq:exp-f_ab-inequality-1}
-		\left(\bigcirc_{i=1}^n \exp_2\right)(1) & = \left(\bigcirc_{i=1}^{k_{\lVert\cdot\rVert}} \exp_2\right)\left( \left(\bigcirc_{i=1}^{n-k_{\lVert\cdot\rVert}} \exp_2\right)(1) \right)\\
-		& > \left(\bigcirc_{i=1}^{k_{\lVert\cdot\rVert}} \exp_2\right)\left( \frac{a\cdot n + b }{c_{\lVert\cdot\rVert}}\right).
-	\end{align}
-	
-	Since $\lVert\cdot\rVert$ is a norm, it satisfies the triangle inequality.
-	For any $n\in\mathbb{N}$, denote by $A_n\subset \mathbb{N}$ the set such that $q_n=\sum_{i\in A_n}e_i$.
-	As $\lVert e_i \rVert = 1$ by definition of $e_i$, we have 
+	Therefore, the set 
 	\begin{equation}
-		\label{eq:q_n-triangle-basis-vector-inequality}
-		n\geq \sum_{i\in A_n}\lVert e_i \rVert \geq\left\lVert \sum_{i\in A_n} e_i\right\rVert = \lVert q_n \rVert.
+		F:=\bigl\{f\in \mathcal{F}_{\tau} \mid K\bigl(f\mid \operatorname{enc}(\tau)\bigr)\leq K\bigl(\left(f_{\tau}\right)_a^{\lozenge} \mid \operatorname{enc}(\tau)\bigr)\bigr\}	
 	\end{equation}
+	must be finite.
 	
-	By the monotonicity of the exponential function $\exp_2$, we thereby culminate in
-	\begin{align}
-		\label{eq:exp-f_ab-inequality-full}
-		\left(\bigcirc_{i=1}^n \exp_2\right)(1) &\overset{\ref{eq:exp-f_ab-inequality-1}}{>} \left(\bigcirc_{i=1}^{k_{\lVert\cdot\rVert}} \exp_2\right)\left( \frac{a\cdot n + b }{c_{\lVert\cdot\rVert}}\right) \\
-		&\overset{\ref{eq:q_n-triangle-basis-vector-inequality}}{\geq} \left(\bigcirc_{i=1}^{k_{\lVert\cdot\rVert}} \exp_2\right)\left( \frac{a\cdot  \lVert q_n \rVert + b }{c_{\lVert\cdot\rVert}}\right)=f_{a,b}(n).
-	\end{align}
+	Because $F\subset \mathcal{F}_{\tau}$, Corollary \ref{cor:scaled-recursive-completion-not-non-recursive-expressible-placeholder} ensures that for each $f\in F$, there is an $n_0(f)$ such that $f(n)\neq \left(f_{\tau}\right)_a^{\lozenge}(n)$ for all $n\geq n_0(f)$.
 	
-	Along with Definition \ref{def:super-log-norm}, our condition is therefore satisfied:
-	\begin{align}
-		\lVert p_n\rVert = \left\lVert 1^{\left(\bigcirc_{i=1}^n \exp_2\right)(1)}\overline{0}\right\rVert 
-		& =  \left\lVert \sum_{i=1}^{\left(\bigcirc_{i=1}^n \exp_2\right)(1)}e_i \right\rVert \\
-		&\overset{\ref{def:super-log-norm}}{\geq} c_{\lVert\cdot\rVert}\left(\bigcirc_{i=1}^{k_{\lVert\cdot\rVert}}\log_2\right) \left( \left( \bigcirc_{i=1}^n \exp_2 \right)(1)\right) \\ 
-		&\overset{\ref{eq:exp-f_ab-inequality-full}}{\geq} c_{\lVert\cdot\rVert}\left(\bigcirc_{i=1}^{k_{\lVert\cdot\rVert}}\log_2\right) \left( f_{a,b}(n) \right) \\ 
-		&= c_{\lVert\cdot\rVert}\left(\bigcirc_{i=1}^{k_{\lVert\cdot\rVert}}\log_2\right) \left( \left(\bigcirc_{i=1}^{k_{\lVert\cdot\rVert}} \exp_2\right) \left(\frac{a\cdot \lVert q_n \rVert+b}{c_{\lVert\cdot\rVert}}\right) \right) \\
-		&= c_{\lVert\cdot\rVert} \left(\frac{a\cdot \lVert q_n \rVert+b}{c_{\lVert\cdot\rVert}}\right)\\
-		&= a\cdot \lVert q_n \rVert+b.
-	\end{align}
+	Let $n_0:=\max_{f\in F}n_0(f)$ be the maximum of these indices.
 	
-	However, since $n> 2^{4(1+c_{\mathcal{T}})}$ and by the assumptions on the compressibility of $p_n$ and $q_n$, we conclude with Corollaries \ref{cor:arbitrarycompress-zero-pad} and \ref{cor:incompressible-zero-pad} that
-	\begin{align}
-		K(p_n)\overset{\ref{cor:arbitrarycompress-zero-pad}}{\leq}\log_2(n)+c_{\mathcal{T}} \overset{\ref{lemma:log-lin-add-inequality-placeholder}}{<} n \overset{\ref{cor:incompressible-zero-pad}}{\leq} K(q_n).
-	\end{align}
+	Now, let $S=\bigl\{\bigl(x_1,\left(f_{\tau}\right)_a^{\lozenge}(x_1)\bigr),\dots,\bigl(x_k,\left(f_{\tau}\right)_a^{\lozenge}(x_k)\bigr)\bigr\}$ be an arbitrary dataset of size $k > n_0$.
+	Denote by $m_1:=\max_{1\leq i\leq k}x_i$ the largest natural number instance in $S$.
+	Since $|S|\geq n_0+1$, $m_1\geq n_0$.
+	By the choice of $n_0$, we have $f(m_1)\neq \left(f_{\tau}\right)_a^{\lozenge}(m_1)$ for all $f\in F$.
+	For any $f\in\mathcal{F}_{\tau}$ that is consistent with the functional pairs in $S$, it particularly holds that $f(m_1)=\left(f_{\tau}\right)_a^{\lozenge}(m_1)$.
+	For that reason, $f\notin F$ and hence $K\bigl(f\mid \operatorname{enc}(\tau)\bigr) > K\bigl(\left(f_{\tau}\right)_a^{\lozenge} \mid \operatorname{enc}(\tau)\bigr)$.
 \end{proof}
 
-\begin{corollary}[Regularization with Minkowski Norms yields no Simplicity Guarantees]
-	Let $p>0$ be an arbitrary real number and $\lVert\cdot\rVert_p$ denote the corresponding Minkowski norm.
-	For any real numbers $a\geq 1, b\geq 0$, there are both $v,w\in\Sigma^{\infty}$ such that $K(v)\geq a\cdot K(w)+b$, but $\lVert v \rVert_p < \lVert w \rVert_p $, and $v,w\in\Sigma^{\infty}$ such that $\lVert v \rVert_p \geq a\cdot \lVert w \rVert_p+b$, but $K(v) < K(w)$. 
-\end{corollary}
-\begin{proof}
-	Let $p>0$ be an arbitrary real number.
-	
-	We show that the Minkowski norm $\lVert\cdot\rVert_p$ is both properly additive (Definition \ref{def:properly-additive-vector-norms}) and super-logarithmic (Definition \ref{def:super-log-norm}).
-	
-	For the first part, let $A\subset \mathbb{N}$ be arbitrary.
-	For any $j\in\mathbb{N}$ with $j\notin A$, the monotonicity of the root function $\sqrt[p]{\cdot}$ ensures that
-	\begin{align}
-		\left\lVert \sum_{i\in A} e_i + e_j \right\rVert_p &= \left(\sum_{i\in A\cup\{j\}} 1^p \right)^{\frac{1}{p}} = \left( |A|+1 \right)^{\frac{1}{p}} > |A|^{\frac{1}{p}} = \left(\sum_{i\in A} 1^p \right)^{\frac{1}{p}} = \left\lVert \sum_{i\in A} e_i \right\rVert_p.
-	\end{align}
-	
-	For the second part, take $c=1,k=1,$ and choose a natural number $m_0>\max\left(\left(2^{4p}\right)^p,2^{4p}\right)$.
-	
-	Any $m\geq m_0$ in particular satisfies $m > 2^{4p}$.
-	Therefore, Lemma $\ref{lemma:log-lin-inequality}$ guarantees that $m > p\log(m)$ for such $m$.
-	
-	There exist a real number $x$ such that $m=x^p$.
-	Since $m>\left(2^{4p}\right)^p$, this $k$ satisfies $k>2^{4p}$. 
-	For that reason, it holds for any $m\geq m_0$ that
-	\begin{align}
-		\left\lVert \sum_{i=1}^{m} e_i \right\rVert_p = \sqrt[p]{m} = \sqrt[p]{k^p} = k > p \log_2(k) = p\cdot \log_2(m^{\frac{1}{p}}) = p \cdot \frac{1}{p} \log_2(m)=\log_2(m).
-	\end{align}
-\end{proof}
+The final message of this chapter can therefore be summarized as follows.
+If we want to enable algorithms to learn simple functions, we not only need to bestow our machine learning models with recursive structure, but also need to extend our optimization objectives to favour simpler functions over more complex ones.
 
-\begin{corollary}[L0-Regularization yields no Simplicity Guarantees]
-	Denote by $\lVert\cdot\rVert_0$ the norm that counts non-zero components.
-	For any real numbers $a\geq 1, b\geq 0$, there are both $v,w\in\Sigma^{\infty}$ such that $K(v)\geq a\cdot K(w)+b$, but $\lVert v \rVert_0 < \lVert w \rVert_0 $, and $v,w\in\Sigma^{\infty}$ such that $\lVert v \rVert_0 \geq a\cdot \lVert w \rVert_0+b$, but $K(v) < K(w)$. 
-\end{corollary}
-\begin{proof}
-	We show that the $\lVert\cdot\rVert_0$ norm is both properly additive (Definition \ref{def:properly-additive-vector-norms}) and super-logarithmic (Definition \ref{def:super-log-norm}).
-	
-	For the first part, let $A\subset \mathbb{N}$ be arbitrary.
-	For any $j\in\mathbb{N}$ with $j\notin A$, we have
-	\begin{align}
-		\left\lVert \sum_{i\in A} e_i + e_j \right\rVert_0 &= |A|+1 > |A| = \left\lVert \sum_{i\in A} e_i \right\rVert_0.
-	\end{align}
-	
-	For the second part, take $c=1,k=1,$ and choose $m_0=1$. For any $m\geq m_0$, it holds that
-	\begin{align}
-		\left\lVert \sum_{i=1}^{m} e_i \right\rVert_0 = m > \log_2(m).
-	\end{align}
-\end{proof}
-
-
-\section{The Expressive Power of Recursion}
-% TODO: Refer to G{\"o}del's primitive recursive functions. 
-% \cite{godel1931formal}
-% We can also take Robinson's version.
-
-\section{Inductive Inference à la Solomonoff}
-% TODO: Relate to Minimum Description Length Literature. 
-% \cite{grunwald2007minimum} \cite{grunwald2019minimum}.
-% TODO: Relate to Kolmogorov Complexity Literature. 
-% \cite{li2008kolmogorov}.
-% \cite{legg2007universal} Machine Intelligence via Kolmogorov Complexity.
-By nature, our organism strives to minimize the energy it requires to perform a certain operation. This also applies to our brain. When trying to make sense of our world, our brain tries to do so in the most efficient way. But in terms of what kind of efficiency?
-
-Let us illustrate this question with the example of inferring time series from few samples.
-Observing the sequence \dots 2 \_ \_ \_ 2\dots, our brains might assume the constant function $f(n)=2$.
-But given \dots 2 \_ 4 \_ \_ \dots, would the brain assume a linear sequence \dots 2 3 4 5 \dots? Or would it rather assume a constant function with one exception \dots 2 2 4 2 \dots.
-And after the next sample extends the overall image to \dots 2 \_ 4 \_ 2\dots, is the constant function with one exception now still the most plausible assumption?
-Or do we in fact deal with a symmetric piece-wise linear function \dots 1 2 3 4 3 2 1 \dots instead?
-
-In general, both assumptions are reasonable, as they fit simple patterns on the observed sequences.
-But as more and more 2s are joining the overall image, the constant function with the exception becomes more and more plausible. While it remains a suitable candidate for the underlying pattern, alternative pattern classes become more and more complex with additional samples, and thus more and more energy-intensive. Within our inductive bias that follows some principle of simplicity, such as Ockham's Razor, the simplest algorithm becomes more and more likely to generate the observed patterns. 
-% TODO: Present Ockham's Razor more scientifically (with citation).
-
-\subsection{The Necessity of Sequential Inputs in Alphabetical Representation}
-%Humans do not perform operations on a number as a whole, as current mathematical models do. Instead, they represent numbers in numeral systems, in particular the decimal system. This transformation not only into a representation that allows
-%Number is not regarded as a real number.
-
-\subsection{Computational Complexity - The Yet Ignored Principle in Compression}
-The term "simplicity" might hint at the \textit{descriptive} efficiency of an algorithm or concept. The less resources are needed to describe the algorithm, the more efficient will a machine or human be able to store this piece of information. 
-However, this aspect does not fully capture the multi-sided shape of efficiency. Another side is the executive efficiency, that describes how many resources it needs to execute a certain algorithm. These resources include at least time, memory, but in a more general setting also communication costs between different involved units.
-
-% TODO: Refer to Ray Solomonoff's Theory of Inductive Inference \cite{solomonoff1964formal}.
-
-But given \dots 2 4 8 16 \dots, I do not assume a cubic polynomial, but an exponential function $f(n)=2^n$. Although the function values are exponential in the input, the computational complexity need not be, depending on which operations the underlying architecture allows. An architecture that features bit shift operations in constant time will allow an algorithm that computes $f$ with linear computational complexity.
-Moreover, its descriptive complexity is far lower than the growing complexity of the polynomial alternatives.
-
-% TODO: Example: Learning a sorting algorithm
+It remains to ask how such measures could alleviate the strong information-theoretic conditions that training distributions still have to satisfy to fall within the scope of generalization guarantees.
+In the next chapter, we demonstrate how Kolmogorov complexity paves the way to formulate such sufficient conditions in a general, but still nearly optimal manner.
+To that end, it first exhibits that it is not meaningful to condition learnability on the number of samples in dataset. 
+Instead, it proposes to measure the information that a dataset conveys about the functions that could have generated it in terms of Kolmogorov complexity, and demonstrates how this measure yields not only generalization guarantees, but could realise simplicity biases in practice.
