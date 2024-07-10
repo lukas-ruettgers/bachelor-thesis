@@ -5,15 +5,132 @@
 
 \chapter{Models and Optimization that are Mindless of Simplicity}
 \label{chap:models-optimization-kolmogorov}
-In this chapter, we consider learning problems of the form $h:\mathbb{N}^k\to\mathbb{N}$ for some arbitrary $k\in\mathbb{N}$. 
-
+In this chapter, we consider learning problems of the form $h:\mathbb{N}^k\to\mathbb{N}$ for some arbitrary $k\in\mathbb{N}$.
+To cover the entire range of signed, finite precision floating point numbers in computing architectures and thus all functions that neural network can express in practice, we will later show how our results extend from $\mathbb{N}$ to $\mathbb{Z}$.
+Figure \ref{fig:overview-chap-3} provides a holistic roadmap for the line of reasoning that this chapter trails, which we now explain in more detail.
+\begin{figure}[h]
+	\begin{center}
+		\begin{tikzpicture}[every text node part/.style={align=center}, font=\small]
+			
+			%%% HEADERS %%%%%%%%%%%%%%%%%%%%%%%%
+			\node[xshift=40pt,font=\large] (models) at (0,0) {\textbf{Models} };
+			\node[right=100pt of models,font=\large] (simplicity) {\textbf{Simplicity}};
+			\node[right=80pt of simplicity,font=\large] (algorithms) {\textbf{Algorithms}};
+			
+			%%% MODELS %%%%%%%%%%%%%%%%%%%%%%%%
+			\node[below = 20pt of models.south] (func-set){function set\\ $\tau=\{f_1,\dots,f_j\}$};
+			\draw[->, dashed, rwth-storm] 
+			([xshift=0pt]models.south) 
+			to [out=240,in=120] ([xshift=0pt]func-set.north); 
+			\node[above=5pt of func-set.north,font=\tiny,rwth-storm,xshift=-30pt]{have access to}; 
+			
+			
+			
+			
+			%% ARROW FINITE CONCATENATIONS %%%%%%%%%%%%%%%%%%%%%%%%
+			
+				\node[below = 35pt of func-set] (non-rec-funcs){non-recursive functions $\mathcal{F}_\tau$};
+				\draw[->, dashed,rwth-storm] 
+				([xshift=0pt]func-set.south) 
+				to [out=240,in=120] ([xshift=0pt]non-rec-funcs.north); 
+				\node[
+				above=10pt of non-rec-funcs.north,
+				xshift=-30pt,
+				font=\tiny, rwth-storm
+				] (finite-concats) {all finite \\concatenations};
+			
+			
+			%% ARROW REPRESENTATION CLASS WITHIN %%%%%%%%%%%%%%%%%%%%
+			
+				\node[below = 25pt of non-rec-funcs] (non-rec-models){non-recursive models over $\tau$};
+				\draw[->, dashed,rwth-storm] 
+				([xshift=0pt]non-rec-models.north) 
+				to [out=120, in=240](non-rec-funcs.south);
+				\node[
+				below = 5pt of non-rec-funcs.south,
+				font=\tiny,
+				xshift=-30pt, rwth-storm] 
+				(repr-class-within) {representation \\ class within};
+				
+				\node[below=-2pt of non-rec-models.south, font=\tiny, gray] (func-set-info) 
+				{e.g. multi-layer neural networks};
+				
+			
+			
+			
+			%% ARROW CANNOT EXPRESS %%%%%%%%%%%%%%%%%%%%%
+			
+				\node[below=15pt of simplicity.south] (rec-completion) {recursive completion $f_\tau^{\lozenge}$};
+				\draw[->,rwth-purple] (non-rec-funcs.north east) to 
+				[out=60, in=230](rec-completion.south west);
+				\node[
+				above= 20pt of non-rec-funcs.north east,
+				font=\tiny,
+				xshift=0pt,rwth-purple
+				] (cannot-express) {cannot \\ express};
+		
+			
+			
+			%% ARROW CONSTANTLY LOW KOLMOGOROV %%%%%%%%%%%%%%%%%%%%%
+			
+				\node[below=30pt of rec-completion] (kolmogorov-complexity) {Kolmogorov complexity};
+				\draw[->,rwth-purple]
+				([xshift=10pt]rec-completion.south)
+				to [out=300, in=60]([xshift=10pt]kolmogorov-complexity.north);
+				\node[
+				below=5pt of rec-completion, 
+				font=\tiny,
+				xshift=40pt,rwth-purple] (constantly-low) {constantly low \\ given $\tau$};
+			
+			
+			%%% Algorithms %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+			
+			%% ARROW INFINITELY OPTIMAL %%%%%%%%%%%%%%%%%%%%%
+		
+				\node[below = 125pt of algorithms.south] (irm) {ERM/IRM};
+				\draw[<-,rwth-purple]
+				(irm.west) to [out=180, in=320] ([xshift=40pt]non-rec-funcs.south);
+				\node[
+				left= 50pt of irm.west,
+				font=\tiny,
+				yshift=-15pt,rwth-purple
+				] (infinitely-many-consistent) {for any finite dataset generated from $f_\tau^{\lozenge}$ \\ infinitely many remain consistent and hence optimal};
+			
+			
+			%% ARROW SIMPLICITY BIAS %%%%%%%%%%%%%%%%%%
+				\node[
+				draw,
+				dashed,
+				rectangle, 
+				right=10pt of kolmogorov-complexity.south east, 
+				yshift=-20pt] (simplicity-bias){Simplicity bias \\ + ERM/IRM};
+				\draw[->, dashed,gray]
+				(irm.north) to [out=90, in=0](simplicity-bias.east);
+				\draw[->, dashed,gray]
+				(kolmogorov-complexity.east) to [out=0, in=90](simplicity-bias.north);
+				
+				%% ARROW SUBOPTIMAL %%%%%%%%%%%%%%%%%%%%%%
+				\draw[->,rwth-purple]
+				(simplicity-bias.west) to [out=180, in=350](non-rec-funcs.east);
+				\node[
+				left= 10pt of simplicity-bias.west,
+				font=\tiny,
+				yshift=-10pt,rwth-purple
+				] (render-suboptimal) {renders all consistent functions suboptimal\\ for sufficiently large datasets};
+		\end{tikzpicture}
+	\end{center}
+	\caption[Overview of the line of reasoning in Chapter \ref{chap:models-optimization-kolmogorov}.]{Holistic overview of the line of reasoning in Chapter \ref{chap:models-optimization-kolmogorov}.}
+	\label{fig:overview-chap-3}
+\end{figure}
 When we construct mathematical models to learn predictors for such functions $h$, there is an underlying finite set of operations or functions $\tau=\{f_1,\dots,f_j\}$ that serve as \textit{building blocks} of our model.
-For neural networks, typical building block functions include arithmetic operations like addition or multiplication, activation functions like the sigmoid function $\sigma(x)=\frac{1}{1+e^{-x}}$, $\operatorname{ELU}$ or $\tanh$, constants $c\in\mathbb{N}$, and logical expressions like the equality or inequality $=,<$, and logical conjunctions such as $\land$ and $\lor$.
+In practice, these are the functions we eventually use in our source code to express a model in a certain programming language.
+For neural networks, typical building block functions include arithmetic operations like addition or multiplication, activation functions like the sigmoid function $\sigma(x)=\frac{1}{1+e^{-x}}$, ReLU, ELU, or $\tanh$, constants $c$, and logical expressions like the equality or inequality $=,<$, and logical conjunctions such as $\land$ and $\lor$.
 
 In the case of feed-forward neural networks $M_\theta$, our building block functions $f_i$ are merely concatenated in a way that does not depend on the input $x$.
 In particular, the number of layers and the values of the parameters are fixed and do not change according to the input $x$.
 More formally, the function $f_{\theta}$ that $M_\theta$ computes is equivalent to a finite concatenation of the building block functions $f_1,\dots,f_j$.
-Such feed-forward neural networks are well-known instances of a model class that we will later rigorously define as \textit{non-recursive models}.
+Such multi-layer neural networks are well-known instances of a model class that we will later rigorously define as \textit{non-recursive models}.
+Informally, non-recursive models over $\tau$ can merely express finite concatenations of the building block functions in $\tau$.
 
 The demonstrations of this chapter are twofold.
 Firstly, this chapter puts forward that there are simple functions that these non-recursive models are not able to express.
@@ -63,9 +180,10 @@ On our way to provide a rigorous definition of non-recursive models, we first ch
 	\end{enumerate}
 \end{definition}
 Non-recursive functions over $\tau$ are hence nothing but finite concatenations of functions in $\tau$.
+For example, if the function set $\tau$ consists out of the constants $f_0(n_i)=0,f_1(n_i)=1$, and the addition function $f_{+}(n_i,n_j)=n_i+n_j$, the non-recursive functions over $\tau$ are nothing but the class of linear functions over $\mathbb{N}$, $\mathcal{F}_{\tau}=\{f:f(n)=an+b\mid a,b\in\mathbb{N}\}$.
 
-As we study the expressive power of models, it suffices to identify models with the representation class $\mathcal{M}$ of functions that they can realize.
-Therefore, we call a model non-recursive on $\tau$ if this representation class $\mathcal{M}\subset \mathcal{F}_{\tau}$.
+As we study the expressive power of models, it suffices to identify models with the representation class $\mathcal{M}$, that contains all functions they can realize.
+Therefore, we call a model non-recursive on $\tau$ if its representation class $\mathcal{M}\subset \mathcal{F}_{\tau}$.
 In other words, if a model is non-recursive on $\tau$, any function $g$ that this model can realize is equivalent to a certain finite concatenation of functions in $\tau$.
 
 %In the following, we abbreviate the arity of a function $f$ by $\operatorname{ar}(f)$.
@@ -94,7 +212,7 @@ Moving on, the monotonicity of non-recursive functions is defined in the standar
 	
 	If the inequality holds strictly, we call $f$ strictly monotonously increasing.
 	
-	The definition of (strictly) monotonously decreasing terms is symmetric.
+	The definition of (strictly) monotonously decreasing functions is symmetric.
 \end{definition}
 
 \section{Recursive completion}
@@ -116,10 +234,60 @@ To formally exemplify recursive functions and contrast them to non-recursive one
 		f^{(m+1)}(n)&:=f^{-}(f^{(m)}(n)),&& n,m\in\mathbb{N}.
 	\end{align}
 \end{definition}
-
+Using the example of a $2$-ary function $f$, Figure \ref{fig:recursive-concatenation} visualizes the functional composition of the recursive concatenation $f^{(m)}$ by its term tree.
+\begin{figure}[h]
+	\begin{center}
+		\begin{tikzpicture}[every text node part/.style={align=center}, font=\normalsize]
+			%% F1
+			\node[] (f1) at (0,0){$f^{(1)}(n):$};
+			
+			%% F1 UPPER LAYER
+			\node[right=10pt of f1.east,yshift=-5pt] (f1up) {$f(\;\cdot\;,\;\cdot\;)$};
+			
+			%% F1 LOWER LAYER
+			\node[below = 20pt of f1up,xshift=-25pt] (f1lowl){$n$};
+			\node[below = 20pt of f1up,xshift=25pt] (f1lowr){$n$};
+			
+			\draw[-] ([xshift=-5pt]f1up.south) -- (f1lowl.north);
+			\draw[-] ([xshift=10pt]f1up.south) -- (f1lowr.north);
+			
+			
+				%%% F2
+				\node[right=100pt of f1.east] (f2) {$f^{(2)}(n):$};
+				
+				%% F2 UPPER LAYER
+				\node[right=10pt of f2.east,yshift=-5pt] (f2up) {$f(\;\cdot\;,\;\cdot\;)$};
+				
+				%% F2 MIDDLE LAYER
+				\node[below = 20pt of f2up,xshift=-35pt] (f2midl){$f(\;\cdot\;,\;\cdot\;)$};
+				\node[below = 20pt of f2up,xshift=35pt] (f2midr){$f(\;\cdot\;,\;\cdot\;)$};
+				
+				\draw[-] ([xshift=-5pt]f2up.south) -- (f2midl.north);
+				\draw[-] ([xshift=10pt]f2up.south) -- (f2midr.north);
+				
+				%% F2 LOWER LAYER
+				% LEFT
+				\node[below = 20pt of f2midl,xshift=-25pt] (f2lowll){$n$};
+				\node[below = 20pt of f2midl,xshift=25pt] (f2lowlr){$n$};
+				
+				\draw[-] ([xshift=-5pt]f2midl.south) -- (f2lowll.north);
+				\draw[-] ([xshift=10pt]f2midl.south) -- (f2lowlr.north);
+				
+				% RIGHT
+				\node[below = 20pt of f2midr,xshift=-25pt] (f2lowrl){$n$ };
+				\node[below = 20pt of f2midr,xshift=25pt] (f2lowrr){$n$};
+				
+				\draw[-] ([xshift=-5pt]f2midr.south) -- (f2lowrl.north);
+				\draw[-] ([xshift=10pt]f2midr.south) -- (f2lowrr.north);
+			
+		\end{tikzpicture}
+	\end{center}
+	\caption[Recursive concatenation of a $2$-ary function.]{Term tree of the recursive concatenation of a $2$-ary function $f^{(m)}$ for $m=1,2$.}
+	\label{fig:recursive-concatenation}
+\end{figure}
 If functions $f$ over $\mathbb{N}$ are strictly monotonously increasing and have an arity larger than $1$, the function values of their recursive concatenations $f^{(m)}(n)$ must grow exponentially fast in the number of concatenations $m$, as the following Lemma shows.
 
-\begin{lemma}[Self-Lower Bound for Strictly Monotonously Increasing Functions]
+\begin{lemma}[Lower bound for recursive concatenation of strictly monotonously increasing functions]
 	\label{lemma:self-lower-bound-strictly-monotonous-functions}
 	Let $f:\mathbb{N}^{k}\to\mathbb{N}$ be an arbitrary $k$-ary function that is strictly monotonously increasing with $k\geq 1$.
 	Let $f^{(m)}$ denote the $m$-wise recursive concatenation of $f$ as in Definition \ref{def:recursive-concatenation}. 
@@ -173,9 +341,9 @@ Finally, logical functions are by definition bounded by $1$, and in particular a
 For that reason, we restrict the function sets $\tau$ to strictly monotonously increasing and bounded functions.
 As it renders useful in the later theorems, we now show that for any such $\tau$, the recursive concatenation of $f_{\tau}$ is lower bounded by the recursive concatenation of each strictly monotonously increasing function $f_k\in\tau$.
 
-\begin{lemma}[Maximum bound for Recursive Concatenation Sum]
+\begin{lemma}[Lower bound for recursive concatenation of function set sum]
 	\label{lemma:max-bound-recursive-concatenation-sum}
-	Given an arbitrary function set $\tau=\{f_1,\dots,f_j\}$.
+	Given an arbitrary function set $\tau=\{f_1,\dots,f_j\},f_i:\mathbb{N}\to\mathbb{N}$.
 	
 	For any monotonously increasing function $f_k\in\tau$ and any $m,n\in\mathbb{N}$, it holds that
 	$f_{\tau}^{(m)}(n)\geq f_k^{(m)}(n)$.
@@ -190,10 +358,11 @@ As it renders useful in the later theorems, we now show that for any such $\tau$
 	\end{align*}
 	for all $1\leq k\leq j$ and $n\in\mathbb{N}$.
 	
-	Now, assume that for some $m\in\mathbb{N}$, the statement $f_{\tau}^{(m)}(n)\geq f_i^{(m)}(n)$ holds for all strictly monotonously increasing functions $f_i\in\tau$ and all $n\in\mathbb{N}$.
+	Now, assume that for some $m\in\mathbb{N}$, the statement $f_{\tau}^{(m)}(n)\geq f_i^{(m)}(n)$ holds for all monotonously increasing functions $f_i\in\tau$ and all $n\in\mathbb{N}$.
 	
 	For $m+1$, any monotonously increasing $f_k \in \tau$ satisfies
 	\begin{align}
+		\label{eq:lemma:max-bound-recursive-concatenation-sum-inequality}
 		f_{\tau}^{(m+1)}(n) = f_{\tau}^{-}(f_{\tau}^{(m)}(n)) = \sum_{i=1}^{j}f_i^{-}(f_{\tau}^{(m)}(n))
 		&\geq f_k^{-}(f_{\tau}^{(m)}(n))\\
 		&\overset{\text{(IH)}}{\geq} f_k^{-}( f_k^{(m)}(n)) = f_k^{(m+1)}(n),
@@ -219,9 +388,9 @@ The following theorems will be proved for this special case of recursive concate
 For an arbitrary function set $\tau$ that only comprises strictly monotonously increasing and bounded functions, we are going to show that $f_\tau^{\lozenge}$ --- referred to as the \textit{recursive completion over $\tau$} --- is not expressible by non-recursive functions over $\tau$, briefly $f_\tau^{\lozenge} \notin \mathcal{F}_{\tau}$.
 This implies that any non-recursive model on $\tau$ is not able to express this function.
 
-\begin{theorem}[Recursive sum completion is not non-recursively expressible]
+\begin{theorem}[Recursive completion over $\tau$ is not non-recursively expressible]
 	\label{theorem:recursive-completion-not-non-recursive-expressible}
-	Fix an arbitrary function set $\tau=\{f_1,\dots,f_j\}$, where each $f_i$ is strictly monotonously increasing or bounded. 
+	Fix an arbitrary function set $\tau=\{f_1,\dots,f_j\},f_i:\mathbb{N}\to\mathbb{N}$, where each $f_i$ is strictly monotonously increasing or bounded. 
 	Assume that there is at least one $f_i\in\tau$ that is strictly monotonously increasing and has arity $\operatorname{ar}(f_i)>1$, e.g. the addition function.
 	For any non-recursive function $f\in\mathcal{F}_{\tau}$, there is an $n_0\in\mathbb{N}$ such that for all $n\geq n_0$, $f(n)\neq f_{\tau}^{\lozenge}(n)$.
 \end{theorem}
@@ -249,10 +418,10 @@ This implies that any non-recursive model on $\tau$ is not able to express this 
 	
 	% To let this proof transfer more directly to countably infinite sets with negative numbers like $\mathbb{Q}$, we do not avail of the fortuitous fact $f_m^{-}(0)\geq 0$ for having chosen $\mathbb{N}$ but conduct a more general argument that is agnostic of $f_m^{-}(0)$.
 	
-	Since all functions $f_i\in\tau$ are strictly monotonously increasing or bounded, we thereby conclude by means of Lemma \ref{lemma:max-bound-recursive-concatenation-sum} that
+	Since $f_m$ is monotonously increasing, we conclude by means of Lemma \ref{lemma:max-bound-recursive-concatenation-sum} that
 	\begin{equation}
 		\label{eq:theorem:recursive-completion-not-non-recursive-expressible-inequality}
-		f_{\tau}^{(n)}(n+a)\geq f_m^{(n)}(n+a) > n+a = f(n+a).
+		f_{\tau}^{(n)}(n+a)\overset{\ref{lemma:max-bound-recursive-concatenation-sum}}{\geq} f_m^{(n)}(n+a) \overset{(\ref{eq:theorem:recursive-completion-not-non-recursive-expressible-self-lower-bound})}{>} n+a = f(n+a).
 	\end{equation}
 	
 	Proceeding with the induction hypothesis (IH), assume that there is some $p\in\mathbb{N}$ such that for every non-recursive function $f\in\mathcal{F}_{\tau}$ with $\operatorname{dep}(f)\leq p$, there exists an $n_0\in\mathbb{N}$ such that $f_\tau^{(n)}(n+a)>f(n+a)$ for all $n\geq n_0$ and $a\in\mathbb{N}$.
@@ -299,94 +468,124 @@ Otherwise, if $f_m$ was a bounded function, the threshold $n_0$ could just be ta
 Therefore, for non-recursive functions $f$ of sufficiently large depth $p$, the threshold $n_0$ can be upper bounded by a term $a\cdot p$, where $a\to 1$ for $p\to\infty$.  
 
 Figure \ref{fig:composition-tree-recursive-completion-vs-fixed-term} visualizes the eventual dominance of $f_{\tau}^{\lozenge}$ over non-recursive functions $f$.
-$f_{\tau}$ covers every possible \textit{composition path} that the functions in $\tau$ could construct and will hence eventually excel $f$ by the strict monotonicity of involved functions.
-Wrapping each function $f_i$ by the magnitude function $|\cdot|$ would allow to extend this proof to functions over $\mathbb{Z}$.
-But this extension is not essential to the actual result and was hence left out for the ease of exposition.
+$f_{\tau}$ covers every possible \textit{composition path} that the non-recursive functions in $\tau$ could possibly choose. Eventually, $n$ will exceed both the depth of $f$ and the largest constant in $f$. By the the strict monotonicity of the involved functions, $f_{\tau}^{\lozenge}$ will thus excel $f$.
+
+An extension of this result to $\mathbb{Z}$ allows to apply this result directly to neural networks which usually operate over signed floating point numbers of finite precision.
+The adjustments we need to make are minimal.
+On the one hand, the inequality in Equation (\ref{eq:lemma:max-bound-recursive-concatenation-sum-inequality}) in the proof of the lower bound of the sum $f_\tau:=\sum_{i=1}^{j}f_i$ in Lemma \ref{lemma:max-bound-recursive-concatenation-sum} relied on the non-negativity of each $f_i$.
+To generalize this statement to functions over $\mathbb{Z}$, we simply wrap each function $f_i$ by the \textit{magnitude} function before summing them up.
+Juxtaposing this adjusted construction $f_{\tau}$ to non-recursive functions over $\tau$ is still perfectly fair, since both the addition function and the magnitude function will still fall within the scope of functions that still satisfy our assumptions on $\tau$.
+
+On the other hand, the assumptions on the functions in $\tau$ are weakened a little to still express a broad range of functions that are used to design neural networks and other models in practice.
+While the definition of boundedness directly carries over to negative numbers, the condition of strict monotonicity is slightly alleviated.
+
+Arithmetic operations such as multiplication and addition, logical expressions, constants, and activation functions that are usually employed in practice such as ReLU, ELU, $\tanh$, or sigmoid still fall within the scope of these assumptions.
+
+Although the proofs require only slight changes, they yet affect the ease of exposition.
+For this reason, the argument was presented here only for functions over $\mathbb{N}$, while the more general result for functions over $\mathbb{Z}$ is laid out in Appendix \ref{app:extension-inexpressivity-integer}.
+
 \begin{figure}[h]
 	\begin{center}
 		\begin{tikzpicture}[every text node part/.style={align=center}, font=\normalsize]
 			%% UPPER LAYER
-			\node[] (ftau0) at (0,0) {$f_{\tau}^{(n)}=\Sigma_{i=1}^{2}f_i^{(n)}$};
-			\node[below = 20pt of ftau0, xshift=-50pt] (f10){$f_1$};
-			\node[below = 20pt of ftau0, xshift=50pt] (f20){$f_2(\;\cdot\;,\;\cdot\;,\;\cdot\;)$};
-			\node[below = 0pt of ftau0, xshift=5pt] (+0){$+$};
-			
-			\draw[-] ([xshift=0pt]ftau0.south) -- (f10.north);
-			\draw[-,color=olive] ([xshift=10pt]ftau0.south) -- (f20.north);
-			
-			%%% MIDDLE LAYER
-			\node[below = 20pt of f20,xshift=-45pt] (ftau10){$f_{\tau}^{(n-1)}$};
-			\node[below = 20pt of f20,xshift=5pt] (ftau11){$f_{\tau}^{(n-1)}$};
-			\node[below = 20pt of f20,xshift=55pt] (ftau12){$f_{\tau}^{(n-1)}$};
-			
-			\draw[-,color=olive] ([xshift=-10pt]f20.south) -- (ftau10.north);
-			\draw[-,color=olive] ([xshift=5pt]f20.south) -- (ftau11.north);
-			\draw[-,color=olive] ([xshift=20pt]f20.south) -- (ftau12.north);
-			
-			%% LOWER LAYER
-			\node[below=20pt of ftau10,xshift=-20pt] (f1-ul) {$f_1$};
-			\node[below=20pt of ftau10,xshift=5pt] (f2-ul) {$f_2$};
-			\draw[-,color=olive] ([xshift=-10pt]ftau10.south) -- (f1-ul.north);
-			\draw[-] ([xshift=-5pt]ftau10.south) -- (f2-ul.north);
-			
-			\node[below=20pt of ftau11,xshift=-20pt] (f1-um) {$f_1$};
-			\node[below=20pt of ftau11,xshift=5pt] (f2-um) {$f_2$};
-			\draw[-] ([xshift=-10pt]ftau11.south) -- (f1-um.north);
-			\draw[-,color=olive] ([xshift=-5pt]ftau11.south) -- (f2-um.north);
-			
-			\node[below=20pt of ftau12,xshift=-20pt] (f1-ur) {$f_1$};
-			\node[below=20pt of ftau12,xshift=5pt] (f2-ur) {$f_2$};
-			\draw[-] ([xshift=-10pt]ftau12.south) -- (f1-ur.north);
-			\draw[-,color=olive] ([xshift=-5pt]ftau12.south) -- (f2-ur.north);
-			
-			%% BOTTOM LAYER
-			\node[below=20pt of f2-ul] (nl) {$n$};
-			\draw[loosely dotted] ([xshift=0pt]f2-ul.south) -- (nl.north);
-			\node[below=20pt of f2-um] (nm) {$n$};
-			\draw[loosely dotted] ([xshift=0pt]f2-um.south) -- (nm.north);
-			\node[below=20pt of f2-ur] (nr) {$n$};
-			\draw[loosely dotted] ([xshift=0pt]f2-ur.south) -- (nr.north);
+			\node[] (ftau0) at (0,0) {$f_{\tau}^{\lozenge}(n)=\Sigma_{i=1}^{2}f_i^{\lozenge}(n)$};
 		
+				\node[below = 20pt of ftau0, xshift=-50pt] (f10){$f_1$};
+				\node[below = 20pt of ftau0, xshift=50pt] (f20){$f_2(\;\cdot\;,\;\cdot\;,\;\cdot\;)$};
+				\node[below = 0pt of ftau0, xshift=5pt] (+0){$+$};
+				
+				\draw[-] ([xshift=0pt]ftau0.south) -- (f10.north);
+				\draw[-,thick,color=rwth-carmine] ([xshift=10pt]ftau0.south) -- (f20.north);
+				
+				%%% MIDDLE LAYER
+				\node[below = 20pt of f20,xshift=-45pt] (ftau10){$f_{\tau}^{(n-1)}$};
+				\node[below = 20pt of f20,xshift=5pt] (ftau11){$f_{\tau}^{(n-1)}$};
+				\node[below = 20pt of f20,xshift=55pt] (ftau12){$f_{\tau}^{(n-1)}$};
+				
+				\draw[-,color=rwth-carmine] ([xshift=-10pt]f20.south) -- (ftau10.north);
+				\draw[-,color=rwth-carmine] ([xshift=5pt]f20.south) -- (ftau11.north);
+				\draw[-,color=rwth-carmine] ([xshift=20pt]f20.south) -- (ftau12.north);
+				
+				%% LOWER LAYER
+				\node[below=20pt of ftau10,xshift=-20pt] (f1-ul) {$f_1$};
+				\node[below=20pt of ftau10,xshift=5pt] (f2-ul) {$f_2$};
+				\node[below = 5pt of ftau10, xshift=-7pt] (+10){\small $+$};
+				\draw[-,thick,color=rwth-carmine] ([xshift=-10pt]ftau10.south) -- (f1-ul.north);
+				\draw[-] ([xshift=-5pt]ftau10.south) -- (f2-ul.north);
+				
+				\node[below=20pt of ftau11,xshift=-20pt] (f1-um) {$f_1$};
+				\node[below=20pt of ftau11,xshift=5pt] (f2-um) {$f_2$};
+				\node[below = 5pt of ftau11, xshift=-7pt] (+11){\small $+$};
+				\draw[-] ([xshift=-10pt]ftau11.south) -- (f1-um.north);
+				\draw[-,thick,color=rwth-carmine] ([xshift=-5pt]ftau11.south) -- (f2-um.north);
+				
+				\node[below=20pt of ftau12,xshift=-20pt] (f1-ur) {$f_1$};
+				\node[below=20pt of ftau12,xshift=5pt] (f2-ur) {$f_2$};
+				\node[below = 5pt of ftau12, xshift=-7pt] (+12){\small $+$};
+				\draw[-] ([xshift=-10pt]ftau12.south) -- (f1-ur.north);
+				\draw[-,thick,color=rwth-carmine] ([xshift=-5pt]ftau12.south) -- (f2-ur.north);
+				
+				%% BOTTOM LAYER
+				\node[below=20pt of f2-ul] (nl) {$n$};
+				\draw[loosely dotted] ([xshift=0pt]f2-ul.south) -- (nl.north);
+				\node[below=20pt of f2-um] (nm) {$n$};
+				\draw[loosely dotted] ([xshift=0pt]f2-um.south) -- (nm.north);
+				\node[below=20pt of f2-ur] (nr) {$n$};
+				\draw[loosely dotted] ([xshift=0pt]f2-ur.south) -- (nr.north);
+			
+			
+			%%%%%% SMALL FUNCTION DESCRIPTION %%%%%%%%%%%%%%
+		
+				\node[right=30pt of ftau0, color=gray] (descr) {{\normalsize $\substack{f_1 \text{ const.}, \\f_2 \text{ str. mon. incr. 3-ary}}$}};
+				\draw[dashed, color=gray] (ftau0.east) -- (descr.west);
+			
+			
 			%%%%%% RIGHT SIDE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 			\node[right=150pt of ftau0] (rftau0) {$f=f_2(f_1,f_2(\dots),f_2(\dots))$};
-			\node[below = 20pt of rftau0, xshift=-100pt, color=lightgray,opacity=0.5] (rf10){$f_1$};
-			\node[below = 20pt of rftau0, xshift=0pt] (rf20){$f_2(\;\cdot\;,\;\cdot\;,\;\cdot\;)$};
+		
+				\node[below = 20pt of rftau0, xshift=-100pt, color=lightgray,opacity=0.5] (rf10){$f_1$};
+				\node[below = 20pt of rftau0, xshift=0pt] (rf20){$f_2(\;\cdot\;,\;\cdot\;,\;\cdot\;)$};
+				
+				\draw[-, color=lightgray,opacity=0.5] ([xshift=-55pt]rftau0.south) -- (rf10.north);
+				\draw[-, thick,color=rwth-carmine] ([xshift=-45pt]rftau0.south) -- (rf20.north);
+				
+				%%% MIDDLE LAYER
+				\node[below = 33pt of rf20,xshift=-50pt] (rftau10){};
+				\node[below = 33pt of rf20,xshift=0pt] (rftau11){};
+				\node[below = 33pt of rf20,xshift=50pt] (rftau12){};
+				
+				%% LOWER LAYER
+				\node[below=20pt of rftau10,xshift=-10pt] (rf1-ul) {$f_1$};
+				\node[below=20pt of rftau10,xshift=10pt, color=lightgray,opacity=0.5] (rf2-ul) {$f_2$};
+				\draw[-, thick,color=rwth-carmine] ([xshift=-15pt]rf20.south) -- (rf1-ul.north);
+				\draw[-, color=lightgray,opacity=0.5] ([xshift=-10pt]rf20.south) -- (rf2-ul.north);
+				
+				\node[below=20pt of rftau11,xshift=-5pt, color=lightgray,opacity=0.5] (rf1-um) {$f_1$};
+				\node[below=20pt of rftau11,xshift=15pt] (rf2-um) {$f_2$};
+				\draw[-, color=lightgray,opacity=0.5] ([xshift=2pt]rf20.south) -- (rf1-um.north);
+				\draw[-, thick,color=rwth-carmine] ([xshift=7pt]rf20.south) -- (rf2-um.north);
+				
+				\node[below=20pt of rftau12,xshift=0pt, color=lightgray,opacity=0.5] (rf1-ur) {$f_1$};
+				\node[below=20pt of rftau12,xshift=20pt] (rf2-ur) {$f_2$};
+				\draw[-, color=lightgray,opacity=0.5] ([xshift=20pt]rf20.south) -- (rf1-ur.north);
+				\draw[-, thick,color=rwth-carmine] ([xshift=25pt]rf20.south) -- (rf2-ur.north);
 			
-			\draw[-, color=lightgray,opacity=0.5] ([xshift=-55pt]rftau0.south) -- (rf10.north);
-			\draw[-, color=olive] ([xshift=-45pt]rftau0.south) -- (rf20.north);
-			
-			%%% MIDDLE LAYER
-			\node[below = 33pt of rf20,xshift=-50pt] (rftau10){};
-			\node[below = 33pt of rf20,xshift=0pt] (rftau11){};
-			\node[below = 33pt of rf20,xshift=50pt] (rftau12){};
-			
-			%% LOWER LAYER
-			\node[below=20pt of rftau10,xshift=-10pt] (rf1-ul) {$f_1$};
-			\node[below=20pt of rftau10,xshift=10pt, color=lightgray,opacity=0.5] (rf2-ul) {$f_2$};
-			\draw[-, color=olive] ([xshift=-15pt]rf20.south) -- (rf1-ul.north);
-			\draw[-, color=lightgray,opacity=0.5] ([xshift=-10pt]rf20.south) -- (rf2-ul.north);
-			\node[below=20pt of rf2-ul, color=lightgray,opacity=0.5] (rnl) {$f_1/n$};
-			\draw[loosely dotted, color=lightgray,opacity=0.5] ([xshift=0pt]rf2-ul.south) -- (rnl.north);
-			
-			\node[below=20pt of rftau11,xshift=-5pt, color=lightgray,opacity=0.5] (rf1-um) {$f_1$};
-			\node[below=20pt of rftau11,xshift=15pt] (rf2-um) {$f_2$};
-			\draw[-, color=lightgray,opacity=0.5] ([xshift=2pt]rf20.south) -- (rf1-um.north);
-			\draw[-, color=olive] ([xshift=7pt]rf20.south) -- (rf2-um.north);
-			\node[below=20pt of rf2-um] (rnm) {$f_1/n$};
-			\draw[loosely dotted] ([xshift=0pt]rf2-um.south) -- (rnm.north);
-			
-			\node[below=20pt of rftau12,xshift=0pt, color=lightgray,opacity=0.5] (rf1-ur) {$f_1$};
-			\node[below=20pt of rftau12,xshift=20pt] (rf2-ur) {$f_2$};
-			\draw[-, color=lightgray,opacity=0.5] ([xshift=20pt]rf20.south) -- (rf1-ur.north);
-			\draw[-, color=olive] ([xshift=25pt]rf20.south) -- (rf2-ur.north);
-			\node[below=20pt of rf2-ur] (rnr) {$f_1/n$};
-			\draw[loosely dotted] ([xshift=0pt]rf2-ur.south) -- (rnr.north);
+				\node[below=20pt of rf2-ul, color=lightgray,opacity=0.5] (rnl) {$f_1/n$};
+				\draw[loosely dotted, color=lightgray,opacity=0.5] ([xshift=0pt]rf2-ul.south) -- (rnl.north);
+				\node[below=20pt of rf2-um] (rnm) {$f_1/n$};
+				\draw[loosely dotted] ([xshift=0pt]rf2-um.south) -- (rnm.north);
+				\node[below=20pt of rf2-ur] (rnr) {$f_1/n$};
+				\draw[loosely dotted] ([xshift=0pt]rf2-ur.south) -- (rnr.north);
+				
 			
 			%%%%%%%%%%% DOMINANCE ARROW %%%%%%%%%%%%%
-			\draw[dashed, color=olive] (nr.east) --++(90pt,0pt) node[midway,above]{\small $f_1\in o(n)$};
-			\end{tikzpicture}
+			
+				\draw[-stealth, dashed, color=rwth-carmine] ([xshift=-25pt,yshift=-20pt]descr.east) -- ++ (0pt,-120pt) node[midway,right] {\small $\operatorname{dep}(f)\in o(n)$};
+				\draw[-stealth, dashed, color=rwth-carmine] (nr.east) --++(90pt,0pt) node[midway,above]{\small $f_1\in o(n)$};
+			
+		\end{tikzpicture}
 	\end{center}
-	\caption[Recursive Completion Composition Tree]{Composition tree juxtaposing the recursive completion $f_{\tau}^{\lozenge}$ and an exemplary non-recursive function $f\in\mathcal{F}_{\tau}$ of fixed depth.}
+	\caption[Dominance of the recursive completion over non-recursive functions.]{Term tree juxtaposing the recursive completion $f_{\tau}^{\lozenge}$ and an exemplary non-recursive function $f\in\mathcal{F}_{\tau}$ of fixed depth. Eventually, $n$ will excel both the depth of $f$ and the largest constant in $f$, which ensures that $f_{\tau}^{\lozenge}(n)>f(n)$.}
 	\label{fig:composition-tree-recursive-completion-vs-fixed-term}
 \end{figure}
 
@@ -427,7 +626,7 @@ In the spirit of Equation \ref{eq:self-delimiting-encoding}, the self-delimiting
 \end{equation}
 where $\varepsilon\in\{0,1\}^{*}$ again is the empty string as introduced in Definition \ref{def:natural-numbers-binary-strings-encoding}.
 
-Given such an encoding, $\mathcal{T}_{\lozenge}$ can then simulate the Turing Machines $\mathcal{T}_i$ just as the universal Turing Machine $U$, and sum up their outputs to obtain $f_{\tau}$.
+Given such an encoding, $\mathcal{T}_{\lozenge}$ can then simulate the Turing Machines $\mathcal{T}_i$ just as the universal Turing Machine $U$ from Equation \ref{eq:universal-turing-machine}, and sum up their outputs to obtain $f_{\tau}$.
 
 Of course, we have to make the assumption that every function $f_i\in\tau$ is partial computable.
 But any function that can be computed by a machine must necessarily be partial computable according to the Church-Turing thesis.
@@ -497,9 +696,117 @@ In this way, our argument substantiates that such non-recursive \textit{structur
 		& = c + 2\cdot \log_2(a).
 	\end{align}
 \end{proof}
-
+Figure \ref{fig:uniform-tm-recursive-completion} sketches the interplay of the different tapes that $\mathcal{T}_{\lozenge}$ orchestrates to compute $f_{\tau}^{\lozenge}$.
+\begin{figure}[h]
+	\begin{center}
+		\begin{tikzpicture}[every text node part/.style={align=center}, font=\small]
+			\node[] (input) at (140pt,-10pt) {input tape\\ 
+				\begin{tabular}{c|c|c|c|c|c|c|c}
+					\hline
+					$\dots$
+					& $\operatorname{enc}(\mathcal{T}_1)$ 
+					& $\operatorname{ar}(f_1)$
+					& $\dots$
+					& $\operatorname{enc}(\mathcal{T}_j)$ 
+					& $\operatorname{ar}(f_j)$
+					& $n$ 
+					& $\dots$ \\\hline
+				\end{tabular}
+			};
+			
+			%% TURING MACHINE SIGNIFIER
+			\node[above=-10pt of input.north west,xshift=-10pt] (tm) {$\mathcal{T}_{\lozenge}$:};
+			
+			%% COUNTING
+			\node[right= 30pt of input.south east, yshift=-20pt] (counting){loop tape \\
+				\begin{tabular}{c|c|c}
+					\hline
+					$\dots$
+					& $k$
+					& $\dots$ \\\hline
+				\end{tabular}
+			};
+			
+			%% OUTPUT
+			\node[below= 30pt of counting.south] (output){output tape \\
+				\begin{tabular}{c|c|c}
+					\hline
+					$\dots$
+					& $x$
+					& $\dots$ \\\hline
+				\end{tabular}
+			};
+			
+			%% COMPUTATION
+			\node[below= 30pt of input.south west, xshift=60pt] (computation){computation tape \\
+				\begin{tabular}{c|c|c}
+					\hline
+					$\dots$
+					& \footnotesize simulate $\mathcal{T}_i$ on $x$ 
+					& $\dots$ \\\hline
+				\end{tabular}
+			};
+			
+			%% ACCUMULATION
+			\node[below= 30pt of computation.south] (accumulation){accumulation tape \\
+				\begin{tabular}{c|c|c}
+					\hline
+					$\dots$
+					& \footnotesize $\sum_{i=1}^{j}\mathcal{T}_j(x)$ 
+					& $\dots$ \\\hline
+				\end{tabular}
+			};
+			
+			%% 0. INITIALIZE
+				\draw[->,rwth-purple] ([xshift=-40pt]input.south east) to [out=270, in=180]([yshift=-5pt]counting.west);
+				\draw[->,rwth-purple] ([xshift=-40pt]input.south east) to [out=270, in=150]([yshift=0pt]output.west);
+				
+				\node[
+				left=10pt of counting.west,
+				yshift=-20pt,
+				font=\tiny,rwth-purple
+				]  {0. Initialize \\ $k:=n$ \\ $x:=n$};
+			
+			
+			
+			%% WHILE
+				\node[below=-2pt of counting.south,xshift=20pt,rwth-purple] (while){$\circlearrowright$ {\tiny while $k>0$}};
+				\node[below=-2pt of while.south, xshift=5pt,font=\tiny,rwth-purple] (decr) {$k$\texttt{-=}$1$};
+				
+				%% PROVIDE AS INPUT
+				\draw[->,rwth-purple] ([yshift=-5pt]output.west) to [out=180,in=0]([yshift=-5pt]computation.east);
+				\node[
+				yshift=-25pt,
+				right=5pt of computation.east,
+				font=\tiny,rwth-purple
+				] (provide) {1. Provide $x$ as \\input to each simulation};
+				\draw[-,dashed,color=rwth-storm] ([xshift=20pt]input.south) -- ++(0,-50pt) node[midway,right,font=\tiny] {fetch description \\ and arity \\ of each $\mathcal{T}_i$};
+			
+			
+			%% ADD TO ACCUMULATION
+				\draw[->,rwth-purple] ([xshift=-5pt]computation.south) to [out=240, in=120]([xshift=-5pt]accumulation.north);
+				\node[
+				above=5pt of accumulation.north,
+				xshift=-40pt,
+				font=\tiny,
+				rwth-purple] (add) {2. Add outputs to};
+			
+			
+			%% WRITE SUM TO
+				\draw[->,rwth-purple] (accumulation.south) to [out=330, in=210](output.south);
+				\node[
+				right=10pt of accumulation.south east,
+				yshift=-15pt,
+				font=\tiny,rwth-purple
+				] (overwrite) {3. Overwrite $x$ with sum};
+			
+		\end{tikzpicture}
+	\end{center}
+	\caption{Uniform Turing Machine that computes the recursive completion.}
+	\label{fig:uniform-tm-recursive-completion}
+\end{figure}
 Because the Turing Machine $\mathcal{T}_{\lozenge}$ regards $\tau$ merely as one of its inputs, it has a constant description length across all possible function sets $\tau$.
-Together with Corollary \ref{cor:scaled-recursive-completion-not-non-recursive-expressible-placeholder}, this theorem demonstrates that the structural limitation of non-recursive models can not be arbitrarily mended by appropriate choices of the underlying function set, including activation functions.
+Together with Corollary \ref{cor:scaled-recursive-completion-not-non-recursive-expressible-placeholder}, this Theorem demonstrates that the structural limitation of non-recursive models can not be arbitrarily mended by appropriate choices of the underlying function set, including activation functions.
 No matter how expressive the underlying function set is, the conditional Kolmogorov complexity of functions that cannot even be expressed by such models is upper bounded by a constant.
 
 The corollary below joins these two results together.
@@ -517,7 +824,7 @@ The corollary below joins these two results together.
 	
 	For any $m\in\mathbb{N}$, there are $\sqrt{2}^{m-c}-1$ functions $h:\mathbb{N}\to\mathbb{N}$ with a conditional Kolmogorov complexity 
 	\begin{equation*}
-		K(h\mid \operatorname{enc}(\tau))\leq m
+		K\bigl(h\mid \operatorname{enc}(\tau)\bigr)\leq m
 	\end{equation*}
 	that cannot be expressed by any non-recursive model over $\tau$.
 	% and therefore constructs a term $t_M\in T(\tau,\{x_1,\dots,x_k\})$ with $M^{-}(n)=t_M^{-}(n)$ for all $n\in\mathbb{N}$.
@@ -559,7 +866,11 @@ Even domain generalization optimization objectives like IRM can by itself not di
 % Therefore, they all achieve the same optimal value in the IRM objective where the expected risks $R$ are approximated with empirical risks $\hat{R}$.
 
 Complementing this result, we prove that all non-recursive functions eventually render suboptimal when we further take into account their Kolmogorov complexity.
-Particularly, there exists a threshold $n_0$ such that for \textit{any} dataset $S$ of size $|S|\geq n_0$, any non-recursive function $f\in\mathcal{F}_{\tau}$ that still remains consistent with $S$ must have a higher conditional Kolmogorov complexity $K\bigl(f\mid \operatorname{enc}(\tau)\bigr)$ than the true function $\left(f_{\tau}\right)_a^{\lozenge}$.
+Figure \ref{fig:eliminating-non-rec-funcs-simplicity-bias} underscores the discriminative power that Kolmogorov complexity or any similar simplicity bias exerts on the functions that remain consistent with the dataset.
+Because the mere requirement of fitting samples leaves infinitely many degrees of freedom, optimization objectives like ERM assign infinitely many non-recursive functions $f\in\mathcal{F}_{\tau}$ the same optimal score for any finite dataset generated by $f_{\tau}^{\lozenge}$ (cf. Figure \ref{fig:no-simplicity-bias-perspective}).
+On the other hand, only finitely many non-recursive functions $f\in\mathcal{F}_{\tau}$ remain at least as optimal as the true function if functions are additionally evaluated by a simplicity bias like their Kolmogorov complexity (cf. Figure \ref{fig:simplicity-bias-perspective}).
+
+Over and above, there exists a threshold $n_0$ such that for \textit{any} dataset $S$ of size $|S|\geq n_0$, even these finitely many more optimal alternatives are eliminated, because any non-recursive function $f\in\mathcal{F}_{\tau}$ that still remains consistent with $S$ must have a higher conditional Kolmogorov complexity $K\bigl(f\mid \operatorname{enc}(\tau)\bigr)$ than the true function $\left(f_{\tau}\right)_a^{\lozenge}$.
 
 \begin{lemma}[IRM does not Identify Recursive Completion]
 	\label{lemma:recursive-completion-irm-cannot-identify}
@@ -660,6 +971,7 @@ Note that the function set $\tau':=\{f_{+},f_{\times},c_1,c_0,f_{=}\}$ that was 
 Although any non-recursive model can therefore not express $\left(f_{\tau}\right)_a^{\lozenge}$, there are arbitrarily many non-recursive functions such models could draw upon to achieve an optimal risk by merely memorizing information.
 
 Theorem \ref{theorem:recursive-completion-not-non-recursive-expressible} even paves the way to a stronger result that assures that \textit{any} non-recursive functions $f\in\mathcal{F}_{\tau}$ --- not only the ones explicitly constructed in the proof of Lemma \ref{lemma:recursive-completion-irm-cannot-identify} --- that agree with $\left(f_{\tau}\right)_a^{\lozenge}$ on sufficiently many points must obtain a higher Kolmogorov complexity than $\left(f_{\tau}\right)_a^{\lozenge}$.
+
 If optimization objectives were to take into account this kind of simplicity bias, they could hence already filter out a huge amount of hypotheses despite the quantitative incompleteness of the training dataset.
 
 \begin{theorem}[Surpassing the Kolmogorov Complexity Threshold]
@@ -695,10 +1007,328 @@ If optimization objectives were to take into account this kind of simplicity bia
 	For any $f\in\mathcal{F}_{\tau}$ that is consistent with the functional pairs in $S$, it particularly holds that $f(m_1)=\left(f_{\tau}\right)_a^{\lozenge}(m_1)$.
 	For that reason, $f\notin F$ and hence $K\bigl(f\mid \operatorname{enc}(\tau)\bigr) > K\bigl(\left(f_{\tau}\right)_a^{\lozenge} \mid \operatorname{enc}(\tau)\bigr)$.
 \end{proof}
+As soon as the dataset $D$ contains a sufficiently large instance $x_i\geq m_1$, any non-recursive function with a lower Kolmogorov complexity than $f_{\tau}^{\lozenge}$ must become inconsistent with $D$, since it maps $x_i$ to a smaller value than $f_{\tau}^{\lozenge}$ as was shown in the inexpressivity result of Theorem \ref{theorem:recursive-completion-not-non-recursive-expressible}.
+Figure \ref{fig:one-sample-renders-suboptimal} visualizes this condition in the spirit of Figure \ref{fig:eliminating-non-rec-funcs-simplicity-bias}.
+\begin{figure}[h]
+	\raggedleft
+	\begin{subfigure}{\textwidth}
+		\raggedleft
+		\begin{tikzpicture}[every text node part/.style={align=center}, font=\small]
+			
+			%%% ELLIPSES PERSPECTIVE
+			
+			% COMPUTABLE FUNCTIONS
+			\node[ellipse, 
+			draw=black, 
+			fill=gray!20, 
+			minimum height = 100pt, 
+			minimum width=150pt,
+			yshift=60pt] 
+			(comp-ellipse) at (225pt, 0pt){};
+			
+			% NON-RECURSIVE FUNCTIONS
+			\node[ellipse, 
+			draw=rwth-teal!60,
+			fill=rwth-teal!30, 
+			fill opacity=0.2,
+			text opacity=1,
+			minimum width = 100pt, 
+			minimum height= 80pt,
+			label={[anchor=south,above=0pt,text=rwth-teal]270:$\mathcal{F}_{\tau}$}] 
+			(non-rec-funcs-ellipse) at ([yshift=-3pt]comp-ellipse.center)  {};
+			
+			% CONSISTENT NON-RECURSIVE FUNCTIONS
+			
+			\node[ellipse, 
+			draw=rwth-teal!80,
+			fill=rwth-teal!80, 
+			fill opacity=0.4,
+			text opacity=1,
+			minimum width = 80pt, 
+			minimum height= 40pt,
+			font=\tiny,
+			text=white,
+			label={[anchor=south,above=2pt,font=\tiny,text=white]270:consistent with $D$ \\ generated by $f_{\tau}^{\lozenge}$}] 
+			(consistent-non-rec-funcs-ellipse) at ([yshift=0pt]non-rec-funcs-ellipse.center)  {}; 
+			
+			% INFINITE REMARK
+			\path[draw=rwth-teal, dashed] ([yshift=-10pt]consistent-non-rec-funcs-ellipse.north) -- ++(5pt,50pt) node [above,font=\footnotesize,text=rwth-teal] {infinite};
+			
+			
+			%%% LEGEND
+			% PARTIAL COMPUTABLE
+			\draw[yshift=60pt, fill=gray!20, font=\tiny] [xshift=20pt,yshift=-10pt](10:300pt) rectangle ++(5pt,5pt) node[right,yshift=-2pt] (legend-comp) {computable functions};
+			
+			
+			% NON-RECURSIVE FUNCTIONS
+			\draw[yshift=60pt, 
+			draw=rwth-teal!60,
+			fill=rwth-teal!30, 
+			fill opacity=0.2,
+			text opacity=1,
+			font=\tiny] [xshift=20pt,yshift=-30pt](10:300pt) rectangle ++(5pt,5pt) node[right,yshift=-2pt] (legend-non-rec) {non-recursive functions};
+			
+			% CONSISTENT NON-REC FUNCTIONS
+			\draw[yshift=60pt, 
+			draw=rwth-teal!80,
+			fill=rwth-teal!80, 
+			fill opacity=0.4,
+			text opacity=1,
+			font=\tiny] [xshift=20pt,yshift=-40pt](10:300pt) rectangle ++(5pt,5pt) node[right,yshift=-2pt] (legend-non-rec) {consistent non-rec. functions};
+			
+			
+			
+			%% RECURSIVE COMPLETION IN ELLIPSE
+			%\path[yshift=60pt, fill=black!80, draw=none] (170pt,25pt) circle [radius=2pt] node[ right] {$f_{\tau}^{\lozenge}$};
+			
+			%%% DATASET COORDINATE SYSTEM
+			
+			% AXES
+			\node[yshift=60pt,xshift=35pt] (dataset-cs-center) at (-10:300pt) {};
+			\path[yshift=60pt, draw, ->] 
+			[xshift=30pt](-10:300pt) -- ++(50pt,0pt);
+			\path[yshift=60pt, draw, ->] 
+			[xshift=35pt,yshift=-5pt](-10:300pt) -- ++(0pt,50pt);
+			
+			% DATASET 1
+			\path[draw=rwth-storm!80,
+			fill=rwth-storm!30] 
+			([xshift=30pt,yshift=20pt]dataset-cs-center) ellipse[x radius=15pt, y radius=10pt] node[text=black!80,font=\tiny] {$D$};
+			
+			
+			%% RECURSIVE COMPLETION
+			\path[yshift=60pt, fill=black!80, draw=none] (170pt,25pt) circle [radius=2pt] node[ right] {$f_{\tau}^{\lozenge}$};
+			
+		\end{tikzpicture}	
+		\caption{Without any inductive bias beyond merely fitting the dataset, infinitely many non-recursive functions remain consistent and hence optimal according to optimization objectives like ERM.}
+		\label{fig:no-simplicity-bias-perspective}
+	\end{subfigure}\\
+	\begin{subfigure}{\textwidth}
+		\raggedleft
+		\begin{tikzpicture}[every text node part/.style={align=center}, font=\small]
+			
+			%%% LEGEND
+			% PARTIAL COMPUTABLE
+			\draw[yshift=60pt, fill=gray!20, font=\tiny] [xshift=20pt,yshift=-10pt](10:300pt) rectangle ++(5pt,5pt) node[right,yshift=-2pt] (legend-comp) {computable functions};
+			
+			% SIMPLER PARTIAL COMPUTABLE
+			\path[yshift=60pt, 
+			draw,
+			fill=gray!20, 
+			font=\tiny] [xshift=20pt,yshift=-20pt] (10:300pt) rectangle ++(5pt,5pt)
+			node[right,yshift=-2pt] (legend-simp) {simpler computable functions} ;
+			
+			% SEPARATE PATTERN
+			\path[yshift=60pt, 
+			pattern={Lines[angle=45, distance=2pt]}, 
+			pattern color=Mahogany!60, 
+			draw=none,
+			font=\tiny] [xshift=20pt,yshift=-20pt](10:300pt) -- ++(5pt,0pt) -- ++ (0pt,5pt) -- ++(-5pt,0pt) -- cycle;
+			
+			
+			% NON-RECURSIVE FUNCTIONS
+			\draw[yshift=60pt, 
+			draw=rwth-teal!60,
+			fill=rwth-teal!30, 
+			fill opacity=0.2,
+			text opacity=1,
+			font=\tiny] [xshift=20pt,yshift=-30pt](10:300pt) rectangle ++(5pt,5pt) node[right,yshift=-2pt] (legend-non-rec) {non-recursive functions};
+			
+			% CONSISTENT NON-REC FUNCTIONS
+			\draw[yshift=60pt, 
+			draw=rwth-teal!80,
+			fill=rwth-teal!80, 
+			fill opacity=0.4,
+			text opacity=1,
+			font=\tiny] [xshift=20pt,yshift=-40pt](10:300pt) rectangle ++(5pt,5pt) node[right,yshift=-2pt] (legend-non-rec) {consistent non-rec. functions};
+			
+			
+			
+			%% RECURSIVE COMPLETION IN ELLIPSE
+			%\path[yshift=60pt, fill=black!80, draw=none] (170pt,25pt) circle [radius=2pt] node[ right] {$f_{\tau}^{\lozenge}$};
+			
+			%%% DATASET COORDINATE SYSTEM
+			
+			% AXES
+			\node[yshift=60pt,xshift=35pt] (dataset-cs-center) at (-10:300pt) {};
+			\path[yshift=60pt, draw, ->] 
+			[xshift=30pt](-10:300pt) -- ++(50pt,0pt);
+			\path[yshift=60pt, draw, ->] 
+			[xshift=35pt,yshift=-5pt](-10:300pt) -- ++(0pt,50pt);
+			
+			% DATASET 1
+			\path[draw=rwth-storm!80,
+			fill=rwth-storm!30] 
+			([xshift=30pt,yshift=20pt]dataset-cs-center) ellipse[x radius=15pt, y radius=10pt] node[text=black!80,font=\tiny] {$D$};
+			
+			
+			
+			%%% SIMPLICITY BIAS PERSPECTIVE
+			
+			%% KOLMOGOROV COMPLEXITY AXIS
+			\draw[->] (0,0pt) -- (310pt,0pt) node[midway,xshift=100pt,below] {Kolmogorov complexity};
+			
+			%% PARTIAL COMPUTABLE FUNCTIONS
+			\path[fill=gray!20, yshift=60pt,draw=none,rotate=-10] 
+			(0pt,0pt) 
+			-- (300pt,0pt) 
+			arc [start angle=0, end angle=20, radius=300pt]
+			-- cycle;
+			\draw[yshift=60pt] (0pt,0pt) -- (10:300pt);
+			\draw[yshift=60pt] (0pt,0pt) -- (-10:300pt); 
+			
+			%% SIMPLER FUNCTIONS
+			\path[yshift=60pt, 
+			pattern={Lines[angle=45, distance=5pt]}, 
+			pattern color=Mahogany!60,
+			draw=none] (0pt,0pt) -- (170pt,30pt) -- (170pt,-30pt) -- cycle;
+			\path[yshift=60pt, draw=Mahogany!80, thick, dashed] (170pt,35pt) -- (170pt,-35pt);
+			
+			% BACKGROUND FOR F_TAU
+			\node[yshift=60pt,fill=gray!20,circle,radius=7pt,minimum size=14pt] (non-rec-funcs-bg) at (110pt,-2pt) {};
+			
+			%% NON-RECURSIVE FUNCTIONS
+			% ALL 
+			\path[yshift=60pt, draw=rwth-teal!60] (6:300pt) .. controls (8:20pt) and (350:20pt) .. (352:300pt);
+			\path[yshift=60pt, draw=none, fill=rwth-teal!30, fill opacity=0.2] (6:300pt) .. controls (8:20pt) and (350:20pt) .. (352:300pt) arc [start angle = -8, end angle = 6, radius=300pt];
+			\node[yshift=60pt, text=rwth-teal!80] (non-rec-funcs) at (110pt,-2pt) {$\mathcal{F}_{\tau}$};
+			
+			% FINITENESS REMARKS
+			\path[draw=Mahogany!80,decorate, decoration={brace,amplitude=10pt},yshift=65pt] (0pt,0pt) -- (10:170pt) node [midway, above,yshift=10pt,rotate=10,font=\footnotesize,text=Mahogany!80] {finite};
+			\path[draw=gray,decorate, decoration={brace, amplitude=10pt},yshift=65pt] (10:175pt) -- (10:300pt) node [midway, yshift=10pt,above,rotate=10,font=\footnotesize,text=gray] (inf) {infinite};
+			
+			% CONSISTENT 1
+			\path[yshift=60pt, draw=rwth-teal!80] (4:300pt) .. controls (8:60pt) and (350:60pt) .. (354:300pt);
+			\path[yshift=60pt, draw=none, fill=rwth-teal!80, fill opacity=0.4] (4:300pt) .. controls (8:60pt) and (350:60pt) .. (354:300pt) arc [start angle = -6, end angle = 4, radius=300pt];
+			\node[yshift=60pt, text=white, font=\tiny] (cons1) at (220pt,-5pt){consistent with $D$ \\ generated by $f_{\tau}^{\lozenge}$}; 
+			
+			
+			%% RECURSIVE COMPLETION
+			\path[yshift=60pt, fill=black!80, draw=none] (170pt,25pt) circle [radius=2pt] node[ right] {$f_{\tau}^{\lozenge}$};
+			
+		\end{tikzpicture}	
+		\caption{Additionally exerting Kolmogorov complexity as a simplicity bias on the consistent functions induces an ordering on these consistent functions, leaving at most finitely many non-recursive functions with a better score than $f_{\tau}^{\lozenge}$.}
+		\label{fig:simplicity-bias-perspective}
+	\end{subfigure}
+	
+	\caption[The discriminate power of a Kolmogorov complexity bias beyond merely fitting a dataset.]{Juxtaposing the discriminate power of a Kolmogorov complexity bias beyond fitting a dataset with the indifference of standard optimization objectives like ERM and IRM to functions that perfectly fit the dataset.}
+	\label{fig:eliminating-non-rec-funcs-simplicity-bias}
+\end{figure}
 
 The final message of this chapter can therefore be summarized as follows.
 If we want to enable algorithms to learn simple functions, we not only need to bestow our machine learning models with recursive structure, but also need to extend our optimization objectives to favour simpler functions over more complex ones.
 
+\begin{figure}[h]
+	\raggedleft
+	\begin{tikzpicture}[every text node part/.style={align=center}, font=\small]
+		
+		
+		%%% LEGEND
+		% PARTIAL COMPUTABLE
+		\draw[yshift=60pt, fill=gray!20, font=\tiny] [xshift=20pt,yshift=-10pt](10:300pt) rectangle ++(5pt,5pt) node[right,yshift=-2pt] (legend-comp) {computable functions};
+		
+			% SIMPLER PARTIAL COMPUTABLE
+			\path[yshift=60pt, 
+			draw,
+			fill=gray!20, 
+			font=\tiny] [xshift=20pt,yshift=-20pt] (10:300pt) rectangle ++(5pt,5pt)
+			node[right,yshift=-2pt] (legend-simp) {simpler computable functions} ;
+			
+			% SEPARATE PATTERN
+			\path[yshift=60pt, 
+			pattern={Lines[angle=45, distance=2pt]}, 
+			pattern color=Mahogany!60, 
+			draw=none,
+			font=\tiny] [xshift=20pt,yshift=-20pt](10:300pt) -- ++(5pt,0pt) -- ++ (0pt,5pt) -- ++(-5pt,0pt) -- cycle;
+		
+		
+		% NON-RECURSIVE FUNCTIONS
+		\draw[yshift=60pt, 
+		draw=rwth-teal!60,
+		fill=rwth-teal!30, 
+		fill opacity=0.2,
+		text opacity=1,
+		font=\tiny] [xshift=20pt,yshift=-30pt](10:300pt) rectangle ++(5pt,5pt) node[right,yshift=-2pt] (legend-non-rec) {non-recursive functions};
+		
+		% CONSISTENT NON-REC FUNCTIONS
+			\draw[yshift=60pt, 
+			draw=rwth-teal!80,
+			fill=rwth-teal!80, 
+			fill opacity=0.4,
+			text opacity=1,
+			font=\tiny] [xshift=20pt,yshift=-40pt](10:300pt) rectangle ++(5pt,5pt) node[right,yshift=-2pt] (legend-non-rec) {consistent non-rec. functions};
+		
+		
+		
+		%% RECURSIVE COMPLETION IN ELLIPSE
+		%\path[yshift=60pt, fill=black!80, draw=none] (170pt,25pt) circle [radius=2pt] node[ right] {$f_{\tau}^{\lozenge}$};
+		
+		%%% DATASET COORDINATE SYSTEM
+			
+			% AXES
+			\node[yshift=60pt,xshift=35pt] (dataset-cs-center) at (-10:300pt) {};
+			\path[yshift=60pt, draw, ->] 
+			[xshift=30pt](-10:300pt) -- ++(50pt,0pt);
+			\path[yshift=60pt, draw, ->] 
+			[xshift=35pt,yshift=-5pt](-10:300pt) -- ++(0pt,50pt);
+			
+			
+			% DATASET 3
+				\path[draw=rwth-storm!80,
+				fill=rwth-storm!30] 
+				([xshift=30pt,yshift=20pt]dataset-cs-center) ellipse[x radius=25pt, y radius=20pt] node[text=black!80,font=\tiny] {$D$};
+			
+			
+			% M CIRCLE
+				\path[fill=black!80] ([xshift=45pt,yshift=35pt]dataset-cs-center)circle[radius=2pt] node[right,font=\tiny]{$m_1$};
+			
+		
+		
+		%%% SIMPLICITY BIAS PERSPECTIVE
+			
+			%% KOLMOGOROV COMPLEXITY AXIS
+			\draw[->] (0,0pt) -- (310pt,0pt) node[midway,xshift=100pt,below] {Kolmogorov complexity};
+			
+			%% PARTIAL COMPUTABLE FUNCTIONS
+			\path[fill=gray!20, yshift=60pt,draw=none,rotate=-10] 
+			(0pt,0pt) 
+			-- (300pt,0pt) 
+			arc [start angle=0, end angle=20, radius=300pt]
+			-- cycle;
+			\draw[yshift=60pt] (0pt,0pt) -- (10:300pt);
+			\draw[yshift=60pt] (0pt,0pt) -- (-10:300pt); 
+			
+			%% SIMPLER FUNCTIONS
+			\path[yshift=60pt, 
+			pattern={Lines[angle=45, distance=5pt]}, 
+			pattern color=Mahogany!60,
+			draw=none] (0pt,0pt) -- (170pt,30pt) -- (170pt,-30pt) -- cycle;
+			\path[yshift=60pt, draw=Mahogany!80, thick, dashed] (170pt,35pt) -- (170pt,-35pt);
+			
+			% BACKGROUND FOR F_TAU
+			\node[yshift=60pt,fill=gray!20,circle,radius=7pt,minimum size=14pt] (non-rec-funcs-bg) at (110pt,-2pt) {};
+			
+			%% NON-RECURSIVE FUNCTIONS
+			% ALL 
+			\path[yshift=60pt, draw=rwth-teal!60] (6:300pt) .. controls (8:20pt) and (350:20pt) .. (352:300pt);
+			\path[yshift=60pt, draw=none, fill=rwth-teal!30, fill opacity=0.2] (6:300pt) .. controls (8:20pt) and (350:20pt) .. (352:300pt) arc [start angle = -8, end angle = 6, radius=300pt];
+			\node[yshift=60pt, text=rwth-teal!80] (non-rec-funcs) at (110pt,-2pt) {$\mathcal{F}_{\tau}$};
+			
+			
+			% CONSISTENT 3
+				\path[yshift=60pt, draw=rwth-teal!80] (4:300pt) .. controls (8:140pt) and (350:140pt) .. (354:300pt);
+				\path[yshift=60pt, draw=none, fill=rwth-teal!80, fill opacity=0.4] (4:300pt) .. controls (8:140pt) and (350:140pt) .. (354:300pt) arc [start angle = -6, end angle = 4, radius=300pt];
+				\node[yshift=60pt, text=white, font=\tiny] (cons1) at (240pt,-5pt){consistent with $D$ \\ generated by $f_{\tau}^{\lozenge}$};
+			
+		
+		
+		%% RECURSIVE COMPLETION
+		\path[yshift=60pt, fill=black!80, draw=none] (170pt,25pt) circle [radius=2pt] node[ right] {$f_{\tau}^{\lozenge}$};
+		
+	\end{tikzpicture}	
+	\caption[One sufficiently large sample renders all consistent non-recursive functions suboptimal.]{One sufficiently large sample renders all consistent non-recursive functions suboptimal. Here, $m_1$ is the threshold in the proof of Theorem \ref{theorem:surpass-kolmogorov-complexity-threshold}, above which every non-recursive functions with a lower Kolmogorov complexity than $f_{\tau}^{\lozenge}$ must become inconsistent by Theorem \ref{theorem:recursive-completion-not-non-recursive-expressible}.}
+	\label{fig:one-sample-renders-suboptimal}
+\end{figure}
 It remains to ask how such measures could alleviate the strong information-theoretic conditions that training distributions still have to satisfy to fall within the scope of generalization guarantees.
 In the next chapter, we demonstrate how Kolmogorov complexity paves the way to formulate such sufficient conditions in a general, but still nearly optimal manner.
 To that end, it first exhibits that it is not meaningful to condition learnability on the number of samples in dataset. 

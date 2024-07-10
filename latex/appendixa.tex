@@ -92,24 +92,22 @@
 	\end{equation}
 \end{lemma}
 \begin{proof}
-	% TODO: Replace $\bigcirc$ notation by the $m$-wise recursive concatenation.
 	Denote by $g_2$ the real function $g_2(x)=2x$.
 	A similarly elementary argument as in the proof of Lemma \ref{lemma:log-lin-inequality} yields $\exp_2(x)=2^x\geq 2x=g_2(x)$ for any $x\geq 2$.
 	Repeated application of this inequality thence yields 
 	\begin{equation}
 		\label{eq:multi-exp-2x-inequality}
-		\left(\bigcirc_{i=1}^n\exp_2\right)(x) \geq \left(\bigcirc_{i=1}^n g_2\right)(x)= 2^n\cdot x \quad \text{ for any } n\in\mathbb{N}.
+		\exp^{(n)}_2(x) \geq  g^{(n)}_2(x)= 2^n\cdot x 
 	\end{equation}
-	
-	In particular, this states that $\left(\bigcirc_{i=1}^{n-k}\exp_2\right)(x) \geq 2^{n-k}\cdot x$ for any $n\geq k$.
+	for any $n\in\mathbb{N}$.
+	In particular, this states that $\exp^{(n-k)}_2(x) \geq 2^{n-k}\cdot x$ for any $n\geq k$.
 	
 	Now, assume that $n>4\cdot 2^k\cdot a$.
 	By Lemma \ref{lemma:log-lin-inequality}, it holds that $2^n> 2^k\cdot a\cdot n$.
 	For that reason, we obtain
 	\begin{align}
 		\label{eq:cascade-exp-inequality}
-		\left(\bigcirc_{i=1}^{n-k}\exp_2\right)(x) &\overset{(\ref{eq:multi-exp-2x-inequality})}{\geq} 2^{n-k}\cdot x\\
-		&\overset{\ref{lemma:log-lin-inequality}}{>} 2^{-k}\cdot 2^k\cdot a\cdot n \cdot x = a\cdot n\cdot x.
+		\exp^{(n-k)}_2(x) \overset{(\ref{eq:multi-exp-2x-inequality})}{\geq} 2^{n-k}\cdot x\overset{\ref{lemma:log-lin-inequality}}{>} 2^{-k}\cdot 2^k\cdot a\cdot n \cdot x = a\cdot n\cdot x.
 	\end{align}
 	
 \end{proof}
@@ -118,7 +116,7 @@
 	Let $a\geq 1,b\geq 0$ be arbitrary real numbers.
 	For any $k\in\mathbb{N}$ and $n\in\mathbb{N}$ with $n>4\cdot 2^k\cdot (a+b)$, it holds that
 	\begin{equation}
-		\left(\bigcirc_{i=1}^{n-k}\exp_2\right)(1) > a\cdot n + b.
+		\exp^{(n-k)}_2(1) > a\cdot n + b.
 	\end{equation}
 \end{corollary}
 \begin{proof}
@@ -127,11 +125,10 @@
 	First of all, Equation \ref{eq:exp-lin-inequality} asserts that $2^k>k$.
 	With $a+b\geq 1$, this implies $n>4\cdot k\geq k+1$ for $k\geq 1$.
 	For $k=0$, we similarly have $n>4\cdot 2^k=4>k+1$.
-	Therefore, we may reduce $\left(\bigcirc_{i=1}^{n-k}\exp_2\right)(1)=\left(\bigcirc_{i=1}^{n-k-1}\exp_2\right)(2)$ and conclude in the same fashion as Lemma \ref{lemma:cascade-exp-inequality}:
+	Therefore, we may reduce $\exp^{(n-k)}_2(1)=\exp^{(n-k-1)}_2(2)$ and conclude in the same fashion as Lemma \ref{lemma:cascade-exp-inequality}:
 	\begin{align}
-		\left(\bigcirc_{i=1}^{n-k-1}\exp_2\right)(2) &\overset{(\ref{eq:multi-exp-2x-inequality})}{\geq} 2^{-k-1}\cdot 2^n \cdot 2\\
-		&\overset{(\ref{eq:cascade-exp-inequality})}{>} 2^{-k-1} \cdot 2^k\cdot (a+b)\cdot n \cdot 2\\
-		& = (a+b)\cdot n \overset{n\geq 1}{\geq} an+b.
+		\exp^{(n-k-1)}_2(2) &\overset{(\ref{eq:multi-exp-2x-inequality})}{\geq} 2^{-k-1}\cdot 2^n \cdot 2\\
+		&\overset{(\ref{eq:cascade-exp-inequality})}{>} 2^{-k-1} \cdot 2^k\cdot (a+b)\cdot n \cdot 2 = (a+b)\cdot n \overset{n\geq 1}{\geq} an+b.
 	\end{align}
 \end{proof}
 \section{Inexpressivity of scaled recursive completion}
@@ -158,27 +155,224 @@
 	Since the assumptions on $\tau$ are the same as in Theorem \ref{theorem:recursive-completion-not-non-recursive-expressible}, we can directly avail to its equations.
 	For depth $0$ and any $n\geq n_0=1,a\in\mathbb{N}$, we extend Equations \ref{eq:theorem:recursive-completion-not-non-recursive-expressible-self-lower-bound} and \ref{eq:theorem:recursive-completion-not-non-recursive-expressible-inequality} to
 	\begin{align}
-		f_{\tau}^{(n)}(s\cdot (n+a)) &\overset{(\ref{eq:theorem:recursive-completion-not-non-recursive-expressible-inequality})}{\geq} f_m^{(n)}(s\cdot (n+a))\\
-		&\geq f_m^{(n)}(n+a)\\
+		f_{\tau}^{(n)}(s\cdot (n+a)) \overset{(\ref{eq:theorem:recursive-completion-not-non-recursive-expressible-inequality})}{\geq} f_m^{(n)}(s\cdot (n+a))
+		\geq f_m^{(n)}(n+a)
 		\label{eq:cor-scaled-recursive-completion-not-non-recursive-expressible-self-lower-bound}
-		&\overset{(\ref{eq:theorem:recursive-completion-not-non-recursive-expressible-self-lower-bound})}{>}n+a  = f(n+a).
+		\overset{(\ref{eq:theorem:recursive-completion-not-non-recursive-expressible-self-lower-bound})}{>}n+a  = f(n+a).
 	\end{align}
 	
 	Proceeding with the induction hypothesis (IH), assume that there is some $p\in\mathbb{N}$ such that for every non-recursive function $f\in\mathcal{F}_{\tau}$ with $\operatorname{dep}(f)\leq p$, there exists an $n_0\in\mathbb{N}$ such that $f_\tau^{(n)}(s\cdot(n+a))>f(n+a)$ for all $n\geq n_0$ and $a\in\mathbb{N}$. 
 	As in Theorem \ref{theorem:recursive-completion-not-non-recursive-expressible}, we expand any $f\in\mathcal{F}_{\tau}$ with depth $p+1\geq 1$ as $f(n)=f_m(g_1(n),\dots,g_k(n))$ for some $f_m\in\tau$ with arity $k\in\mathbb{N}$ and non-recursive functions $g_i\in \mathcal{F}_{\tau}$ with depth $\operatorname{dep}(g_i)\leq p$ and distinguish by the cases where $f_m$ is bounded or strictly monotonously increasing.
 	
-	In the case that $f_m$ is bounded by some $c_m$, the same $n_0=c_m$ as in Equation \ref{eq:theorem:recursive-completion-not-non-recursive-expressible-induction-step-bounded} in the proof of the original theorem satisfies $f_{\tau}^{(n)}(s\cdot (n+a)) \overset{(\ref{eq:cor-scaled-recursive-completion-not-non-recursive-expressible-self-lower-bound})}{>} n+a \geq c_m \geq f(n+a)$.
+	In the case that $f_m$ is bounded by some $c_m$, the same $n_0=c_m$ as in Equation \ref{eq:theorem:recursive-completion-not-non-recursive-expressible-induction-step-bounded} in the proof of the original theorem satisfies 
+	\begin{align}
+		f_{\tau}^{(n)}(s\cdot (n+a)) \overset{(\ref{eq:cor-scaled-recursive-completion-not-non-recursive-expressible-self-lower-bound})}{>} n+a \geq c_m \geq f(n+a).
+	\end{align}
 	
-	In the other case where $f_m$ is strictly monotonously increasing, we adopt $n_0=\max_{1\leq i\leq k} n_0(g_i)$ as it stands from the proof of Theorem \ref{theorem:recursive-completion-not-non-recursive-expressible}.
+	In the other case where $f_m$ is strictly monotonously increasing, we adopt $n_0=\underset{1\leq i\leq k}{\max}n_0(g_i)$ as it stands from the proof of Theorem \ref{theorem:recursive-completion-not-non-recursive-expressible}.
+	This $n_0$ is hence independent of $s$.
 	Similarly, let $n\geq n_0$ and $a\geq 1$ be arbitrary and substitute $n'=n+1$ and $b=a-1$. Then we analogously have
 	\begin{align}
 		f(n'+b)=f(n+a)&=f_m(g_1(n+a),\dots,g_k(n+a))\\
-		&\overset{(IH)}{<}f_m(f_\tau^{(n)}(s\cdot (n+a)),\dots,f_\tau^{(n)}(s\cdot (n+a)))=f_m^{-}(f_\tau^{(n)}(s\cdot (n+a)))\\
-		&\overset{\ref{lemma:max-bound-recursive-concatenation-sum}}{\leq} f_\tau^{-}(f_\tau^{(n)}(s\cdot (n+a)))=f_{\tau}^{(n+1)}(s\cdot (n+a))=f_{\tau}^{(n')}(s\cdot(n'+b)).
+		&\overset{(IH)}{<}f_m(f_\tau^{(n)}(s\cdot (n+a)),\dots,f_\tau^{(n)}(s\cdot (n+a)))\\
+		&=f_m^{-}(f_\tau^{(n)}(s\cdot (n+a)))\\
+		&\overset{\ref{lemma:max-bound-recursive-concatenation-sum}}{\leq} f_\tau^{-}(f_\tau^{(n)}(s\cdot (n+a)))\\
+		&=f_{\tau}^{(n+1)}(s\cdot (n+a))=f_{\tau}^{(n')}(s\cdot(n'+b)).
 	\end{align}
 	
 	The overall statement consequently follows by the induction principle, and as a special case, we obtain that for any non-recursive function $f\in\mathcal{F}_{\tau}$, there exists an $n_0(f)\in\mathbb{N}$ such that $f(n)<f_{\tau}^{(n)}(s\cdot n)=\left(f_{\tau}\right)_{s}^{\lozenge}(n)$ for all $n\geq n_0$.
 	
-	This $n_0$ does not depend on $s$ and applies for all $s\geq 1$, which proves our result.
+\end{proof}
+
+\section{Extension of non-recursive inexpressivity results to integer functions}
+\label{app:extension-inexpressivity-integer}
+To directly apply our results to neural networks that operate on finite precision floating numbers, we yet need to extend the results of non-recursive functions from Section \ref{sec:expressive-limits-non-recursive-models} to functions sets over $\mathbb{Z}$.
+
+The necessary alterations are only small and the assumptions on the properties of the functions in the function set $\tau$ are still realistic, such that they are directly applicable to multi-layer neural networks and other non-recursive models on common computing architectures.
+
+In particular, the inequality in Equation (\ref{eq:lemma:max-bound-recursive-concatenation-sum-inequality}) in the proof of the lower bound of the sum $f_\tau:=\sum_{i=1}^{j}f_i$ in Lemma \ref{lemma:max-bound-recursive-concatenation-sum} relied on the non-negativity of each $f_i$.
+To generalize this statement to functions over $\mathbb{Z}$, we simply take the \textit{magnitude} of each function $f_i$ before summing them up.
+Therefore, we redefine the magnitude sum function $f_\tau(n):=\sum_{i=1}^{j}|f_i(n)|$.
+Juxtaposing this construction $f_{\tau}$ with non-recursive functions over $\tau$ is still perfectly fair, since both the addition function and the magnitude function fall within the scope of functions that still satisfy our assumptions on $\tau$.
+The uniform Turing Machine $\mathcal{T}_{\lozenge}$ from \ref{theorem:recursive-completion-kolmogorov-complexity} only needs a slight adjustment to correctly compute the recursive completion over $\tau$ $f_\tau^{\lozenge}$ according to this new definition.
+Representing integers $n\in\mathbb{Z}$ in the two's complement as is usually done in floating point arithmetic on computing architectures, $\mathcal{T}_{\lozenge}$ only has to compute the magnitude of the output after each simulation on the computation tape before it accumulates this output on the accumulation tape.
+
+Secondly, we adapt our assumptions on the functions in $\tau$.
+Originally, we assumed that each function $f_i:\mathbb{N}\to\mathbb{N}$ in $\tau$ is either bounded or strictly monotonously increasing. Moreover, we required that at least one strictly monotonously increasing function $f_i$ has an arity $\operatorname{ar}(f_i)>1$.
+The definition of bounded function directly transfers to functions $f_i:\mathbb{Z}\to\mathbb{Z}$.
+On the other hand, sign flips in functions over $\mathbb{Z}$ sometimes invert the monotonic behaviour of a function, as is the case for the multiplication function.
+To reconcile the constraint of strict monotonicity with this behaviour, it is viable to merely require strict monotonicity over natural numbers and bound the magnitude of the function values for non-negative and possibly negative inputs by the function value for the respective non-negative inputs. 
+We formalise the latter condition in the following vein
+\begin{definition}[Dominance on $\mathbb{N}$]
+	\label{def:dominance-on-n}
+	Let $f:\mathbb{Z}^{k}\to\mathbb{Z}$ be an arbitrary function.
+	We say that $f$ is dominant on $\mathbb{N}$ if for all $x_1,\dots,x_k\in\mathbb{Z}$,
+	\begin{align}
+		|f(x_1,\dots,x_k)|\leq f(|x_1|,\dots,|x_k|).
+	\end{align}
+\end{definition}
+
+For at least one strictly monotonously increasing function $f_i\in\tau$, we however still require arity $\operatorname{ar}(f_i)>1$. Additionally, the strict monotonicity of $f_i$ must hold entirely over $\mathbb{Z}$, not only over $\mathbb{N}$ as for the other strictly monotonously increasing functions.
+The addition function $f_{+}$ however still satisfies these conditions.
+For such functions, we slightly adjust the self-lower bound from Lemma \ref{lemma:self-lower-bound-strictly-monotonous-functions} to take into account the possibly negative function value at $0$.
+For completeness, we still provide the full proof.
+\begin{lemma}[Lower bound for recursive concatenation of strictly monotonously increasing functions]
+	\label{lemma:self-lower-bound-strictly-monotonous-functions-integer}
+	Let $f:\mathbb{Z}^{k}\to\mathbb{Z}$ be an arbitrary $k$-ary function that is strictly monotonously increasing with $k\geq 1$.
+	Let $f^{(m)}$ denote the $m$-wise recursive concatenation of $f$ as in Definition \ref{def:recursive-concatenation}. 
+	% NOTE: It must hold that $k\geq 1$ for strictly monotonously increasing functions.
+	
+	It holds that $f^{(m)}(n)\geq k^m\cdot n + f^{-}(0)\cdot\sum_{i=0}^{m-1}k^i$ for all $n,m\in\mathbb{N}$.
+\end{lemma}
+\begin{proof}
+	Fix an arbitrary, strictly monotonously increasing function $f$ of arity $k$.
+	First of all, we show that $f^{-}(n)\geq k\cdot n + f^{-}(0)$ for all $n\in\mathbb{N}$.
+	
+	Exhaustive exploitation of strict monotonicity yields
+	\begin{align}
+		f^{-}(n)=f(\underbrace{n,\dots,n}_{k \text{ times}})&\geq f(n-1,n,\dots,n)+1\\
+		&\overset{\dots}{\geq} f(0,n,\dots,n)+n \\
+		&\overset{\dots}{\geq} f(0,0,\dots,0)+k\cdot n = f^{-}(0) + k\cdot n.
+		\label{eq:self-lower-bound-strictly-monotonous-functions-integer-inequality-depth1}
+	\end{align} 
+	
+	Now, we prove the general lower bound for $f^{(m)}(n)$ by induction over the number of recursive concatenations $m\in\mathbb{N}$.
+	
+	The base case $m=0$ holds by definition since $f^{(0)}(n)=n=k^0\cdot n + f^{-}(0)\cdot\underbrace{\sum_{i=0}^{-1}k^i}_{=0}$.
+	
+	For the induction hypothesis (IH), assume that there is some $m\in\mathbb{N}$ such that $f^{(m)}(n)\geq k^m\cdot n + f^{-}(0)\cdot\sum_{i=0}^{m-1}k^i$ holds for all $n\in\mathbb{N}$.
+	By the strict monotonicity of $f$ and Equation \ref{eq:self-lower-bound-strictly-monotonous-functions-inequality-depth1}, we obtain
+	\begin{align}
+		\label{eq:self-lower-bound-strictly-monotonous-functions-integer-inequality-induction-step}
+		f^{(m+1)}(n)&=f^{-}(f^{(m)}(n)) \overset{\text{(IH)},(\ref{eq:self-lower-bound-strictly-monotonous-functions-inequality-depth1})}{\geq} k\cdot f^{-}(0)\cdot\sum_{i=0}^{m-1}k^i + f^{-}(0) = k^{m+1} \cdot n + \sum_{i=0}^{(m+1)-1}k^i. 
+	\end{align}
+	
+	Consequently, the overall result follows by the induction principle.
+\end{proof}
+
+With the new definition of $f_{\tau}$ that considers the \textit{magnitude} of each function $f_i$, lower bound of the recursive concatenation $f_{\tau}^{(m)}$ may accordingly include the magnitude too.
+\begin{lemma}[Lower bound for recursive concatenation of function set sum]
+	\label{lemma:max-bound-recursive-concatenation-sum-integer}
+	Given an arbitrary function set $\tau=\{f_1,\dots,f_j\},f_i:\mathbb{Z}\to\mathbb{Z}$.
+	Denote by $f_{\tau}$ the magnitude sum $f_{\tau}(n)=\sum_{i=1}^{j} \bigl|f_i(n)\bigr|$.
+	
+	For any monotonously increasing function $f_k\in\tau$ and any $m,n\in\mathbb{N}$, it holds that
+	$f_{\tau}^{(m)}(n)\geq \bigl|f_k^{(m)}(n)\bigr|$.
+\end{lemma}
+\begin{proof}
+	Given all as above.
+	We show the statement by induction over $m\in\mathbb{N}$.
+	
+	For $m=0$, the result follows from the definition
+	\begin{align*}
+		f_{\tau}^{(0)}(n)=\sum_{i=1}^{j} \bigl|f_{i}^{(0)}(n)\bigr|=\sum_{i=1}^{j}n\geq n=f_{k}^{(0)}(n).
+	\end{align*}
+	for all $1\leq k\leq j$ and $n\in\mathbb{N}$.
+	
+	Now, assume that for some $m\in\mathbb{N}$, the statement $f_{\tau}^{(m)}(n)\geq |f_i^{(m)}(n)|$ holds for all monotonously increasing functions $f_i\in\tau$ and all $n\in\mathbb{N}$.
+	
+	For $m+1$, any monotonously increasing $f_k \in \tau$ satisfies
+	\begin{align}
+		f_{\tau}^{(m+1)}(n) = f_{\tau}^{-}(f_{\tau}^{(m)}(n)) = \sum_{i=1}^{j}\bigl|f_i^{-}(f_{\tau}^{(m)}(n))\bigr|
+		&\geq \bigl|f_k^{-}(f_{\tau}^{(m)}(n))\bigr|\\
+		&\overset{\text{(IH)}}{\geq} \bigl|f_k^{-}( f_k^{(m)}(n))\bigr| = \bigl|f_k^{(m+1)}(n)\bigr|,
+	\end{align}
+	where the first inequality draws upon the non-negativity of each summand $\bigl|f_i^{-}(f_{\tau}^{(m)}(n))\bigr|$.
+	Therefore, the overall statement for all $m\in\mathbb{N}$ follows by induction.	
+	
+\end{proof}
+With these adjusted bounds at hand, we can obtain the same inexpressivity result as in the original Theorem \ref{theorem:recursive-completion-not-non-recursive-expressible}.
+Our requirement that each function in $\tau$ is either bounded, or dominant and strictly monotonously increasing on $\mathbb{N}$ is still satisfied by arithmetic operations such as addition and multiplication, as well as logical expressions and constants.
+Moreover, any activation functions that are usually employed in practice can be expressed as finite concatenations of functions that satisfy the above conditions.
+
+It therefore covers the range of functions that are used to construct multi-layer neural networks like MLPs in practice.
+\begin{theorem}[Recursive sum completion is not non-recursively expressible]
+	\label{theorem:recursive-completion-not-non-recursive-expressible-integer}
+	Fix an arbitrary function set $\tau=\{f_1,\dots,f_j\},f_i:\mathbb{Z}^k\to\mathbb{Z}$, where each $f_i$ is either 
+	\begin{itemize}
+		\item bounded, or
+		\item dominant and strictly monotonously increasing on $\mathbb{N}$.
+	\end{itemize}
+	Assume that there is at least one $f_i\in\tau$ that is strictly monotonously increasing on $\mathbb{Z}$ and has arity $\operatorname{ar}(f_i)>1$, e.g. the addition function.
+	For any non-recursive function $f\in\mathcal{F}_{\tau}$, there is an $n_0\in\mathbb{N}$ such that for all $n\geq n_0$, $f(n)\neq f_{\tau}^{\lozenge}(n)$.
+\end{theorem}
+\begin{proof}
+	Given an arbitrary function set $\tau=\{f_1,\dots,f_j\}$ as above.
+	Define $f_\tau(n):=\sum_{i=1}^{j}|f_i(n)|$ as in Lemma \ref{lemma:max-bound-recursive-concatenation-sum-integer}.
+	
+	As it facilitates the induction step, we prove a stronger statement by induction over the depth of non-recursive functions $\operatorname{dep}(f)\in\mathbb{N}$.
+	Namely, we are going to prove that for all non-recursive functions $f\in\mathcal{F}_{\tau}$, there is an $n_0\in\mathbb{N}$ such that $|f(n+a)|<f_{\tau}^{(n)}(n+a)$ for all $n\geq n_0$ and all offsets $a\in\mathbb{N}$.
+	
+	Beginning with the base case, let $f\in\mathcal{F}_{\tau}$ be arbitrary with $\operatorname{dep}(f)=0$.
+	Therefore, $f$ must be equivalent to the identify function, thus $f(n)=n$ for all $n\in\mathbb{Z}$.
+	
+	Let $a\in\mathbb{N}$ be arbitrary.	
+	
+	Since $k=\operatorname{ar}(f_m)>1$ for at least one strictly monotonously increasing $f_{\ell}\in\tau$, Lemma \ref{lemma:self-lower-bound-strictly-monotonous-functions-integer} guarantees that
+	\begin{align}
+		\label{eq:theorem:recursive-completion-not-non-recursive-expressible-integer-self-lower-bound-lemma}
+		f_{\ell}^{(n)}(n+a) \geq k^n\cdot (n+a) + f_{\ell}^{-}(0)\cdot\sum_{i=0}^{n-1}k^i. %\overset{k>1}{>} n+a.
+	\end{align}
+	for any $n\in\mathbb{N}$.
+	Because $k>1$, it further holds by the geometric sum that
+	\begin{align}
+		\label{eq:theorem:recursive-completion-not-non-recursive-expressible-integer-geom-sum-bound}
+		f_{\ell}^{-}(0)\cdot\sum_{i=0}^{n-1}k^i & \geq  -\bigl|f_{\ell}^{-}(0)\bigr|\cdot \frac{k^n-1}{k-1} \geq -\bigl|f_{\ell}^{-}(0)\bigr|\cdot(k^n-1).
+	\end{align}
+	
+	Choose $n_0:=|f_{\ell}^{-}(0)|+1$ and let $n\geq n_0$ be arbitrary.
+	Joining the above inequalities, we obtain
+	\begin{align}
+		\label{eq:theorem:recursive-completion-not-non-recursive-expressible-integer-self-lower-bound}
+		f_{\ell}^{(n)}(n+a) &\overset{(\ref{eq:theorem:recursive-completion-not-non-recursive-expressible-integer-self-lower-bound-lemma})}{\geq} k^n\cdot (n+a) + f_{\ell}^{-}(0)\cdot\sum_{i=0}^{n-1}k^i\\
+		&\overset{(\ref{eq:theorem:recursive-completion-not-non-recursive-expressible-integer-geom-sum-bound})}{\geq} k^n\cdot (n+a) -(k^n-1)\cdot \bigl|f_{\ell}^{-}(0)\bigr| \\
+		&= (k^n-1)\cdot\bigl(\underbrace{n+a-\bigl|f_{\ell}^{-}(0)\bigr|}_{> 0}\bigr) + n+a\\
+		&> n+a = |n+a|.
+	\end{align}
+	
+	Since $f_{\ell}$ is monotonously increasing, we conclude by means of Lemma \ref{lemma:max-bound-recursive-concatenation-sum-integer} that
+	\begin{equation}
+		\label{eq:theorem:recursive-completion-not-non-recursive-expressible-integer-inequality}
+		f_{\tau}^{(n)}(n+a)\overset{\ref{lemma:max-bound-recursive-concatenation-sum-integer}}{\geq} f_{\ell}^{(n)}(n+a) \overset{(\ref{eq:theorem:recursive-completion-not-non-recursive-expressible-integer-self-lower-bound})}{>} |n+a| = |f(n+a)|.
+	\end{equation}
+	
+	Proceeding with the induction hypothesis (IH), assume that there is some $p\in\mathbb{N}$ such that for every non-recursive function $f\in\mathcal{F}_{\tau}$ with $\operatorname{dep}(f)\leq p$, there exists an $n_0\in\mathbb{N}$ such that $f_\tau^{(n)}(n+a)>f(n+a)$ for all $n\geq n_0$ and $a\in\mathbb{N}$.
+	
+	Let $a\in\mathbb{N}$ be arbitrary in the following.
+	Consider an arbitrary non-recursive function $f\in\mathcal{F}_{\tau}$ with $\operatorname{dep}(f)=p+1$.
+	
+	As by Definition \ref{def:non-recursive-functions}, we have $f(n)=f_m(g_1(n),\dots,g_k(n))$ for some $f_m\in\tau$ with arity $k\in\mathbb{N}$ and non-recursive functions $g_i\in \mathcal{F}_{\tau}$ with depth $\operatorname{dep}(g_i)\leq p$.
+	
+	To begin with, we consider the case where $f_m$ is a bounded function. Denote by $c_m$ the bound of $f_m$, that is $|f_m(n)|\leq c_m$ for all $n\in\mathbb{Z}$.
+	For any $n\geq \max\bigl(|f_{\ell}^{-}(0)|+1,c_m\bigl)$, where $f_{\ell}$ is the strictly monotonously increasing function from before, Equation \ref{eq:theorem:recursive-completion-not-non-recursive-expressible-inequality} assures that
+	\begin{equation}
+		\label{eq:theorem:recursive-completion-not-non-recursive-expressible-induction-step-bounded}
+		f_\tau^{(n)}(n+a)
+		\overset{(\ref{eq:theorem:recursive-completion-not-non-recursive-expressible-inequality})}{>} n+a\geq c_m\geq \bigl|f_m\bigl(g_1(n+a),\dots,g_k(n+a)\bigr)\bigr|=|f(n+a)|.
+	\end{equation}
+	
+	Otherwise, consider the case where $f_m$ is dominant and strictly monotonously increasing on $\mathbb{N}$.
+	By the induction hypothesis, for every non-recursive function $g_i$, there is an $n_0(g_i)$ such that $f_\tau^{(n)}(n+a)>|g_i(n+a)|$ for all $n\geq n_0(g_i)$.
+	We hence directly take the threshold as the maximum $n_0 = \max_{1\leq i\leq k}n_0(g_i)$.
+	
+	Now, let $n\geq n_0$ be arbitrary. 
+	Subsequently, we assume that $a\geq 1$, and substitute $b=a-1$ and $n'=n+1$.
+	By the strict monotonicity of $f_m$ on $\mathbb{N}$, we conclude
+	\begin{align}
+		\label{eq:theorem:recursive-completion-not-non-recursive-expressible-integer-induction-step}
+		|f(n'+b)|=|f(n+a)|
+		&=\bigl|f_m\bigl(g_1(n+a),\dots,g_k(n+a)\bigr)\bigr|\\
+		&\overset{\ref{def:dominance-on-n}}{\leq} f_m\bigl(|g_1(n+a)|,\dots,|g_k(n+a)|\bigr)\\
+		&\overset{(IH)}{<}f_m(f_\tau^{(n)}(n+a),\dots,f_\tau^{(n)}(n+a))\\
+		&\leq\bigl|f_m^{-}(f_\tau^{(n)}(n+a))\bigr|\\
+		&\leq f_\tau^{-}(f_\tau^{(n)}(n+a))=f_{\tau}^{(n+1)}(n+a)=f_{\tau}^{(n')}(n'+b).
+	\end{align}
+	
+	Since $a\in\mathbb{N}_{\geq 1}$ was chosen arbitrarily, the above argument holds for all $b\in\mathbb{N}$ and all $n'\geq n_0+1=:n_0(f)$. 
+	To conclude with, we have shown that for any non-recursive function $f\in \mathcal{F}_{\tau}$ with $\operatorname{dep}(f)=p+1$, there exists an $n_0(f)\in\mathbb{N}$ such that $|f(n+a)|<f_\tau^{(n)}(n+a)$ for all $n\geq n_0(f),a\in\mathbb{N}$.
+	
+	Consequently, the overall result for non-recursive functions of arbitrary depth draws upon the induction principle.
+	
+	As a special case of the above result, we obtain that for any non-recursive function $f\in \mathcal{F}_{\tau}$, there is an $n_0\in\mathbb{N}$ such that for all $n\geq n_0$, $f(n)<f_{\tau}^{\lozenge}(n)$.
 	
 \end{proof}

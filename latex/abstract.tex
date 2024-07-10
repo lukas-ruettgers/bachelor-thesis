@@ -11,11 +11,11 @@
 
 % TODO: Write Abstract
 \noindent
-The reasonable maximum demand on out-of-distribution generalization is that the training algorithm should infer the \textit{simplest} function that remains consistent with the observed data.
+The reasonable maximum demand on out-of-distribution generalization is that the learning algorithm should infer the \textit{simplest} function that remains consistent with the observed data.
 %Out-of-distribution generalization requires agents to induce from their experience to unseen environments. 
 %However, the reasonable maximum demand on inductive inference is to detect and infer the simplest underlying function that remains consistent with the observed data.
 % TODO: Maybe replace information-theoretic by descriptive
-Kolmogorov complexity intuitively formalises this notion of simplicity from an information-theoretic viewpoint, as it associates the simplicity of a function with the description length of the shortest program that can produce it.
+Kolmogorov complexity intuitively formalizes the notion of simplicity from an information-theoretic viewpoint, as it associates the simplicity of a function with the description length of the shortest program that can compute it.
 % Kolmogorov complexity intuitively formalises the descriptive complexity of a function, as it considers the length of the shortest program description that can produce it.
 In light of this descriptive complexity, this thesis addresses limitations in our model classes, optimization techniques, and statistical learnability conditions that impede learning simple functions.
 % In light of this descriptive complexity, current models and optimization techniques still lack the ability to learn recursive functions which are known to comprise simple yet powerful patterns.\\
@@ -32,8 +32,8 @@ On the other extreme, models that allowed to express \textit{any partial computa
 This is because present learnability conditions in theory either restrict themselves to exemplary model or hypothesis classes \cite{ahuja2021invariance,arjovsky2019invariant}, or rely on overly conservative assumptions such as the ubiquitous \textit{i.i.d.} assumption \cite{paccagnan2024pick,campi2023compression}.
 % like ERM, IRM
 
-In this setting of overarching model expressivity, this work instead substantiates how incorporating Kolmogorov complexity as a simplicity bias into the optimization objective function carves the way to formulate general distribution-free, both necessary and sufficient information-theoretic conditions that a dataset must satisfy to learn \textit{any} partial computable function, and exemplifies how such a bias can further reduce the sample size that is usually required for classical learnability guarantees.
-To that end, it proposes to draw upon Kolmogorov complexity to quantify the information that finite datasets convey about the functions that could have possibly generated it.
+In this setting of overarching model expressivity, this work instead substantiates how incorporating Kolmogorov complexity as a simplicity bias into the optimization objective function carves the way to formulate general distribution-free, both necessary and sufficient information-theoretic conditions that a dataset must satisfy to learn \textit{any} partial computable function, and exemplifies how such an inductive bias can further reduce the sample size that is usually required for classical learnability guarantees.
+To that end, it proposes to directly draw upon Kolmogorov complexity to quantify the information that finite datasets convey about the functions that could have possibly generated it.
 %, and illustrates how this quantity --- coined \textit{functional information} --- could realise simplicity biases in practice.
 
 % that even dedicated domain generalization optimization objectives like Invariant Risk Minimization \cite{arjovsky2019invariant} still fail to identify the true hypothesis $h$ given finite datasets, because they do not favour simpler concepts over more complex ones.

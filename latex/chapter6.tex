@@ -19,15 +19,31 @@ Learning is therefore inseparably linked to compression, because learning the tr
 However, compression algorithms do not keep up with the compression power of Turing Machines, and therefore can not even yield approximate guarantees on the \textit{order} between the Kolmogorov complexity of two strings.
 
 Explicitly realising such an approximation of at least the ordering that Kolmogorov complexity induces seems hard and directly related to the learning problem itself. 
-In practice, viable heuristics that indirectly pursue the simplicity bias of Kolmogorov complexity might however already take advantage from its aforementioned benefits.
 
 \section{Future work}
-The steps towards such a powerful simplicity bias must be taken gradually and carefully.
-One of these next steps could include to further study the role of recursion to enable models to express simple functions.
-Although feed-forward networks alone might not exhibit this ability, modern architectures such as attention models notably advanced the expressive power and empirical generalization ability of large language models \cite{brown2020language}.
-Signs of simplicity biases within these models would further corroborate the theoretical foundation for these empirical capabilities.
+In practice, viable heuristics that indirectly pursue the simplicity bias of Kolmogorov complexity might however already take advantage from its aforementioned benefits.
+The statements in Chapter \ref{chap:sufficient-information-learnability} hold for any possible prefix-free encoding of Turing Machines, since they only rest on the property that there are only finitely many functions with a lower complexity.
+Although the heuristic simplicity biases we derive in practice might not precisely agree with the intuitive information-theoretic notion of simplicity that Kolmogorov complexity over the standard Turing Machine encodings expresses, such heuristics might advance our theoretical toolbox to derive out-of-distribution generalization guarantees under weaker statistical assumptions.
+Instead of encoding Turing Machines, such simplicity biases could also be directly defined over model classes such as neural networks.
+While the complexity of multi-layer neural networks is usually merely quantified in terms of their layer width, depth, or the norm of its weights, desirable simplicity biases could further consider regularities in the computation graph of the neural network.
+As this thesis put forward the general benefit of simplicity biases independent of the exact order between functions, having such a specific simplicity bias at hand would allow to quantify more precise information-theoretic learnability guarantees.
 
-At the same time, bestowing compression algorithms with recursive procedures to enable them to take further advantage of recursive patterns in the data might scale their compression ratio limits.
-Although these limits might yet not yield approximate guarantees on the order induced by Kolmogorov complexity in the generality in which it was studied here, it might certainly be an important step towards it.
+Moreover, the role of recursion in empowering model classes to express simple but omnipresent patterns should not be neglected.
+However, the problems that bar the way from learning recursive algorithms still remain uncharted waters.
+Firstly, the error back-propagation on which gradient descent draws upon can not be directly transferred to models where the structure of the computation graph is not fixed but also subject to optimization.
+On the contrary, recurrent neural networks have a \textit{fixed} recursive structure. When they are trained to fit a time series, they are provided with a learning signal at each step in time to optimize parameters within this fixed structure.
+But it is the recursive structure itself that needs to be learned when models shall express a more powerful range of simple recursive patterns.
+However, it is hard to parametrize this model structure in a way that a function that expresses this model class is differentiable over these parameters.
+Therefore, it is yet unclear how alterations in the structure shall be guided by the value of the loss function. 
 
-%Finally, it might be interesting to characterize the Kolmogorov complexity of hypothesis class by means of \textit{symmetries} between the functional description of members.
+Although these challenges are hard, they seem impossible to bypass on our quest for empowering machines to learn simple functions and establishing guarantees about their generalization behaviour.
+
+%The steps towards such a powerful simplicity bias must be taken gradually and carefully.
+%One of these next steps could include to further study the role of recursion to enable models to express simple functions.
+%Although feed-forward networks alone might not exhibit this ability, modern architectures such as attention models notably advanced the expressive power and empirical generalization ability of large language models \cite{brown2020language}.
+%Signs of simplicity biases within these models would further corroborate the theoretical foundation for these empirical capabilities.
+%
+%At the same time, bestowing compression algorithms with recursive procedures to enable them to take further advantage of recursive patterns in the data might scale their compression ratio limits.
+%Although these limits might yet not yield approximate guarantees on the order induced by Kolmogorov complexity in the generality in which it was studied here, it might certainly be an important step towards it.
+%
+%%Finally, it might be interesting to characterize the Kolmogorov complexity of hypothesis class by means of \textit{symmetries} between the functional description of members.

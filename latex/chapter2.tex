@@ -125,7 +125,99 @@ In more natural language, they assume that the training distributions must alrea
 To support the necessity of this strong assumption, they state in their Theorem 2 that for any $\mathcal{P}_{tr}$ that does not satisfy this condition, no deterministic algorithm will always identify the correct linear classifier $f$. 
 The reason is that for linearly separable classes, there could always be another linear classifier $f'$ that could have generated the same training data but disagrees with $f$ on some instance outside out of $\mathcal{P}_{tr}$.
 As any deterministic algorithm has to decide for at most one of $f$ or $f'$, it will certainly fail to generalize out-of-distribution for the other one.
-
+\begin{figure}[h]
+	\begin{center}
+		\begin{subfigure}{0.5\textwidth}
+			\begin{tikzpicture}[every text node part/.style={align=center}, font=\small]
+				% EXPLAIN DOMAIN GENERALIZATION SETUP
+				
+				%% COORDINATE SYSTEM
+				\coordinate[] (center) at (20pt,0pt);
+				\node[left=0pt of center, yshift=-7pt] (X) {$\mathcal{X}$};
+				
+				\draw[->] (center) ++ (-10pt,0pt) --++(155pt,0pt);
+				\draw[->] (center) ++ (0pt,-10pt) --++(0pt,105pt);
+				
+				%% DIVISION INTO INV AND SPU
+				
+				\path[] (center) ++ (0pt,-5pt) ++(0pt,100pt) ++(-5pt,-10pt) node[left,font=\tiny] {true \\ features};
+				\path[] (center) ++ (-5pt,0pt) ++(150pt,0pt) ++(-10pt,-10pt) node[left,font=\tiny] {spurious \\ noise};
+				
+				
+				%% DISTRIBUTIONS
+				% P_ALL
+				\path[
+				fill=rwth-storm,
+				fill opacity =0.4,
+				draw=rwth-storm!60
+				] 
+				(center) ++ (60pt,50pt) ellipse[x radius=50pt,y radius=40pt]
+				node[right=30pt,text opacity = 1, text=rwth-storm,font=\footnotesize] {$\mathcal{P}_{all}$};
+				
+				% P_TR AHUJA ADJUSTED
+				\path[
+				fill=rwth-storm,
+				fill opacity =0.6,
+				draw=rwth-storm!80
+				] 
+				(center) ++ (60pt,50pt) ellipse[x radius=30pt,y radius=40pt]
+				node[right=10pt,text opacity = 1,text=MidnightBlue,font=\footnotesize] {$\mathcal{P}_{tr}$};
+				
+				
+				%% POINT OUTSIDE
+				\path[fill=black!80, draw=none] ($(center) + (60pt,50pt) + (0pt,30pt)$) circle [radius=2pt] node[ right] (x){$x'$};
+				
+				
+			\end{tikzpicture}
+			\caption{Commonly studied overlap assumption \cite{ahuja2021invariance}}
+			\label{fig:domain-generalization-overlap}
+	\end{subfigure}\hspace{10pt}
+	\begin{subfigure}{0.43\textwidth}
+		\begin{tikzpicture}[every text node part/.style={align=center}, font=\small]
+			% EXPLAIN DOMAIN GENERALIZATION SETUP
+			
+			%% COORDINATE SYSTEM
+			\coordinate[] (center) at (20pt,0pt);
+			\node[left=0pt of center, yshift=-7pt] (X) {$\mathcal{X}$};
+			
+			\draw[->] (center) ++ (-10pt,0pt) --++(155pt,0pt);
+			\draw[->] (center) ++ (0pt,-10pt) --++(0pt,105pt);
+			
+			
+			%% DISTRIBUTIONS
+			% P_ALL
+			\path[
+			fill=rwth-storm,
+			fill opacity =0.4,
+			draw=rwth-storm!60
+			] 
+			(center) ++ (60pt,50pt) ellipse[x radius=50pt,y radius=40pt]
+			node[right=30pt,text opacity = 1, text=rwth-storm,font=\footnotesize] {$\mathcal{P}_{all}$};
+			
+			% P_TR
+			\path[
+			fill=rwth-storm,
+			fill opacity =0.6,
+			draw=rwth-storm!80
+			] 
+			(center) ++ (60pt,50pt) ellipse[x radius=30pt,y radius=20pt]
+			node[right=10pt,text opacity = 1,text=MidnightBlue,font=\footnotesize] {$\mathcal{P}_{tr}$};
+			
+			
+			
+			%% POINT OUTSIDE
+			\path[fill=black!80, draw=none] ($(center) + (60pt,50pt) + (0pt,30pt)$) circle [radius=2pt] node[ right] (x){$x'$};
+			\draw[dashed] (x.east) -- ++(30pt,0pt) node[right,font=\footnotesize] {$f'(x')=?$};
+			
+			
+		\end{tikzpicture}
+		\caption{The more general setting of this work.}
+		\label{fig:domain-generalization-general}
+	\end{subfigure}
+\end{center}
+\caption[Contrasting the domain generalization setting of this work against prior work.]{While prior work in domain generalization such as \cite{ahuja2021invariance} considers scenarios where the range of true functions is entirely available during training and focus on the problem how the representation shall exclude noise or other features that exhibit spurious correlations with the label and hence ostensibly raise the predictive power, this work considers what information about the true features themselves is necessary and sufficient to correctly infer the true function as the \textit{simplest} function that remains consistent with the information.}
+\label{fig:domain-generalization}
+\end{figure}
 %% REBASING OUT-OF-DISTRIBUTION ON THE MAXIMUM DEMAND WE COULD REASONABLY POSE
 On the first sight, this argument seems to annihilate any hope to attain out-of-distribution generalization with means beyond an overarching training dataset.
 However, this notion of out-of-distribution generalization that was proved impossible in the aforementioned work excels the maximum demand that we could reasonably pose to out-of-distribution generalization.
@@ -133,7 +225,15 @@ However, this notion of out-of-distribution generalization that was proved impos
 Without any additional prior knowledge, the most reasonable inference one could make given some observations is arguably to assume the \textit{simplest} underlying pattern that could have generated these observations \cite{solomonoff1964formal}.
 Of course, in general there are infinitely many functions that remain consistent with any finite training dataset, but most of them do not identify simple concepts.
 
-Optimization objectives like IRM or IB-IRM are however indifferent about the simplicity of an hypothesis $h$, as they only evaluate $h$ within $\mathcal{P}_{tr}$, and assign the optimal score to $h$ as long as these in-distribution optimality conditions are satisfied.
+In Chapter \ref{chap:sufficient-information-learnability}, this work hence considers how much limited information is sufficient to ensure that the simplest function that remains consistent with this information indeed coincides with the true function. 
+By this means, this work proposes to accompany our definition of out-of-distribution generalization with an inductive bias that resolves the additional degrees of freedom outside of the training distribution support, and showcases that a simplicity bias by virtue of Kolmogorov complexity realises a desirable inductive bias that favours simplicity.
+Figure \ref{fig:domain-generalization} juxtaposes this new setting with the commonly adopted setting in prior domain generalization literature. 
+On the one hand, Figure \ref{fig:domain-generalization-overlap} illustrates the separation of the information into true and spurious information. 
+While the former is exhaustively covered by the training distribution support, the variation in the latter is only observed in a limited range, and the objective is to ensure that the predictor shall remain robust against possible deviations in these spurious features during testing or deployment.
+On the other hand, our setting in Figure \ref{fig:domain-generalization-general} rests on a simplicity bias to determine how the behaviour of a predictor $f'$ on instances $x'$ outside of the training distribution support shall be determined.
+In this way, it reconciles our demands on out-of-distribution generalization with the limited information available in practice.
+
+On the contrary, optimization objectives like IRM or IB-IRM are however indifferent about the simplicity of an hypothesis $h$, as they only evaluate $h$ within $\mathcal{P}_{tr}$, and assign the optimal score to $h$ as long as these in-distribution optimality conditions are satisfied.
 In fact, the mere constraints that control how $h$ behaves outside of $\mathcal{P}_{tr}$ are imposed by the choice of the hypothesis class $\mathcal{H}$.
 However, this work argues that commonly employed model classes can not represent an important body of simple functions and instead restrict themselves to more complex ones, resulting in unreasonable out-of-distribution behaviour.
 % - It is not steered by the optimization, but engineered by the model class $\mathcal{H}$.
@@ -151,7 +251,7 @@ In the infinite hidden layer width limit, Xu et al. even formally proved that th
 Based on the example of Graph Neural Networks and Dynamic Programming problems, they further argued that the generalization ability of models is largely determined by how well task-specific non-linearities are encoded into the model class.
 
 %% TRANSITION TO KOLMOGOROV COMPLEXITY
-Generalization is therefore still not learned by inference principles that favour simplicity, but mainly engineered ab initio by model designers.
+Generalization is therefore still not achieved by inference principles that favour simplicity, but mainly engineered ab initio by model designers.
 To substantiate this insight with formal arguments, we first require a definition of the \textit{simplicity} of a function.
 This is subject of the next section, which introduces Kolmogorov complexity as an rigorous measure for this informal notion.
 By and large, the Kolmogorov complexity of a function $f$ considers how much information is needed to describe the simplest algorithm that produces the same output as $f$.
@@ -166,20 +266,102 @@ The finding that the expressive power of this computational framework coincides 
 It states that \textit{effectively calculable} functions --- those functions that we intuitively believe to be computable by some algorithm --- are also computable by the class of Turing Machines \cite{turing2004intelligent}.
 
 %% FORMAL DEFINITION OF TURING MACHINES
-Formally, a Turing Machine is a tuple $\mathcal{T}=(Q,\Sigma,\Gamma,B,q_0,q_1,\delta)$.
+Formally, a Turing Machine is a tuple $\mathcal{T}=(Q,\Sigma,\Gamma,B,q_0,q_{halt}\delta)$.
 It receives its input $x$ as a word over an alphabet $\Sigma$, which is a finite set of symbols. 
-In this work, we will always assume $\Sigma=\{0,\dots,k-1\}=\mathbb{Z}_k$ for some $k\in\mathbb{N}_{\geq 2}$ and stick to the binary alphabet $\{0,1\}$ if not specified otherwise.
-This word is provided on a working tape of infinite cells, which can be understood as an infinite amount of working memory that $\mathcal{T}$ can utilize. Each cell comprises exactly one symbol from the tape alphabet $\Gamma=\Sigma\cup\{B\}$, where $B\notin\Sigma$ is the blank symbol that indicates unused tape cells.
+In this work, we will always stick to the archetypical, binary alphabet $\Sigma=\{0,1\}$.
+The input word $x$ is provided to $\mathcal{T}$ on a working tape of infinite cells, which can be understood as an infinite amount of working memory that $\mathcal{T}$ can utilize. Each cell comprises exactly one symbol from the tape alphabet $\Gamma=\Sigma\cup\{B\}$, where $B\notin\Sigma$ is the blank symbol that indicates unused tape cells.
 The expressive power of Turing Machines does not change if we allow them access to multiple tapes, and we will adopt the convention that $\mathcal{T}$ always has a dedicated input and output tape.
-The finite set $Q$ comprises different internal states that describe the contextual information that $\mathcal{T}$ requires apart from the input $x$ to compute the output. 
-The algorithmic behaviour of $\mathcal{T}$ that produces the output is captured in its \textit{transition function} $\delta:Q\times \Gamma \to Q \times \Gamma \times \{L,R,N\}$.
+The deterministic algorithmic behaviour of $\mathcal{T}$ is described in its \textit{transition function} $\delta:Q\times \Gamma \to Q \times \Gamma \times \{L,R,N\}$.
 Endowed with a tape head, $\mathcal{T}$ can access only one cell at once. 
-Depending on the internal state $q$ it is situated into and the symbol $a$ it reads, $\delta(q,a)=(q',a',D)$ determines to what internal state $q'$ to transition, what symbol $a'$ to write, and into what direction --- left, right, or none --- to move the tape head.
-Functionally, $\mathcal{T}$ coincides with a \textit{partial computable} function $f_{\mathcal{T}}(x):=\begin{cases}
-	y, & \mathcal{T} \text{ halts and outputs } y\\
-	\bot, & \mathcal{T} \text{ does not halt}
-\end{cases}$,
+The internal states $q\in Q$ hence contain contextual information that the Turing Machine must store to interpret the symbol in the current cell in the correct way.
+Figure \ref{fig:algorithmic-behaviour-turing-machine-general} illustrates this algorithmic behaviour.
+Depending on the internal state $q_i$ it is situated into and the symbol $a$ it reads, $\delta(q,a)=(q_{next},a',\operatorname{dir})$ determines to what internal state $q_{next}$ to transition, what symbol $a'$ to write, and into what direction $\operatorname{dir}$ --- left, right, or none --- to move the tape head.
+Figure \ref{fig:tm-modulo-2} exemplifies such a transition function for the modulo function $\operatorname{mod}_2$.
+The Turing Machine runs over the input string and determines in which modulo class the string falls.
+To that end, it must memorize the last symbol, which requires two states $q_0$ and $q_1$.
+By convention, $q_0$ identifies the initial state, and $q_{halt}$ the final state that indicates that $\mathcal{T}$ halts.
+Similarly, a Turing Machine that computed the $\operatorname{mod}_3$ or $\operatorname{mod}_5$ function required three or five states respectively.
+\begin{figure}[h]
+	\begin{center}
+		\begin{subfigure}{0.49\textwidth}
+			\begin{tikzpicture}[every text node part/.style={align=center}, font=\small]
+				% TURING MACHINE
+				\node[anchor=north west] (t) at (0,0pt) {};
+				
+				%%% TAPE
+				\node[below=15pt of t.south west, xshift=70pt,anchor=north west] (tape) {
+					\begin{tabular}{c|c|c|c|c|c|c|c}
+						\hline
+						$\dots$
+						& $0$ 
+						& $1$
+						& $1$
+						& $1$ 
+						& $0$
+						& $1$ 
+						& $\dots$ \\\hline
+					\end{tabular}
+				};
+				\draw[decorate,decoration={brace,amplitude=3pt},rwth-storm] ([xshift=-50pt]tape.north) -- ([xshift=50pt]tape.north) node[midway,above,font=\scriptsize] {tape};
+				
+				% TAPE HEAD
+				\coordinate[below=30pt of tape.south] (tape-head-start);
+				%\node[rectangle,minimum size=5pt,below=10pt of tape.south] (tapehead) {$q_0$};
+				\path[draw=black] (tape-head-start) rectangle ++(18pt,18pt) node[midway] (q0) {$q_1$};
+				\draw[] (tape-head-start) --++(0pt,{18pt+6pt}); 
+				\draw[] (tape-head-start) ++(18pt,0pt) --++(0pt,{18pt+6pt}); 
+				
+				% READ WRITE
+				\draw[<-,dashed,rwth-storm] (tape-head-start) ++ (3pt,18pt) --++(0pt,15pt) node[midway,left,font=\tiny,yshift=2pt]{read};
+				\draw[->,dashed,rwth-storm] (tape-head-start) ++ ({18pt-3pt},{18pt}) --++(0pt,15pt) node[midway,right,font=\tiny,yshift=2pt]{write $a$};
+				
+				% MOVES
+				\draw[<->,rwth-storm] (tape-head-start) ++ ({-5pt},{-5pt+2pt}) -- ++({18pt+5pt+5pt},0pt) node[midway, below,font=\tiny] {moves \\$L,R,N$};
+				
+				% ALTERS STATE
+				\node[right=0pt of q0,rwth-storm,font=\tiny] (alters) {$\circlearrowleft$ alters state};
+				
+				% TRANSITION FUNCTION
+				\node[below=85pt of t.south west,anchor=north west] (delta) {
+						\begin{tabular}{|c|c|c|c|}
+							$\delta$ & $\mspace{35mu}0\mspace{35mu}$ & $\mspace{35mu}1\mspace{35mu}$ & $\mspace{35mu}B\mspace{35mu}$\\\hline
+							$q_0$    &     &     &    \\\hline
+							$q_1$    &     &  \scriptsize{$(q_{next},a,\operatorname{dir})$}   &    \\\hline
+							$\vdots$ &     &     &    \\\hline
+							$q_n$    &     &     &    \\\hline
+						\end{tabular}
+				};
+				
+				% ACCORDING TO DELTA
+				\draw[->,dashed,rwth-storm] (q0.west) to [out=180,in=90]([xshift=18pt]delta.north west);
+				\node[left=40pt of q0,yshift=-5pt,font=\tiny,text=rwth-storm] (acc) {according to \\ transition function};
+				
+				
+			\end{tikzpicture}
+			\caption{A general conceptualization of a Turing Machine.}
+			\label{fig:algorithmic-behaviour-turing-machine-general}
+		\end{subfigure}\hspace{10pt}
+		\begin{subfigure}{0.43\textwidth}
+			\begin{tabular}{|c|c|c|c|}
+				$\delta$ & $\mspace{35mu}0\mspace{35mu}$ & $\mspace{35mu}1\mspace{35mu}$ & $\mspace{35mu}B\mspace{35mu}$\\\hline
+				$q_0$    &  \scriptsize{$(q_{0},B,R)$}   &  \scriptsize{$(q_{1},B,R)$}   &  \scriptsize{$(q_{halt},0,N)$}  \\\hline
+				$q_1$    &  \scriptsize{$(q_{0},B,R)$}   &  \scriptsize{$(q_{1},B,R)$}   &  \scriptsize{$(q_{halt},1,N)$}  \\\hline
+			\end{tabular}
+			\caption{A Turing Machine that computes the modulo function $\operatorname{mod}_2$.}
+			\label{fig:tm-modulo-2}
+		\end{subfigure}
+	\end{center}
+	\caption[The algorithmic behaviour of a Turing Machine.]{Illustration of the algorithmic behaviour of a Turing Machine.}
+	\label{fig:algorithmic-behaviour-turing-machine}
+\end{figure}
 
+Functionally, $\mathcal{T}$ coincides with a \textit{partial computable} function
+\begin{align}
+	f_{\mathcal{T}}(x):=\begin{cases}
+		y, & \mathcal{T} \text{ halts and outputs } y,\\
+		\bot, & \mathcal{T} \text{ does not halt},
+	\end{cases}
+\end{align}
 where $\bot$ means that the output is undefined.
 If $\mathcal{T}$ halts on all inputs, we call $f$ \textit{total computable}.
 
@@ -191,7 +373,15 @@ Besides merely identifying $\mathcal{T}$, $\delta$ \textit{describes} the algori
 An encoding of $\delta$ with a computable inversion thereby allows to fully reconstruct $\mathcal{T}$ in a uniform algorithmic manner.
 \label{text:universal-tm}
 For any such encoding $\operatorname{enc}:\mathcal{T}\mapsto \operatorname{enc}(\mathcal{T})$, there is a \textit{universal Turing Machine} $U$ that given input $\operatorname{enc}(\mathcal{T}),x$ can simulate $\mathcal{T}$ on input $x$.
-To enable $U$ to unambiguously separate concatenations of strings, it proves useful to assume that the image of $\operatorname{enc}$ is a \textit{prefix-free} code.
+In this manner, $U$ computes the partial computable function
+\begin{align}
+	\label{eq:universal-turing-machine}
+	f_U(x)=\begin{cases}
+		f_{\mathcal{T}}(z), & x=\operatorname{enc}(\mathcal{T})z\\
+		\bot, & \text{otherwise}.
+	\end{cases}
+\end{align}
+To enable $U$ to unambiguously separate the concatenated string $x$ into $\operatorname{enc}(\mathcal{T})$ and $z$, it proves useful to assume that the encoding $\operatorname{enc}$ is \textit{prefix-free}.
 This means that for any two Turing Machines $\mathcal{T},\mathcal{T}'$, the string $\operatorname{enc}(\mathcal{T})$ is not a prefix of $\operatorname{enc}(\mathcal{T}'
 )$.
 

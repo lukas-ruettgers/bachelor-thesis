@@ -90,11 +90,16 @@
 \usepackage{amsthm} % For the proof environment
 \usepackage{marvosym} % For lightning symbol in contradiction proofs.
 \usepackage{stmaryrd} % For $\llbracket$ in logical formula interpretations.
+\usepackage{bbm} % mathbbm font for indicator function
 
 % Graphic packages
+\usepackage[dvipsnames]{xcolor}
 \usepackage{tikz}
-\usetikzlibrary{positioning,arrows.meta, patterns, decorations.pathreplacing,calligraphy}
-
+\usetikzlibrary{positioning, arrows.meta, patterns, patterns.meta}
+\usetikzlibrary{shapes,backgrounds} % Ellipses
+\usetikzlibrary{decorations.pathreplacing,calligraphy} % Decorations (like braces)
+\usetikzlibrary{calc} % Coordinate additions
+\usepackage{subcaption}
 
 % Algorithms and Code
 \usepackage{algorithm, caption}
@@ -116,6 +121,8 @@
 \definecolor{rwth-teal}{cmyk}{1,.3,.5,.3}\colorlet{rwth-lteal}{rwth-teal!50}\colorlet{rwth-llteal}{rwth-teal!25}
 \definecolor{rwth-gold}{cmyk}{.35,.46,.7,.35}
 \definecolor{rwth-silver}{cmyk}{.39,.31,.32,.14}
+\definecolor{rwth-storm}{cmyk}{0.5,0.15,0,0.2}
+\definecolor{rwth-olive}{cmyk}{1,0,1,.4}
 
 % Immediately insert new line after theorem environment heading.
 \newtheoremstyle{break}
@@ -137,6 +144,19 @@
 \newtheorem{corollary}{Corollary}[theorem]
 \newtheorem{lemma}[theorem]{Lemma} % This forces lemma to share the counter with theorem.
 \newtheorem{definition}[theorem]{Definition} % Same enforcement for definition.
+
+%%%%%%%%%%%  Customized Command  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Checkmark and crossmark
+\newcommand{\tikzxmark}{%
+	\tikz[scale=0.23,draw=Mahogany] {
+		\draw[line width=0.7,line cap=round] (0,0) to [bend left=6] (1,1);
+		\draw[line width=0.7,line cap=round] (0.2,0.95) to [bend right=3] (0.8,0.05);
+}}
+\newcommand{\tikzcmark}{%
+	\tikz[scale=0.23,draw=rwth-green] {
+		\draw[line width=0.7,line cap=round] (0.25,0) to [bend left=10] (1,1);
+		\draw[line width=0.8,line cap=round] (0,0.35) to [bend right=1] (0.23,0);
+}}
 
 %%%%%%%%%%  Option for "double spacing" %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -166,11 +186,10 @@
 % The following items should be adjusted to match your work. <================= !!!!!!!!!!
 
 \hypersetup{%
-	pdfsubject={Learning by detecting recursion: single-source domain extrapolation for numeral system data},
-	% TODO: Change this to briefly state topic of your thesis 
-% 
-	pdfkeywords={RWTH, THU, Machine Learning, Theory, Deep Learning, Generalization, single source, out of distribution, Ruettgers, Rüttgers, Lukas, bachelor, thesis},
-	% TODO: Add keywords that will help search engines and libraries to find your work.
+	pdfsubject={Kolmogorov complexity and how it illuminates our limitations to let machines learn simple functions},
+	
+	pdfkeywords={RWTH, THU, Machine Learning, Theory, Deep Learning, Generalization, single source, out of distribution, Ruettgers, Rüttgers, Lukas, bachelor, thesis, Kolmogorov, complexity, compression, learnability, illuminates, limitations, simple, functions, simplicity, machine, learn, non-recursive, recursion, inexpressivity, express, structure},
+
 	% Includes the name[s] of the author[s] 
 	% (If you have used \DocumentMetadata, at line 15, you can just put "\CopyrightAuthor," for the names.)
 %
@@ -203,7 +222,7 @@
 % - Regularization over any Vector Norm Does Not Yield any Simplicity Guarantees
 % - Optimal sufficient information for Hypothesis Certification
 % - Simple to describe, hard to compute: Generalize beyond Training Domains by Learning Recursion
-% TODO: Decide title
+
 
 % \Author{Author full name}{Author department}[Author's first PREVIOUS degree][Author's second PREVIOUS degree][...
 % Note that third, fourth, fifth, and sixth arguments are optional [] and may be omitted
